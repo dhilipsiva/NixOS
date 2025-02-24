@@ -4,13 +4,21 @@
   imports = [
     ./hardware-configuration.nix
   ];
+
+  nix = {
+    gc = {
+      automatic = true;                 
+      dates = "daily";                 
+      options = "--delete-older-than 7d";  
+    };  
+  };
   
   nixpkgs.config = {
     allowUnfree = true;
   };
 
   system = {
-    stateVersion = "24.05";
+    stateVersion = "24.11";
     autoUpgrade = {
       enable = true;
       allowReboot = true;
@@ -34,16 +42,25 @@
     mutableUsers = false;
     users.dhilipsiva = {
       isNormalUser = true;
-      extraGroups = [ "wheel" "docker" "networkmanager" ];
+      extraGroups = [ 
+        "adbusers"
+        "docker"
+        "input"
+        "kvm"
+        "networkmanager"
+        "plugdev"
+        "wheel"
+      ];
       hashedPassword = "$6$3TFqdE8hE9Hr9RS.$vd5EFAbzbHXn9qdQRRYtuwHyauBv/m1j.qe7LMo5tmz7KKhRZ1Fao8rS3BNPcS6f0yE4cOFHvf8ofcjzzkT671";
-      # shell = pkgs.fish;
       createHome = true;
     };
   };
 
   programs = {
+    sway = {
+      enable = true;
+    };
     bash = {
-      # enable = true;
       promptInit = "eval $(starship init bash)";
       interactiveShellInit = "eval $(atuin init bash)";
     };
@@ -54,12 +71,11 @@
     waybar = {
       enable = true;
     };
-    hyprland = {
+    nix-ld = {
       enable = true;
+      libraries = with pkgs; [];
     };
-    hyprlock = {
-      enable = true;
-    };
+    adb.enable = true;
   };
 
   systemd = {
@@ -70,31 +86,45 @@
         Persistent = true;
       };
     };
-
     services."backup-nix-config" = {
       serviceConfig = {
         ExecStart = "/run/current-system/sw/bin/cp -r /etc/nixos/configuration.nix /home/dhilipsiva/.files/configuration.nix";
       };
     };
+
+    timers."show-time-notification" = {
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        OnCalendar = "-*-* *:00,15,30,45:00";
+        Persistent = true;
+      };
+    };
+
+    services."show-time-notification" = {
+      description = "Show a notification with the current time";
+      serviceConfig = {
+        ExecStart = "/home/dhilipsiva/.files/scripts/show_time_notification.sh";
+      };
+    }; 
+
   };
   
   time.timeZone = "Asia/Kolkata";
 
   services = {
+    udev.packages = [
+      pkgs.android-udev-rules
+    ];
     syslogd.enable = true;
     timesyncd.enable = true;
     cron = {
       enable = true;
     };
-    xserver = {
-      enable = false;
-    };
-
     gnome.gnome-keyring = {
       enable = true;
     };
-    hypridle = {
-      enable = true;
+    xserver = {
+      enable = false;
     };
     displayManager = {
       enable = false;
@@ -109,6 +139,11 @@
     resolved = {
       enable = true;
     };
+
+    udev.extraRules = ''
+      SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", ATTR{idProduct}=="4ee7", MODE="0660", GROUP="plugdev"
+    '';
+
   };
 
   hardware = {
@@ -141,36 +176,46 @@
       atuin
       awscli2
       bottom
+      bruno
       copilot-cli
+      curl
+      delta
       discord
       docker
       firefox
       fish
       gcc
       git
-      gnome.gnome-keyring
-      gnome.seahorse
+      gnome-keyring
       gnumake
       gnupg
       google-chrome
       helix
-      infisical
-      lemurs
       libinput
+      libnotify
+      libxml2
+      mako
       microsoft-edge
-      nodejs_20
-      nodePackages.aws-cdk
       openconnect
       openssh
+      openssl
+      pass-wayland
+      pkg-config
+      postgresql
       python3
       ripgrep
       rofi-wayland
       rustup
       rye
+      seahorse
+      ssm-session-manager-plugin
       starship
-      # steam
       taskwarrior3
+      tree
+      unzip
       vscode
+      vscode-langservers-extracted
+      wasm-pack
       watchman
       zellij
     ];
@@ -186,8 +231,22 @@
     };
   };
 
-  virtualisation.docker = {
-    enable = true;
-    enableOnBoot = false;
+  virtualisation = {
+    docker = {
+      enable = true;
+      enableOnBoot = false;
+    };
   };
+
+  networking = {
+    hosts = {
+      "127.0.0.1" = [ 
+        "www.youtube.com" 
+        "youtube.com" 
+        "www.linkedin.com"
+        "linkedin.com"
+      ];
+    };
+  };
+
 }

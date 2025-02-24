@@ -4,7 +4,7 @@
 #
 # Read `man 5 sway` for a complete reference.
 
-bar swaybar_command waybar
+# bar swaybar_command waybar
 
 # font "Fira Code" 20
 
@@ -220,9 +220,10 @@ bindsym $mod+r mode "resize"
 # Status Bar:
 #
 # Read `man 5 sway-bar` for more information about this section.
-# bar {
-#     position bottom
-
+bar {
+    position bottom
+    status_command while ~/.files/.config/sway/status.sh; do sleep 1; done
+    # swaybar_command waybar
     # When the status_command prints a new line to stdout, swaybar updates.
     # The default just shows the current date and time.
     # status_command waybar
@@ -232,7 +233,7 @@ bindsym $mod+r mode "resize"
     #     background #323232
     #     inactive_workspace #32323200 #32323200 #5c5c5c
    #  }
-# }
+}
 
 include @sysconfdir@/sway/config.d/*
 
