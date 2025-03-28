@@ -5,6 +5,12 @@
     ./hardware-configuration.nix
   ];
 
+  i18n.defaultLocale = "en_IN";
+
+  console = {
+    keyMap = "us";
+  };
+
   nix = {
     gc = {
       automatic = true;                 
@@ -15,6 +21,7 @@
   
   nixpkgs.config = {
     allowUnfree = true;
+    android_sdk.accept_license = true;
   };
 
   system = {
@@ -22,6 +29,12 @@
     autoUpgrade = {
       enable = true;
       allowReboot = true;
+    };
+  };
+  
+  security = {
+    polkit = {
+      enable = true;
     };
   };
 
@@ -57,9 +70,10 @@
   };
 
   programs = {
-    sway = {
-      enable = true;
-    };
+    hyprland.enable = true;
+    # sway = {
+    #   enable = true;
+    # };
     bash = {
       promptInit = "eval $(starship init bash)";
       interactiveShellInit = "eval $(atuin init bash)";
@@ -76,6 +90,7 @@
       libraries = with pkgs; [];
     };
     adb.enable = true;
+    
   };
 
   systemd = {
@@ -110,8 +125,17 @@
   };
   
   time.timeZone = "Asia/Kolkata";
+  xdg.portal = {
+    enable = true;
+    wlr.enable = true;
+    # gtk portal needed to make firefox happy
+    # extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
+    extraPortals = [ pkgs.xdg-desktop-portal-hyprland ];
+    # gtkUsePortal = true;
+  };
 
   services = {
+    dbus.enable = true;
     udev.packages = [
       pkgs.android-udev-rules
     ];
@@ -134,6 +158,7 @@
       enable = true;
       alsa.enable = true;
       pulse.enable = true;
+      jack.enable = false;
     };
 
     resolved = {
@@ -162,12 +187,16 @@
   networking = {
     networkmanager.enable = true;
     hostName = "dhilipsiva-thinkpad";
+    firewall.allowedTCPPorts = [ 8080 ];
   };
 
   fonts.packages = with pkgs; [
     fira-code
     font-awesome
     nerdfonts
+    noto-fonts
+    noto-fonts-cjk-sans
+    noto-fonts-emoji
   ];
 
   environment= {
@@ -182,7 +211,8 @@
       delta
       discord
       docker
-      firefox
+      dunst
+      firefox-wayland
       fish
       gcc
       git
@@ -190,33 +220,38 @@
       gnumake
       gnupg
       google-chrome
+      grim
       helix
       libinput
       libnotify
       libxml2
       mako
       microsoft-edge
+      mitmproxy
       openconnect
       openssh
       openssl
       pass-wayland
       pkg-config
-      postgresql
       python3
       ripgrep
       rofi-wayland
       rustup
       rye
       seahorse
+      slurp
       ssm-session-manager-plugin
       starship
-      taskwarrior3
       tree
+      typescript-language-server
       unzip
       vscode
       vscode-langservers-extracted
       wasm-pack
       watchman
+      waybar
+      wl-clipboard
+      xdg-desktop-portal
       zellij
     ];
     variables = {
@@ -243,8 +278,12 @@
       "127.0.0.1" = [ 
         "www.youtube.com" 
         "youtube.com" 
+        
         "www.linkedin.com"
         "linkedin.com"
+
+        "reddit.com"
+        "www.reddit.com"
       ];
     };
   };
