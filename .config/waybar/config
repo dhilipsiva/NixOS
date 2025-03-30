@@ -4,16 +4,16 @@
     "height": 32, // Waybar height
     // "width": 120, // Waybar width
     // Choose the order of the modules
-    "modules-left": ["sway/workspaces", "sway/mode"],
-    "modules-center": ["sway/window"],
+    "modules-left": ["hyprland/workspaces", "hyprland/mode"],
+    "modules-center": ["hyprland/window"],
     "modules-right": ["tray","pulseaudio", "network", "cpu", "memory", "temperature", "backlight", "battery", "battery#bat2", "clock"],
     // Modules configuration
-     "sway/workspaces": {
-         "disable-scroll": true,
-         "disable-markup" : false,
-         "all-outputs": true
+    "hyprland/workspaces": {
+        "format": "<span foreground='#777777'>{name}</span>",
+        "format-active": "<span foreground='#ffffff' background='#268bd2' weight='bold' underline='single'> {name} </span>",
+        "format-urgent": "<span foreground='#ffffff' background='#dc322f'> {name} </span>"
     },
-    "sway/mode": {
+    "hyprland/mode": {
         "format": "<span style=\"italic\">{}</span>"
     },
     "idle_inhibitor": {
