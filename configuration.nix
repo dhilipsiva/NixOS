@@ -5,6 +5,12 @@
     ./hardware-configuration.nix
   ];
 
+  nix = {
+    settings = {
+      experimental-features = [ "nix-command" "flakes" ];
+    };
+  };
+
   i18n.defaultLocale = "en_IN";
 
   console = {
@@ -61,6 +67,7 @@
         "input"
         "kvm"
         "networkmanager"
+        "dialout"
         "plugdev"
         "wheel"
       ];
@@ -129,9 +136,7 @@
     enable = true;
     wlr.enable = true;
     # gtk portal needed to make firefox happy
-    # extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
     extraPortals = [ pkgs.xdg-desktop-portal-hyprland ];
-    # gtkUsePortal = true;
   };
 
   services = {
@@ -202,11 +207,15 @@
   environment= {
     systemPackages = with pkgs; [
       alacritty
+      arduino-ide
       atuin
       awscli2
       bottom
       bruno
+      cmake
+      code-cursor
       copilot-cli
+      coreutils
       curl
       delta
       discord
@@ -219,15 +228,14 @@
       gnome-keyring
       gnumake
       gnupg
-      google-chrome
       grim
       helix
       libinput
       libnotify
       libxml2
       mako
-      microsoft-edge
       mitmproxy
+      ncdu
       openconnect
       openssh
       openssl
@@ -252,6 +260,7 @@
       waybar
       wl-clipboard
       xdg-desktop-portal
+      zed-editor
       zellij
     ];
     variables = {
@@ -279,8 +288,8 @@
         "www.youtube.com" 
         "youtube.com" 
         
-        "www.linkedin.com"
-        "linkedin.com"
+        # "www.linkedin.com"
+        # "linkedin.com"
 
         "reddit.com"
         "www.reddit.com"
