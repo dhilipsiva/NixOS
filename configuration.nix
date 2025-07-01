@@ -9,20 +9,17 @@
     settings = {
       experimental-features = [ "nix-command" "flakes" ];
     };
+    gc = {
+      automatic = true;                 
+      dates = "daily";                 
+      options = "--delete-older-than 7d";  
+    };  
   };
 
   i18n.defaultLocale = "en_IN";
 
   console = {
     keyMap = "us";
-  };
-
-  nix = {
-    gc = {
-      automatic = true;                 
-      dates = "daily";                 
-      options = "--delete-older-than 7d";  
-    };  
   };
   
   nixpkgs.config = {
@@ -154,6 +151,7 @@
     };
     xserver = {
       enable = false;
+      videoDrivers = [ "nvidia" ];
     };
     displayManager = {
       enable = false;
@@ -178,14 +176,20 @@
 
   hardware = {
     pulseaudio.enable = false;
+    graphics.enable32Bit = true;
     nvidia = {
+      open = true;
       modesetting.enable = true;
-      nvidiaSettings.enable = true;
       powerManagement.enable = true;
-      prime.offload.enable = true;
-    };
-    nvidiaOptimus = {
-      disable = true;
+      nvidiaSettings = true;
+      prime = {
+        offload = {
+          enable = true;
+          # busID = "01:00.0";
+        };
+        intelBusId = "PCI:0:2:0";
+        nvidiaBusId = "PCI:1:0:0";
+      };
     };
   };
 
@@ -193,12 +197,24 @@
     networkmanager.enable = true;
     hostName = "dhilipsiva-thinkpad";
     firewall.allowedTCPPorts = [ 8080 ];
+    hosts = {
+      "127.0.0.1" = [ 
+        "www.youtube.com" 
+        "youtube.com" 
+        
+        # "www.linkedin.com"
+        # "linkedin.com"
+
+        # "reddit.com"
+        # "www.reddit.com"
+      ];
+    };
   };
 
   fonts.packages = with pkgs; [
     fira-code
     font-awesome
-    nerdfonts
+    nerd-fonts.droid-sans-mono
     noto-fonts
     noto-fonts-cjk-sans
     noto-fonts-emoji
@@ -233,6 +249,7 @@
       libinput
       libnotify
       libxml2
+      lutris
       mako
       mitmproxy
       ncdu
@@ -255,9 +272,12 @@
       unzip
       vscode
       vscode-langservers-extracted
+      vulkan-tools
       wasm-pack
       watchman
       waybar
+      winetricks
+      wineWowPackages.stable
       wl-clipboard
       xdg-desktop-portal
       zed-editor
@@ -267,6 +287,7 @@
       EDITOR = "hx";
       VISUAL = "hx";
       XDG_CONFIG_HOME = "/home/dhilipsiva/.files/.config";
+      DRI_PRIME = "1";
     };
     shellAliases = {
       g = "git";
@@ -281,20 +302,4 @@
       enableOnBoot = false;
     };
   };
-
-  networking = {
-    hosts = {
-      "127.0.0.1" = [ 
-        "www.youtube.com" 
-        "youtube.com" 
-        
-        # "www.linkedin.com"
-        # "linkedin.com"
-
-        "reddit.com"
-        "www.reddit.com"
-      ];
-    };
-  };
-
 }
