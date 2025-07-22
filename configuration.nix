@@ -75,8 +75,12 @@
 
   programs = {
     hyprland.enable = true;
-    # sway = {
+    # atuin = {
     #   enable = true;
+    #   settings = {
+    #     # session_path = config.age.secrets."atuin_session".path;
+    #     # key_path = config.age.secrets."atuin_key".path;
+    #   };
     # };
     bash = {
       promptInit = "eval $(starship init bash)";
@@ -137,6 +141,7 @@
   };
 
   services = {
+    pulseaudio.enable = false;
     dbus.enable = true;
     udev.packages = [
       pkgs.android-udev-rules
@@ -175,7 +180,6 @@
   };
 
   hardware = {
-    pulseaudio.enable = false;
     graphics.enable32Bit = true;
     nvidia = {
       open = true;
