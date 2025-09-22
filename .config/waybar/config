@@ -6,7 +6,7 @@
     // Choose the order of the modules
     "modules-left": ["hyprland/workspaces", "hyprland/mode"],
     "modules-center": ["hyprland/window"],
-    "modules-right": ["tray","pulseaudio", "network", "cpu", "memory", "temperature", "backlight", "battery", "battery#bat2", "clock"],
+    "modules-right": ["tray","pulseaudio", "network", "disk", "cpu", "memory", "temperature", "backlight", "battery", "battery#bat2", "clock"],
     // Modules configuration
     "hyprland/workspaces": {
         "format": "<span foreground='#777777'>{name}</span>",
@@ -71,5 +71,11 @@
         "format-ethernet": "{ifname}: {ipaddr}/{cidr} ",
         "format-disconnected": "Disconnected ⚠",
         "interval" : 7
+    },
+    "disk": {
+        "path": "/",
+        "format": "{percentage_used}% ",
+        "tooltip": true,
+        "tooltip-format": "Free: {free} | Used: {used} | Total: {total}"
     }
 }

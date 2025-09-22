@@ -209,8 +209,8 @@
         # "www.linkedin.com"
         # "linkedin.com"
 
-        # "reddit.com"
-        # "www.reddit.com"
+        "reddit.com"
+        "www.reddit.com"
       ];
     };
   };
@@ -255,7 +255,6 @@
       libxml2
       lutris
       mako
-      mitmproxy
       ncdu
       openconnect
       openssh
@@ -264,7 +263,7 @@
       pkg-config
       python3
       ripgrep
-      rofi-wayland
+      rofi
       rustup
       rye
       seahorse
