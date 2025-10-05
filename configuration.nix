@@ -203,8 +203,8 @@
     firewall.allowedTCPPorts = [ 8080 ];
     hosts = {
       "127.0.0.1" = [ 
-        "www.youtube.com" 
-        "youtube.com" 
+        # "www.youtube.com" 
+        # "youtube.com" 
         
         # "www.linkedin.com"
         # "linkedin.com"
@@ -267,7 +267,7 @@
       rustup
       rye
       seahorse
-      slurp
+      flameshot
       ssm-session-manager-plugin
       starship
       tree
