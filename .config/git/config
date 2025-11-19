@@ -14,23 +14,26 @@
 # [diff]
 #     tool = delta
 
-[pager]
-    diff = delta
-    log = delta
-    reflog = delta
-    show = delta
+[diff]
+    external = difft
 
-[interactive]
-    diffFilter = delta --color-only
+# [pager]
+#     diff = difft
+#     log = difft
+#     reflog = difft
+#     show = difft
 
-[delta]
-    features = side-by-side line-numbers decorations
-    whitespace-error-style = 22 reverse
+# [interactive]
+    # diffFilter = delta --color-only
 
-[delta "decorations"]
-    commit-decoration-style = bold yellow box ul
-    file-style = bold yellow ul
-    file-decoration-style = none
+# [delta]
+    # features = side-by-side line-numbers decorations
+    # whitespace-error-style = 22 reverse
+
+# [delta "decorations"]
+    # commit-decoration-style = bold yellow box ul
+    # file-style = bold yellow ul
+    # file-decoration-style = none
 
 
 [alias]

@@ -144,7 +144,7 @@
     pulseaudio.enable = false;
     dbus.enable = true;
     udev.packages = [
-      pkgs.android-udev-rules
+      # pkgs.android-udev-rules
     ];
     syslogd.enable = true;
     timesyncd.enable = true;
@@ -195,6 +195,10 @@
         nvidiaBusId = "PCI:1:0:0";
       };
     };
+    opentabletdriver = {
+      enable = true;
+      daemon.enable = true;
+    };
   };
 
   networking = {
@@ -203,11 +207,11 @@
     firewall.allowedTCPPorts = [ 8080 ];
     hosts = {
       "127.0.0.1" = [ 
-        # "www.youtube.com" 
-        # "youtube.com" 
+        "www.youtube.com" 
+        "youtube.com" 
         
-        # "www.linkedin.com"
-        # "linkedin.com"
+        "www.linkedin.com"
+        "linkedin.com"
 
         "reddit.com"
         "www.reddit.com"
@@ -221,7 +225,7 @@
     nerd-fonts.droid-sans-mono
     noto-fonts
     noto-fonts-cjk-sans
-    noto-fonts-emoji
+    noto-fonts-color-emoji
   ];
 
   environment= {
@@ -229,11 +233,11 @@
       alacritty
       arduino-ide
       atuin
-      awscli2
       bottom
       bruno
       cmake
       code-cursor
+      codex
       copilot-cli
       coreutils
       curl
@@ -241,7 +245,7 @@
       discord
       docker
       dunst
-      firefox-wayland
+      firefox
       fish
       gcc
       git
