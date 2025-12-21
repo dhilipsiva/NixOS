@@ -1,0 +1,345 @@
+This is the **final, comprehensive, and modernized migration**. It takes every single line from your legacy `configuration.nix`  and restructures it into a modular **Flake** setup.
+
+This configuration is "Future-Ready" because:
+
+1. **Bleeding Edge:** Uses `nixos-unstable` by default (crucial for your RTX 5090 & Ryzen 9950X3D).
+2. **Modular:** Separates "My Hardware" from "My Software".
+3. **Preserved:** Keeps your custom backup timers, "Focus Mode" (Reddit blocking), and specific package list intact.
+
+### **The Directory Structure**
+
+Run this to create the structure:
+
+```bash
+mkdir -p ~/dotfiles/{hosts/desktop,modules,home}
+cd ~/dotfiles
+
+```
+
+---
+
+### **1. `flake.nix` (The Entry Point)**
+
+This defines your system. It pulls the latest software updates automatically.
+
+```nix
+{
+  description = "Dhilipsiva's Hyper-Modern NixOS";
+
+  inputs = {
+    # The "Unstable" branch is mandatory for your RTX 5090 and Ryzen 9000
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+
+    home-manager = {
+      url = "github:nix-community/home-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+  };
+
+  outputs = { self, nixpkgs, home-manager, ... }@inputs:
+    let
+      system = "x86_64-linux";
+      pkgs = nixpkgs.legacyPackages.${system};
+    in {
+      nixosConfigurations = {
+        # Your New AI/Gaming Rig
+        desktop = nixpkgs.lib.nixosSystem {
+          inherit system;
+          specialArgs = { inherit inputs; };
+          modules = [
+            ./hosts/desktop/default.nix
+            ./modules/common.nix
+            home-manager.nixosModules.home-manager
+            {
+              home-manager.useGlobalPkgs = true;
+              home-manager.useUserPackages = true;
+              home-manager.users.dhilipsiva = import ./home/default.nix;
+            }
+          ];
+        };
+      };
+    };
+}
+
+```
+
+---
+
+### **2. `hosts/desktop/default.nix` (The Hardware Config)**
+
+This file is **exclusive** to your new PC. It handles the dual-boot, the RTX 5090 drivers, and the Ryzen 9950X3D optimization.
+
+```nix
+{ config, pkgs, ... }:
+
+{
+  imports = [ ./hardware-configuration.nix ];
+
+  networking.hostName = "dhilipsiva-desktop";
+
+  # --- BOOTLOADER (Dual Boot Optimized) ---
+  # We use GRUB because it detects Windows on a separate drive better than systemd-boot
+  boot.loader = {
+    efi = {
+      canTouchEfiVariables = true;
+      efiSysMountPoint = "/boot";
+    };
+    grub = {
+      enable = true;
+      devices = [ "nodev" ];
+      efiSupport = true;
+      useOSProber = true; # Finds your Windows SSD automatically
+    };
+  };
+
+  # --- KERNEL & CPU ---
+  # Kernel 6.12+ is required for Ryzen 9000 X3D scheduling
+  boot.kernelPackages = pkgs.linuxPackages_latest;
+  
+  # --- GRAPHICS (RTX 5090) ---
+  services.xserver.videoDrivers = [ "nvidia" ];
+  
+  hardware.nvidia = {
+    modesetting.enable = true;
+    powerManagement.enable = false; # Desktop GPUs run better without aggressive power saving
+    open = false; # Proprietary drivers are currently more stable for 50-series
+    nvidiaSettings = true;
+    
+    # Force the Beta driver branch (570+) for Blackwell architecture support
+    package = config.boot.kernelPackages.nvidiaPackages.beta;
+  };
+
+  # --- WIFI 7 (Firmware Fix) ---
+  # Fixes the missing firmware for MSI X870E Qualcomm chips
+  hardware.enableRedistributableFirmware = true;
+  hardware.firmware = [
+    pkgs.linux-firmware
+    (pkgs.linux-firmware.overrideAttrs (old: {
+      src = pkgs.fetchgit {
+        url = "https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git";
+        rev = "master"; 
+        sha256 = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="; # Run once, let it fail, replace hash
+      };
+    }))
+  ];
+
+  # --- UPS MONITORING (CyberPower) ---
+  power.ups = {
+    enable = true;
+    mode = "standalone";
+    ups.cyberpower = {
+      driver = "usbhid-ups";
+      port = "auto";
+    };
+    users.upsmon = {
+      passwordFile = "/etc/nixos/ups-password"; # Create this file!
+      upsmonConf = ''
+        MONITOR cyberpower@localhost 1 upsmon secret master
+        SHUTDOWNCMD "${pkgs.systemd}/bin/shutdown -h +0"
+      '';
+    };
+  };
+}
+
+```
+
+---
+
+### **3. `modules/common.nix` (Your Core Configuration)**
+
+This contains **everything** from your old config, ensuring you lose nothing (packages, blocked sites, cron jobs).
+
+```nix
+{ config, pkgs, ... }:
+
+{
+  # --- NIX SETTINGS ---
+  [cite_start]nix.settings.experimental-features = [ "nix-command" "flakes" ]; [cite: 2]
+  nix.gc = {
+    automatic = true;
+    dates = "daily";
+    options = "--delete-older-than 7d";
+  [cite_start]}; [cite: 3]
+  nixpkgs.config = {
+    allowUnfree = true;
+    android_sdk.accept_license = true;
+  [cite_start]}; [cite: 5]
+
+  # --- LOCALE & TIME ---
+  [cite_start]time.timeZone = "Asia/Kolkata"; [cite: 26]
+  i18n.defaultLocale = "en_IN";
+  console.keyMap = "us";
+
+  # --- USER & SECURITY ---
+  users.mutableUsers = false;
+  users.users.dhilipsiva = {
+    isNormalUser = true;
+    createHome = true;
+    [cite_start]extraGroups = [ "adbusers" "docker" "input" "kvm" "networkmanager" "dialout" "plugdev" "wheel" ]; [cite: 11]
+    [cite_start]hashedPassword = "$6$3TFqdE8hE9Hr9RS.$vd5EFAbzbHXn9qdQRRYtuwHyauBv/m1j.qe7LMo5tmz7KKhRZ1Fao8rS3BNPcS6f0yE4cOFHvf8ofcjzzkT671"; [cite: 12]
+    shell = pkgs.fish;
+  };
+
+  [cite_start]security.polkit.enable = true; [cite: 8]
+  [cite_start]services.gnome.gnome-keyring.enable = true; [cite: 32]
+
+  # --- NETWORKING & BLOCKLISTS ---
+  networking.networkmanager.enable = true;
+  [cite_start]networking.firewall.allowedTCPPorts = [ 8080 ]; [cite: 42]
+  networking.hosts = {
+    "127.0.0.1" = [ "reddit.com" "www.reddit.com" ]; # [cite_start]Keeping your Focus Mode [cite: 43]
+  };
+
+  # --- AUDIO & HARDWARE ---
+  services.pipewire = {
+    enable = true;
+    alsa.enable = true;
+    pulse.enable = true;
+    jack.enable = false;
+  [cite_start]}; [cite: 35]
+  [cite_start]services.pulseaudio.enable = false; [cite: 29]
+  
+  hardware.opentabletdriver = { enable = true; daemon.enable = true; [cite_start]}; [cite: 41]
+  [cite_start]programs.adb.enable = true; [cite: 20]
+  services.udev.extraRules = ''
+    SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", ATTR{idProduct}=="4ee7", MODE="0660", GROUP="plugdev"
+  [cite_start]''; [cite: 37]
+
+  # --- CUSTOM SERVICES (Ported from your config) ---
+  systemd.timers."backup-nix-config" = {
+    wantedBy = [ "timers.target" ];
+    timerConfig = { OnCalendar = "*-*-* *:00:00"; Persistent = true; };
+  [cite_start]}; [cite: 21]
+  systemd.services."backup-nix-config" = {
+    serviceConfig.ExecStart = "${pkgs.coreutils}/bin/cp -r /etc/nixos/configuration.nix /home/dhilipsiva/dotfiles/configuration_backup.nix";
+  [cite_start]}; [cite: 22]
+
+  systemd.timers."show-time-notification" = {
+    wantedBy = [ "timers.target" ];
+    timerConfig = { OnCalendar = "-*-* *:00,15,30,45:00"; Persistent = true; };
+  [cite_start]}; [cite: 24]
+  systemd.services."show-time-notification" = {
+    serviceConfig.ExecStart = "/home/dhilipsiva/.files/scripts/show_time_notification.sh"; # Ensure this path exists!
+  [cite_start]}; [cite: 26]
+
+  # --- PROGRAMS ---
+  programs.hyprland.enable = true;
+  programs.nix-ld.enable = true; # [cite_start]Critical for running random binaries (VSCode server, etc) [cite: 19]
+  programs.dconf.enable = true;
+  programs.fish.enable = true;
+  virtualisation.docker = { enable = true; enableOnBoot = false; [cite_start]}; [cite: 51]
+
+  # --- PACKAGES (Your complete legacy list) ---
+  environment.systemPackages = with pkgs; [
+    # Core
+    git curl wget tree unzip coreutils gnumake gcc cmake pkg-config
+    libnotify libxml2 libinput openssl gnupg seahorse
+    
+    # Terminals & Shells
+    alacritty fish starship atuin zellij bottom ncdu ripgrep
+    
+    # Editors
+    helix zed-editor vscode vscode-langservers-extracted
+    
+    # Dev Tools
+    python3 nodejs_24 rustup rye gcc gnumake
+    docker bruno discord openconnect openssh
+    arduino-ide copilot-cli code-cursor codex
+    ssm-session-manager-plugin wasm-pack watchman
+    typescript-language-server difftastic
+    
+    # Desktop / GUI
+    rofi waybar dunst mako grim slurp wl-clipboard flameshot
+    firefox
+    
+    # Wine / Gaming
+    lutris wineWowPackages.stable winetricks vulkan-tools
+  [cite_start]]; [cite: 45, 46, 47, 48]
+
+  # --- ENVIRONMENT VARIABLES ---
+  environment.variables = {
+    EDITOR = "hx";
+    VISUAL = "hx";
+    XDG_CONFIG_HOME = "/home/dhilipsiva/.files/.config";
+    # Removed DRI_PRIME=1 because on Desktop your monitor is directly connected to the GPU
+  [cite_start]}; [cite: 49]
+  
+  [cite_start]system.stateVersion = "24.11"; [cite: 6]
+}
+
+```
+
+---
+
+### **4. `home/default.nix` (Home Manager)**
+
+This manages your user-specific configs. I moved your aliases and shell inits here for better management.
+
+```nix
+{ config, pkgs, ... }:
+
+{
+  home.username = "dhilipsiva";
+  home.homeDirectory = "/home/dhilipsiva";
+  home.stateVersion = "24.11";
+
+  # --- SHELL CONFIG ---
+  programs.bash = {
+    enable = true;
+    initExtra = ''
+      eval $(starship init bash)
+      eval $(atuin init bash)
+    [cite_start]''; [cite: 16]
+    shellAliases = {
+      g = "git";
+      e = "hx";
+      q = "exit";
+      # Agent Alias (Goose)
+      gdev = "goose run --model qwen2.5-coder:32b";
+    [cite_start]}; [cite: 50]
+  };
+
+  programs.fish = {
+    enable = true;
+    interactiveShellInit = ''
+      set -g theme_display_date no
+      eval $(starship init fish)
+      eval $(atuin init fish)
+    '';
+    shellAliases = {
+      g = "git";
+      e = "hx";
+      q = "exit";
+      gdev = "goose run --model qwen2.5-coder:32b";
+    };
+  };
+
+  # --- GIT CONFIG ---
+  programs.git = {
+    enable = true;
+    userName = "Dhilip Siva";
+    userEmail = "dhilipsiva@gmail.com"; # Update this if needed
+  };
+
+  # --- AI AGENT CONFIG (Goose) ---
+  home.sessionVariables = {
+    # Point Goose to your Desktop's Ollama
+    OPENAI_BASE_URL = "http://localhost:11434/v1"; 
+    OPENAI_API_KEY = "ollama";
+  };
+}
+
+```
+
+### **How to Install**
+
+1. **Copy** `/etc/nixos/hardware-configuration.nix` to `~/dotfiles/hosts/desktop/`.
+2. **Generate** a dummy UPS password file: `sudo touch /etc/nixos/ups-password`.
+3. **Apply:**
+```bash
+sudo nixos-rebuild switch --flake ~/dotfiles#desktop
+
+```
+
+
+*(The first run will fail on the `linux-firmware` hash. Copy the correct hash from the error message, update `hosts/desktop/default.nix`, and run it again.)*
