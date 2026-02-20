@@ -48,7 +48,7 @@
       };
       efi.canTouchEfiVariables = true;
     };
-    kernelPackages = pkgs.linuxPackages_latest;
+    kernelPackages = pkgs.linuxPackages;
     extraModulePackages = [ config.boot.kernelPackages.bbswitch ];
   };
 
@@ -97,7 +97,6 @@
       enable = true;
       libraries = with pkgs; [];
     };
-    adb.enable = true;
     
   };
 
@@ -207,11 +206,11 @@
     firewall.allowedTCPPorts = [ 8080 ];
     hosts = {
       "127.0.0.1" = [ 
-        "www.youtube.com" 
-        "youtube.com" 
+        # "www.youtube.com" 
+        # "youtube.com" 
         
-        "www.linkedin.com"
-        "linkedin.com"
+        # "www.linkedin.com"
+        # "linkedin.com"
 
         "reddit.com"
         "www.reddit.com"
@@ -231,6 +230,7 @@
   environment= {
     systemPackages = with pkgs; [
       alacritty
+      android-tools
       arduino-ide
       atuin
       bottom
@@ -241,7 +241,7 @@
       copilot-cli
       coreutils
       curl
-      delta
+      difftastic
       discord
       docker
       dunst
@@ -260,6 +260,7 @@
       lutris
       mako
       ncdu
+      nodejs_24
       openconnect
       openssh
       openssl
