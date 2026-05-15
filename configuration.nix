@@ -16,11 +16,17 @@
     };  
   };
 
-  i18n.defaultLocale = "en_IN";
+  i18n.defaultLocale = "en_US.UTF-8";
 
   console = {
     keyMap = "us";
   };
+
+  nixpkgs.overlays = [
+    (final: prev: {
+      openldap = prev.openldap.overrideAttrs (_: { doCheck = false; });
+    })
+  ];
   
   nixpkgs.config = {
     allowUnfree = true;
@@ -29,10 +35,10 @@
 
   system = {
     stateVersion = "24.11";
-    autoUpgrade = {
-      enable = true;
-      allowReboot = true;
-    };
+    # autoUpgrade = {
+    #   enable = true;
+    #   allowReboot = true;
+    # };
   };
   
   security = {
@@ -49,7 +55,7 @@
       efi.canTouchEfiVariables = true;
     };
     kernelPackages = pkgs.linuxPackages;
-    extraModulePackages = [ config.boot.kernelPackages.bbswitch ];
+    # extraModulePackages = [ config.boot.kernelPackages.bbswitch ];
   };
 
   swapDevices = [];
@@ -136,10 +142,14 @@
     enable = true;
     wlr.enable = true;
     # gtk portal needed to make firefox happy
-    extraPortals = [ pkgs.xdg-desktop-portal-hyprland ];
+    extraPortals = [
+      pkgs.xdg-desktop-portal-hyprland
+      pkgs.xdg-desktop-portal-gtk   # add: many flatpaks fall back to gtk for file pickers
+    ];
   };
 
   services = {
+    flatpak.enable = true;
     pulseaudio.enable = false;
     dbus.enable = true;
     udev.packages = [
@@ -189,6 +199,7 @@
         offload = {
           enable = true;
           # busID = "01:00.0";
+          enableOffloadCmd = true;
         };
         intelBusId = "PCI:0:2:0";
         nvidiaBusId = "PCI:1:0:0";
@@ -230,21 +241,15 @@
   environment= {
     systemPackages = with pkgs; [
       alacritty
-      android-tools
-      arduino-ide
       atuin
-      bottom
-      bruno
       cmake
-      code-cursor
       codex
       copilot-cli
       coreutils
+      claude-code
       curl
       difftastic
-      discord
       docker
-      dunst
       firefox
       fish
       gcc
@@ -257,7 +262,6 @@
       libinput
       libnotify
       libxml2
-      lutris
       mako
       ncdu
       nodejs_24
@@ -278,6 +282,7 @@
       tree
       typescript-language-server
       unzip
+      vinegar
       vscode
       vscode-langservers-extracted
       vulkan-tools
@@ -285,7 +290,7 @@
       watchman
       waybar
       winetricks
-      wineWowPackages.stable
+      wineWow64Packages.stable
       wl-clipboard
       xdg-desktop-portal
       zed-editor
@@ -295,7 +300,7 @@
       EDITOR = "hx";
       VISUAL = "hx";
       XDG_CONFIG_HOME = "/home/dhilipsiva/.files/.config";
-      DRI_PRIME = "1";
+      # DRI_PRIME = "1";
     };
     shellAliases = {
       g = "git";

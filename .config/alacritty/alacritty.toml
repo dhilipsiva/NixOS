@@ -6,3 +6,8 @@ italic.family = "Fira Code"
 bold_italic.family = "Fira Code"
 
 size = 16.0
+
+[[keyboard.bindings]]
+key = "Return"
+mods = "Shift"
+chars = "\u001B\r"
