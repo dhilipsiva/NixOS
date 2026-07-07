@@ -39,28 +39,25 @@ supports both via `hardware.nvidia.open = true` + `nvidiaPackages.production`).
 **No unstable input exists**; if the VM later proves a specific hardware package is
 missing on stable, add a *narrowly-scoped* `nixpkgs-unstable` overlay for just that
 package (kernel/mesa/nvidia as a coherent set) — never repoint the whole system.
-It composes `nixosConfigurations.desktop` from **three** module sources (plus
-`nixos-hardware` profiles imported by the host):
+It composes `nixosConfigurations.desktop` from a **modular** `hosts / modules / home`
+split (plus `nixos-hardware` profiles imported by the host):
 
 - `hosts/desktop/default.nix` — machine-specific: GRUB dual-boot, NVIDIA (Blackwell,
-  **open module + production driver**), CyberPower UPS; imports `hardware-configuration.nix`
-  and the `nixos-hardware` `common-cpu-amd` / `common-gpu-nvidia` / `common-pc-ssd` profiles.
-- `modules/common.nix` — the shared system config (users, packages, services, networking).
-- `home/default.nix` — the home-manager user config (shells, git, Goose→Ollama agent),
-  wired in via `home-manager.users.dhilipsiva`.
+  **open module + production driver**), CyberPower UPS, `system.stateVersion` (per-host
+  anchor), and a VM-only `virtualisation.vmVariant` block. Imports `hardware-configuration.nix`
+  and the `nixos-hardware` `common-cpu-amd` / `common-gpu-nvidia-nonprime` / `common-pc-ssd`
+  profiles.
+- `modules/nixos/` — the shared system config, **split by concern**, with a
+  `default.nix` aggregator that imports them all: `nix.nix`, `locale.nix`, `users.nix`,
+  `audio.nix`, `desktop.nix`, `networking.nix`, `virtualisation.nix`, `hardware.nix`,
+  `packages.nix`, `environment.nix`. The flake includes the whole set via `./modules/nixos`.
+- `home/dhilipsiva/` — the home-manager user config: `default.nix` (shells, git,
+  Goose→Ollama agent) + `services.nix` (the quarter-hourly time-notification **user**
+  timer). Wired via `home-manager.users.dhilipsiva`. (Per-tool dotfile files land in Phase 3.)
 
-### Two competing configs — do not confuse them
-
-There are **two** system configs in this repo, and only one is wired into the flake:
-
-- **`modules/common.nix`** is the active system config used by `flake.nix`.
-- **`configuration.nix` (repo root)** is the *legacy* monolithic config for the old
-  ThinkPad laptop (Intel/NVIDIA PRIME offload, hostname `dhilipsiva-thinkpad`). It is
-  **not imported anywhere** — the flake never reads it. Treat it as reference/history
-  when editing; changes to it have no effect on `nixos-rebuild --flake`.
-
-When adding system packages/services, edit `modules/common.nix` (or
-`hosts/desktop/` for machine-specific bits), **not** the root `configuration.nix`.
+When adding system config, edit the relevant `modules/nixos/*.nix` (or `hosts/desktop/`
+for machine-specific bits). The legacy root `configuration.nix` has been **deleted**
+(it was ThinkPad-era, never imported; recoverable from git history if ever needed).
 
 ### Planned migration (read before large changes)
 
@@ -91,14 +88,25 @@ safety substrate is live:
   build-vm variant — set them under `virtualisation.vmVariant.*`, never top-level
   `virtualisation.*`, or evaluation fails.
 
+**Phases 1–2 complete (GATES 1 & 2 passed 2026-07-07).** Phase 1 flipped the config to
+stable `nixos-26.05` (NVIDIA open+production, dropped `linuxPackages_latest`, removed the
+firmware override, `stateVersion → 26.05`, misc stable-package fixes). Phase 2 restructured
+the monolith into the `hosts / modules/nixos / home/dhilipsiva` split described above,
+deleted the legacy root `configuration.nix` + `tmp.txt`, and ported the two systemd units
+(backup dropped; notification → home-manager user timer). Both gates verified with
+`nix flake check` + `nixos-rebuild build .#desktop` + a headless VM boot; Phase 2 parity
+was confirmed by `nix store diff-closures` (only the two intended service changes differ).
+**Next: Phase 3** (migrate `.config/` dotfiles into home-manager Nix; then delete
+`.config/` + the `XDG_CONFIG_HOME` override).
+
 ### Known rough edges
 
 `modules/common.nix` and `home/default.nix` were AI-generated; the invalid `[cite: N]`
-markers that once blocked evaluation have been stripped, and the home-manager git email
-is now `dhilipsiva@pm.me`. Placeholders that will still fail on a real machine:
-- `hosts/desktop/default.nix`: the `linux-firmware` override has a dummy
-  `sha256-AAAA...` hash (intended "let it fail, copy the real hash" flow), and the
-  UPS block references `/etc/nixos/ups-password` which must exist.
+markers that once blocked evaluation have been stripped. Placeholders that will still
+fail on a real machine:
+- `hosts/desktop/default.nix`: the UPS block references `/etc/nixos/ups-password`
+  which must exist (moves to sops in Phase 4). *(The dummy `sha256-AAAA…` firmware
+  override was removed in Phase 1.)*
 - `hosts/desktop/hardware-configuration.nix` is a generic `nixos-generate-config`
   scan (single ext4 root, no LUKS) and does **not** yet reflect the described desktop
   hardware — regenerate it on the actual machine before a real install.
@@ -108,17 +116,19 @@ is now `dhilipsiva@pm.me`. Placeholders that will still fail on a real machine:
 - `.config/*` — live dotfiles served via `XDG_CONFIG_HOME` (alacritty, fish, helix,
   hypr, sway, waybar, zellij, nvim, atuin, git, cheat). These are **not** managed by
   home-manager; they are consumed directly from this repo on the running system.
-- `scripts/show_time_notification.sh` — invoked by a systemd timer defined in the
-  system config (quarter-hourly `notify-send`). Timer `ExecStart` paths point at
-  `/home/dhilipsiva/.files/scripts/...`, so the repo must be cloned to `~/.files`.
-- `clash_royale.sh`, `signature.html`, `tmp.txt` — miscellaneous personal scratch
-  files, unrelated to the system build.
+- `scripts/show_time_notification.sh` — the original quarter-hourly `notify-send`
+  script. **No longer referenced** by the system config: Phase 2 reimplemented it as a
+  home-manager **user** service+timer (`home/dhilipsiva/services.nix`) that builds the
+  script into the Nix store (no hardcoded `~/.files` path). The loose `scripts/` copy
+  can be removed once you're happy with the home-manager version.
+- `misc/clash_royale.sh` — a personal Android autoplay script (moved out of the repo
+  root in Phase 2); `signature.html` — an email signature. Neither is part of the build.
 
 ## Conventions
 
-- The interactive shell is **fish**; `bash` is configured for scripts. Shell aliases
-  `g`=git, `e`=hx, `q`=exit are defined in both the system and home configs — keep
-  them in sync if you change one.
+- The interactive shell is **fish**; `bash` is also configured. Shell aliases
+  `g`=git, `e`=hx, `q`=exit (and `gdev`) are defined in home-manager
+  (`home/dhilipsiva/default.nix`) for **both** bash and fish — keep the two in sync.
 - Default editor is Helix (`hx`); `EDITOR`/`VISUAL` are set to `hx`.
 - `users.mutableUsers = false` — the user account and password hash are declarative;
   change the password by updating `hashedPassword` and rebuilding, not `passwd`.

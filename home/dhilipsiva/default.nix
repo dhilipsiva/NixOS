@@ -1,9 +1,17 @@
 { config, pkgs, ... }:
 
 {
+  imports = [
+    ./services.nix
+  ];
+
   home.username = "dhilipsiva";
   home.homeDirectory = "/home/dhilipsiva";
   home.stateVersion = "26.05";
+
+  # NOTE: the shell/git config below is relocated verbatim from the old
+  # home/default.nix. Phase 3 splits it into per-tool files
+  # (git.nix / shells.nix / …) and ports the raw .config/ dotfiles here.
 
   # --- SHELL CONFIG ---
   programs.bash = {
@@ -39,8 +47,6 @@
   # --- GIT CONFIG ---
   programs.git = {
     enable = true;
-    # 26.05 home-manager renamed userName/userEmail → settings.user.* (Phase 3
-    # restructures git config fully; this keeps eval warning-free meanwhile).
     settings.user = {
       name = "dhilipsiva";
       email = "dhilipsiva@pm.me";
@@ -50,7 +56,7 @@
   # --- AI AGENT CONFIG (Goose) ---
   home.sessionVariables = {
     # Point Goose to your Desktop's Ollama
-    OPENAI_BASE_URL = "http://localhost:11434/v1"; 
+    OPENAI_BASE_URL = "http://localhost:11434/v1";
     OPENAI_API_KEY = "ollama";
   };
 }

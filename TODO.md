@@ -95,28 +95,28 @@ following phase builds on a stable base. Small, verifiable diffs.
 Move from monolith to `hosts / modules / home` split. Pure refactor — behavior should
 be unchanged; only file organization moves.
 
-- [ ] Create `modules/nixos/` split **by concern**, migrating the contents of `modules/common.nix`:
-  - [ ] `nix.nix` (flakes, `gc`, `allowUnfree`, `android_sdk.accept_license`)
-  - [ ] `locale.nix` (`time.timeZone = "Asia/Kolkata"`, `i18n.defaultLocale = "en_IN"`, `console.keyMap`)
-  - [ ] `users.nix` (`dhilipsiva`, groups, `shell = pkgs.fish`, `mutableUsers = false`) — **do not** carry the plaintext `hashedPassword` forward; it moves to sops in Phase 4.
-  - [ ] `audio.nix` (pipewire, `pulseaudio.enable = false`)
-  - [ ] `desktop.nix` (`programs.hyprland`, `dconf`, polkit, gnome-keyring)
-  - [ ] `networking.nix` (NetworkManager, firewall port 8080, the `reddit.com` hosts blocklist)
-  - [ ] `virtualisation.nix` (docker, adb, `nix-ld`, the plugdev udev rule)
-  - [ ] `packages.nix` (the system package list) and `hardware.nix` (opentabletdriver)
-  - [ ] Port/rethink the two `systemd` timer/service units:
-    - [ ] `backup-nix-config` copies `/etc/nixos/configuration.nix` → `/home/dhilipsiva/dotfiles/…`. This is **obsolete in the flake model** (source of truth is the `~/.files` repo, and the root `configuration.nix` is deleted below) — **drop this service** (or repoint it at the repo). Note: deleting `configuration.nix` without removing this unit leaves it copying a non-existent file.
-    - [ ] `show-time-notification` runs `scripts/show_time_notification.sh` (the file **does** exist in the repo). To match the declarative goal, ship it as a home-manager `home.file`/packaged script and reference the store path, instead of the hardcoded `/home/dhilipsiva/.files/scripts/…` path.
-- [ ] Add `modules/nixos/default.nix` aggregator that imports all of `modules/nixos/*` for one-line host inclusion.
-- [ ] Move home-manager out of a single file: create `home/dhilipsiva/default.nix` (sets `home.stateVersion`, imports per-tool files) — the per-tool files themselves are filled in Phase 3.
-- [ ] Update `flake.nix`: compose `desktop` from `hosts/desktop/default.nix` + `modules/nixos` (or its `default.nix`) + the HM nixos module pointing at `home/dhilipsiva`. Pass `inputs` via `specialArgs`.
-- [ ] (Optional, proves the design) Scaffold `hosts/thinkpad/default.nix` from the legacy config to validate "multiple hosts sharing modules" — it keeps its **original** stateVersion.
-- [ ] **Retire the legacy monolith:** delete the root `configuration.nix`. It is ThinkPad-era (Intel + NVIDIA PRIME offload, `dhilipsiva-thinkpad`), never imported by the flake, and superseded. Salvage anything still wanted (e.g. into `hosts/thinkpad/`) *before* deleting.
-- [ ] **Delete `tmp.txt`** (a ~9.7 KB scratch file at repo root — not referenced by anything).
-- [ ] Decide keep/delete for the other loose root files: `clash_royale.sh` (an Android `input tap` autoplay script — unrelated to the system config; drop or move to a `misc/` dir) and `signature.html` (an email signature — keep only if you still use it; not part of the NixOS build).
-- [ ] Update `CLAUDE.md` to describe the new `hosts/modules/home` layout and record that root `configuration.nix` is gone (no longer "reference-only" — removed).
+- [x] Create `modules/nixos/` split **by concern**, migrating the contents of `modules/common.nix`:
+  - [x] `nix.nix` (flakes, `gc`, `allowUnfree`, `android_sdk.accept_license`)
+  - [x] `locale.nix` (`time.timeZone = "Asia/Kolkata"`, `i18n.defaultLocale = "en_IN"`, `console.keyMap`)
+  - [x] `users.nix` (`dhilipsiva`, groups, `shell = pkgs.fish`, `mutableUsers = false`, `programs.fish.enable`). **NOTE:** the plaintext `hashedPassword` **is kept for now** — removing it would break login under `mutableUsers = false` (behaviour change), which the pure-refactor gate forbids. It moves to sops in **Phase 4** (commented in `users.nix`).
+  - [x] `audio.nix` (pipewire, `pulseaudio.enable = false`)
+  - [x] `desktop.nix` (`programs.hyprland`, `dconf`, polkit, gnome-keyring)
+  - [x] `networking.nix` (NetworkManager, firewall port 8080, the `reddit.com` hosts blocklist)
+  - [x] `virtualisation.nix` (docker, `nix-ld`, the plugdev udev rule). `adb` dropped (removed on 26.05 in Phase 1; `android-tools` lives in `packages.nix`).
+  - [x] `packages.nix` (the system package list) and `hardware.nix` (opentabletdriver). Also split out `environment.nix` (`environment.variables`: EDITOR/VISUAL/XDG_CONFIG_HOME).
+  - [x] Port/rethink the two `systemd` timer/service units:
+    - [x] `backup-nix-config` — **dropped entirely** (obsolete in the flake model; the file it copied is deleted). Confirmed removed via closure diff.
+    - [x] `show-time-notification` — ported to a **home-manager user** service+timer (`home/dhilipsiva/services.nix`): the script is built with `pkgs.writeShellScript` and referenced by store path (no hardcoded path), and runs in the user session so `notify-send` actually reaches the desktop.
+- [x] Add `modules/nixos/default.nix` aggregator that imports all of `modules/nixos/*` for one-line host inclusion.
+- [x] Move home-manager out of a single file: create `home/dhilipsiva/default.nix` (sets `home.stateVersion`, imports `./services.nix`). Per-tool split of the shell/git config is deferred to Phase 3 (relocated verbatim for now).
+- [x] Update `flake.nix`: compose `desktop` from `hosts/desktop/default.nix` + `./modules/nixos` + the HM module pointing at `./home/dhilipsiva`; `inputs` passed via `specialArgs` (and `home-manager.extraSpecialArgs`). `system.stateVersion` moved to the **host** (`hosts/desktop`) — it's a per-host first-install anchor.
+- [~] (Optional) Scaffold `hosts/thinkpad/default.nix` — **skipped** (optional; not needed to validate the design and would add an unused host). The legacy config remains in git history if ever revived.
+- [x] **Retire the legacy monolith:** deleted the root `configuration.nix` (ThinkPad-era, never imported, and it imported a non-existent root `hardware-configuration.nix` so it couldn't even build). Nothing salvaged into the active config — a few desktop niceties exist only there (`xdg.portal` for Hyprland, `fonts.packages`, `hardware.graphics.enable32Bit`, gnupg agent); these are **behaviour additions** deferred (fonts land in Phase 3), and git history preserves the file.
+- [x] **Delete `tmp.txt`** (unreferenced scratch). **(Done.)**
+- [x] Loose root files: **moved `clash_royale.sh` → `misc/`**; **kept `signature.html`** (email signature, harmless, not part of the build).
+- [x] Update `CLAUDE.md` to describe the new `hosts/modules/home` layout and record that root `configuration.nix` is gone.
 
-**GATE 2:** `nix flake check` green and `nixos-rebuild --flake .#desktop build` succeeds against the **new modular layout**. VM boot behavior matches Phase 1 (no regression from the reorg). Root `configuration.nix` and `tmp.txt` are gone; `git status` shows the moves.
+**GATE 2 (PASSED 2026-07-07):** `nix flake check` green (zero warnings) and `nixos-rebuild build .#desktop` succeeds against the new modular layout. **Parity proven by closure diff** (`nix store diff-closures` Phase 1 → Phase 2): the *only* differences are the two intended service changes (backup-nix-config removed; show-time-notification moved to a home-manager user unit) — the rest of the system is bit-identical. VM boots (login prompt + home-manager applied, no new failures). Root `configuration.nix` and `tmp.txt` gone; `git` shows the renames.
 
 ---
 
@@ -234,9 +234,9 @@ Only after Gate 6. Per `PLAN.md`, real hardware stays human-in-the-loop. The age
 - [x] `home/default.nix`: `userName` fixed to `"dhilipsiva"` (email kept `dhilipsiva@pm.me`). **(Applied.)**
 - [ ] `home/default.nix`: `eval $(atuin init fish)` (wrong fish syntax) — **replaced by `programs.atuin` fish integration** (Phase 3, atuin/fish).
 - [ ] `modules/common.nix`: plaintext `hashedPassword` — **→ sops `hashedPasswordFile`** (Phase 4).
-- [ ] `modules/common.nix`: `systemd` unit paths (`/home/dhilipsiva/dotfiles/…`, `/home/dhilipsiva/.files/scripts/show_time_notification.sh`) — **verify/fix for the new layout** (Phase 2).
-- [ ] Root `configuration.nix` (legacy ThinkPad monolith) — **delete after salvage** (Phase 2).
-- [ ] `modules/common.nix`: `backup-nix-config` service copies the now-deleted `/etc/nixos/configuration.nix` — **drop or repoint** it so it doesn't break when `configuration.nix` is removed (Phase 2).
-- [ ] `tmp.txt` (repo-root scratch) — **delete**; `clash_royale.sh` / `signature.html` — **keep/delete decision** (Phase 2).
+- [x] `modules/common.nix`: `systemd` unit hardcoded paths — **resolved** (Phase 2): `common.nix` is gone; `show-time-notification` is now a home-manager user unit referencing a `writeShellScript` store path (no hardcoded path).
+- [x] Root `configuration.nix` (legacy ThinkPad monolith) — **deleted** (Phase 2); nothing salvaged into the active config (recoverable from git history).
+- [x] `backup-nix-config` service — **dropped** (Phase 2); no longer references the deleted `configuration.nix`.
+- [x] `tmp.txt` **deleted**; `clash_royale.sh` **moved to `misc/`**; `signature.html` **kept** (Phase 2).
 - [x] `flake.nix`: `nixpkgs → nixos-26.05` + home-manager `release-26.05` + **`nixos-hardware` (added Phase 1, follows nixpkgs)**. Still to add: `sops-nix`, `disko`, then commit `flake.lock` (Phases 4/5). No unstable input unless the VM proves one is needed.
 - [ ] `CLAUDE.md` — **update at every structural change**. Its whole "What this repo is" section is premised on the `XDG_CONFIG_HOME=~/.files/.config` direct-serve model, which Phase 3 **deletes** — so it needs a **full top-section rewrite**, not just appended invariants. (The `[cite: N]` warning in it is already stale — markers were stripped from the `.nix` files.)

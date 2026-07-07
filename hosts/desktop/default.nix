@@ -94,4 +94,8 @@
       settings.SHUTDOWNCMD = "${pkgs.systemd}/bin/shutdown -h +0";
     };
   };
+
+  # First-install anchor for this never-installed host (NOT a bump on an existing
+  # machine). Per-host on purpose: a revived ThinkPad keeps its own value.
+  system.stateVersion = "26.05";
 }

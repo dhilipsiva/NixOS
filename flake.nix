@@ -30,12 +30,13 @@
           specialArgs = { inherit inputs; };
           modules = [
             ./hosts/desktop/default.nix
-            ./modules/common.nix
+            ./modules/nixos
             home-manager.nixosModules.home-manager
             {
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
-              home-manager.users.dhilipsiva = import ./home/default.nix;
+              home-manager.extraSpecialArgs = { inherit inputs; };
+              home-manager.users.dhilipsiva = import ./home/dhilipsiva;
             }
           ];
         };
