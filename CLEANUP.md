@@ -63,6 +63,25 @@ they are throwaway and MUST be rotated by the owner before any real deployment.
 - Guardrail: `scripts/check-sops-recipients.sh` must stay green (vmtest never a recipient of
   secrets.yaml; no plaintext hash / ups-password in `.nix`).
 
+## Phase 5 (disko) — real-hardware items (owner, Phase 6/7)
+
+- **[SET]** `hosts/desktop/disko.nix` `targetDisk` — currently a guarded
+  `/dev/disk/by-id/REPLACE-ME…` placeholder. On the real machine: `ls -l /dev/disk/by-id/`,
+  cross-check with `lsblk -o NAME,SERIAL,MODEL,SIZE` that it's the **Linux** SSD (not Windows),
+  run `sudo scripts/preflight-disk-check.sh <the by-id>` (refuses Windows-signature disks),
+  then paste the id. The eval warning + assertions are build-hygiene only — they do NOT
+  distinguish the Linux SSD from the Windows disk; that's on you + the preflight script.
+- **[REGEN]** `hosts/desktop/hardware-configuration.nix` — regenerate on the real machine
+  (`nixos-generate-config --show-hardware-config`), **keeping the fileSystems/swap removal**
+  (disko owns them). The committed scan is generic and does not match the real hardware.
+- **[LUKS]** the root passphrase: Phase 6 `--vm-test` uses disko's auto `/tmp/secret.key`;
+  Phase 7 real install delivers the real passphrase on tmpfs via
+  `nixos-anywhere --disk-encryption-keys /tmp/secret.key /run/luks.key`. Never commit a key;
+  never set `keyFile`/`settings.keyFile` (would break the interactive boot prompt).
+- **[PHASE 6]** add `disko.tests.*`/`bootCommands` wiring for `nixos-anywhere --vm-test` **only
+  after** confirming the option exists on the pinned disko (it is NOT a module option today —
+  it's a test-framework arg — so it was deliberately left out of Phase 5).
+
 ## Docs to update in the final pass
 
 - **[DOC]** `README.md` — rewrite to document the live build/switch/VM-rehearsal/secret-rotation

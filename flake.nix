@@ -23,6 +23,12 @@
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # Declarative partitioning (Phase 5). Follows nixpkgs to stay on the 26.05 pin.
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = { self, nixpkgs, home-manager, ... }@inputs:
@@ -37,6 +43,10 @@
           specialArgs = { inherit inputs; };
           modules = [
             ./hosts/desktop/default.nix
+            # Declarative partitioning: the module provides disko.* options,
+            # hosts/desktop/disko.nix consumes them (LUKS2 -> ext4 + FAT32 ESP).
+            inputs.disko.nixosModules.disko
+            ./hosts/desktop/disko.nix
             ./modules/nixos
             inputs.sops-nix.nixosModules.sops
             home-manager.nixosModules.home-manager

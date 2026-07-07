@@ -88,7 +88,10 @@
       enable = true;
       devices = [ "nodev" ];
       efiSupport = true;
-      useOSProber = true; # Finds your Windows SSD automatically
+      useOSProber = true; # Finds your Windows SSD automatically (read-only)
+      # GRUB keeps every generation's kernel+initrd on the ESP (/boot). Bound the
+      # count so the 2 GiB ESP can't fill and break a future `nixos-rebuild switch`.
+      configurationLimit = 10;
     };
   };
 

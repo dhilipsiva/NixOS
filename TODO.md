@@ -188,14 +188,19 @@ Get the two committed/plaintext secrets out of the repo before any real install.
 Make partitioning reproducible and fix the two hardware placeholders. This is what
 makes the VM rehearsal a *true* install rehearsal.
 
-- [ ] Add `disko` as a flake input.
-- [ ] Author `hosts/desktop/disko.nix`: GPT with an **ESP** (FAT32, ~1 GiB, `/boot`, for the GRUB EFI dual-boot) + a root partition. Recommended root: LUKS2 → btrfs subvolumes (`@`, `@home`, `@nix`) — or ext4 for simplicity. Express the LUKS key via `keyFile`/`passwordFile` so it's reproducible.
-- [ ] **Dual-boot safety:** scope disko to the **Linux target disk only** — declare *only* the NixOS disk in the spec so it never touches the existing Windows ESP/partition.
-- [ ] Reduce `hosts/desktop/hardware-configuration.nix` to the minimal real scan (`hostPlatform`, kernel modules, microcode) and let **disko own `fileSystems`**. The committed generic single-ext4 scan does NOT match the target and must not drive partitioning.
-- [ ] **Fix the dummy firmware hash:** the `linux-firmware.overrideAttrs` in `hosts/desktop/default.nix` has `sha256 = "sha256-AAAA…"`. Prefer **deleting the custom `fetchgit` override entirely** and relying on `hardware.enableRedistributableFirmware = true` + nixos-hardware (26.05's `linux-firmware` likely already carries the MSI X870E Qualcomm WiFi firmware). Only if a specific firmware is genuinely missing, regenerate the real hash (run once, let it fail, paste the reported hash).
-- [ ] Update `CLAUDE.md`: note that the real `hardware-configuration.nix`, the firmware hash, LUKS/disko layout, and UPS wiring are **human-in-the-loop hardware items**; the VM uses the disko-generated layout instead.
+> Design was research + adversarially verified (workflow: 4 research agents → synthesis → dual-boot-wipe / correctness / vm-coexist reviewers). Two options the sandbox proposed were **empirically confirmed invalid** on the pinned disko and dropped: `preCreateHook` (no such hook on any disko type) and `disko.tests.bootCommands` (a test-framework arg, not a module option — deferred to Phase 6). Verify-then-write: locked disko, read its module source for the real option names before authoring.
 
-**GATE 5:** `nix flake check` green with disko + sops + modular layout all wired. The disko spec references only the intended Linux disk. The firmware override is either removed or carries a real (non-`AAAA`) hash. `nixos-rebuild --flake .#desktop build` succeeds.
+- [x] Add `disko` as a flake input (follows nixpkgs) + `inputs.disko.nixosModules.disko`. **(Done; flake.lock committed.)**
+- [x] Author `hosts/desktop/disko.nix`: single-disk GPT — 2 GiB FAT32 EF00 ESP at `/boot` (unencrypted) + LUKS2 → **ext4** root (`/dev/mapper/cryptroot`). Interactive passphrase at boot (keyFile null); `passwordFile` is format-time only. **(Done — chose ext4 per owner, not btrfs. ESP bumped to 2 GiB + `grub.configurationLimit = 10` so the ESP can't fill under GRUB.)**
+- [x] **Dual-boot safety** (Windows on a SEPARATE SSD): the spec declares ONE disk via a guarded `/dev/disk/by-id/REPLACE-ME…` placeholder (fails closed); assertions enforce one-disk + by-id; a FRESH ESP on the Linux disk (never Windows'); EF00 keeps `grub.devices = ["nodev"]`. **Real wrong-disk protection is `scripts/preflight-disk-check.sh`** (human-run, refuses ntfs/BitLocker/ReFS/exfat/`EFI/Microsoft` + requires typed model/serial confirmation) — since the pinned disko has no in-config runtime hook. **(Done.)**
+- [x] Trim `hosts/desktop/hardware-configuration.nix` — dropped `fileSystems`/`swapDevices` (disko owns them), kept hostPlatform/kernel modules/microcode. **(Done.)**
+- [x] **Firmware hash** — already removed in **Phase 1** (the `sha256-AAAA…` `fetchgit` override is gone; `hardware.enableRedistributableFirmware` + nixos-hardware). **(N/A — done earlier.)**
+- [x] Update `CLAUDE.md`: real `hardware-configuration.nix`, disko `targetDisk`, LUKS passphrase, sops keys are **human-in-the-loop hardware items**; the VM uses the disko-generated layout / injected keys. **(Done — + CLEANUP.md § Phase 5.)**
+
+**GATE 5 (PASSED 2026-07-07):** `nix flake check` green with disko + sops + modular all wired (disko module evaluates — no invalid-option break). The spec references only ONE by-id disk (assertions). No firmware placeholder remains. `nixos-rebuild build --flake .#desktop` succeeds and disko generates `fileSystems."/" = /dev/mapper/cryptroot` (ext4) + `/boot` = ESP, `grub.devices = ["nodev"]`, `initrd.luks.devices.cryptroot.keyFile = null` (interactive). Bonus: build-vm still boots on its own disk (no LUKS prompt), sops + login intact.
+<!-- STATUS: complete on master. OWNER: set the real Linux by-id in disko.nix + regen hardware-configuration.nix + provide LUKS passphrase before real hardware — see CLEANUP.md § Phase 5. -->
+
+**Cross-cutting (Phase 5):** [x] `hardware-configuration.nix` generic scan — trimmed (disko owns fileSystems); regen on real HW. [x] firmware hash — removed (Phase 1).
 
 ---
 
@@ -237,7 +242,7 @@ Only after Gate 6. Per `PLAN.md`, real hardware stays human-in-the-loop. The age
 - [x] `hosts/desktop/default.nix`: dummy `sha256 = "sha256-AAAA…"` linux-firmware hash — **removed the override entirely** (Phase 1, pulled forward — it blocked every `.#desktop` build). Now `hardware.enableRedistributableFirmware` + nixos-hardware only.
 - [~] `hosts/desktop/default.nix`: `/etc/nixos/ups-password` — the inline `secret`/`upsmonConf` MONITOR string is **gone** (reworked to the structured `power.ups.upsmon.monitor` schema in Phase 1); the plaintext `passwordFile` path remains → **still move to sops** (Phase 4).
 - [x] `hosts/desktop/default.nix`: NVIDIA `.beta` + `open = false` — **→ `production` + `open = true`** (Phase 1). **(Done.)**
-- [ ] `hosts/desktop/hardware-configuration.nix`: generic single-ext4 scan — **regenerate on real hardware / let disko own filesystems** (Phase 5/7).
+- [~] `hosts/desktop/hardware-configuration.nix`: generic scan — **disko now owns fileSystems** (Phase 5, trimmed); still **regenerate the hardware bits on real hardware** (Phase 7).
 - [x] `home/default.nix`: `userName` fixed to `"dhilipsiva"` (email kept `dhilipsiva@pm.me`). **(Applied.)**
 - [x] `eval $(atuin init fish)` (wrong fish syntax) — **resolved** (Phase 3): the inline `home/default.nix` shell init is gone; `programs.atuin`/`programs.starship` integrations own shell setup.
 - [x] `users.nix`: plaintext `hashedPassword` — **→ sops `hashedPasswordFile`** (Phase 4, done). Owner must rotate the placeholder value + operator key (CLEANUP.md).

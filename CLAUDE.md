@@ -132,7 +132,24 @@ dhilipsiva locks but the root break-glass still gets a shell — the box is not 
   private halves at `/home/nixos/phase4-keys/`, never committed) — **rotate to your own key**
   and set a real rotated password (the old hash is already burned in git history). See CLEANUP.md.
 
-**Next: Phase 5** (declarative disk via disko + real `hardware-configuration.nix`).
+**Phase 5 complete (GATE 5 passed 2026-07-07).** Declarative partitioning via disko
+(`hosts/desktop/disko.nix`): a SINGLE-disk GPT layout — 2 GiB FAT32 ESP at `/boot` +
+LUKS2 → ext4 root (`/dev/mapper/cryptroot`, interactive passphrase at boot). `disko`
+owns `fileSystems`, so `hardware-configuration.nix` was trimmed (its `fileSystems`/`swap`
+removed). **Dual-boot safety (Windows on a SEPARATE SSD):** the spec targets ONE disk via
+a guarded `/dev/disk/by-id/…` PLACEHOLDER that fails closed; assertions enforce one-disk +
+by-id; the real wrong-disk check is `scripts/preflight-disk-check.sh` (human-run, refuses
+Windows-signature disks). Verified: flake check green, `build .#desktop` builds, and the
+VM still boots on its own disk (disko/LUKS overridden by qemu-vm). GRUB `configurationLimit
+= 10` bounds generations on the ESP.
+
+**Human-in-the-loop hardware items** (the VM uses the disko-generated layout / injected keys
+instead, so none block VM testing) — all tracked in [CLEANUP.md](CLEANUP.md):
+- `hosts/desktop/disko.nix`: set the real Linux SSD `/dev/disk/by-id/…` (run the preflight script first).
+- `hosts/desktop/hardware-configuration.nix`: regenerate on the real machine (`nixos-generate-config`), keeping the fileSystems/swap removal.
+- LUKS passphrase, sops key rotation, UPS password — owner-provided (Phases 5–7).
+
+**Next: Phase 6** (full VM install rehearsal — `nixos-anywhere --flake .#desktop --vm-test` — which actually exercises disko partitioning + sops + bootloader end-to-end).
 
 **Deferred cleanup:** superseded/legacy files are **not** deleted mid-migration — they're
 tracked in [CLEANUP.md](CLEANUP.md) and removed (plus the README/docs rewrite) in one final
@@ -144,8 +161,12 @@ pass after all phases are green. Update `CLEANUP.md` at the end of each phase.
 markers that once blocked evaluation have been stripped. Placeholders that will still
 fail on a real machine:
 - `hosts/desktop/hardware-configuration.nix` is a generic `nixos-generate-config`
-  scan (single ext4 root, no LUKS) and does **not** yet reflect the described desktop
-  hardware — regenerate it on the actual machine before a real install (Phase 5/7).
+  scan trimmed of `fileSystems`/`swap` (disko owns them now) — regenerate the
+  hardware bits on the actual machine before a real install (keep the trim).
+- `hosts/desktop/disko.nix` `targetDisk` is a `/dev/disk/by-id/REPLACE-ME…` PLACEHOLDER
+  — set the real Linux SSD id and run `scripts/preflight-disk-check.sh` first. **Never run
+  `disko`/`nixos-anywhere` against a real disk from here** (the guard hook blocks it; the
+  VM install rehearsal is Phase 6's `--vm-test`).
 - Secrets placeholders: `&operator` in `.sops.yaml` and root's break-glass
   `authorizedKeys` are throwaway agent-generated keys, and `secrets/secrets.yaml` holds a
   random unknown password + `changeme-rotate` UPS value — **rotate all of these to your own
