@@ -12,8 +12,15 @@ set -euo pipefail
 
 dev="${1:-}"
 if [ -z "$dev" ]; then
-  echo "usage: $0 /dev/disk/by-id/<the-LINUX-ssd>" >&2
+  echo "usage: sudo $0 /dev/disk/by-id/<the-LINUX-ssd>" >&2
   exit 2
+fi
+
+# 0. MUST run as root, else `blkid` reads no signatures and the /EFI/Microsoft
+#    probe is skipped -> the check would fail OPEN and pass a Windows disk.
+if [ "$(id -u)" != 0 ]; then
+  echo "REFUSE: must run as root (blkid needs root to read partition signatures)." >&2
+  exit 1
 fi
 
 # 1. Must be a stable by-id path (never /dev/sdX or /dev/nvme0n1 — enumeration
@@ -59,12 +66,18 @@ if [ -n "$found" ]; then
   exit 1
 fi
 
-# 4. Require an explicit typed confirmation of the model/serial shown above.
+# 4. Require typing the FULL serial EXACTLY (not a substring — a single common
+#    character must not pass this last human wrong-disk boundary).
+serial=$(lsblk -dno SERIAL "$real" | head -1 | tr -d '[:space:]')
 echo
 echo "No Windows signature found. CONFIRM this is the LINUX SSD to be WIPED."
-read -rp "Type the disk MODEL or SERIAL exactly as shown above to proceed: " ans
-if [ -z "$ans" ] || ! lsblk -dno SERIAL,MODEL "$real" | grep -qF -- "$ans"; then
-  echo "REFUSE: confirmation did not match. Aborting." >&2
+if [ -z "$serial" ]; then
+  echo "REFUSE: could not read a serial for $real; cannot safely confirm." >&2
+  exit 1
+fi
+read -rp "Type this disk's FULL serial exactly ($serial): " ans
+if [ "$ans" != "$serial" ]; then
+  echo "REFUSE: serial did not match exactly. Aborting." >&2
   exit 1
 fi
 echo "OK: $dev confirmed as the Linux target. Safe to proceed."

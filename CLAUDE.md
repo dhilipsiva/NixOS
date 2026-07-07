@@ -175,7 +175,11 @@ hash — all asserted by `disko.tests.extraChecks`).
   `togglesplit`/`pseudo` while `layout = master` — those two binds are now commented out.
 
 **GATE 6 fully passed** (automated rehearsal + human visual). **Next: Phase 7** — real-hardware
-cutover (HUMAN-driven; the agent prepares/drafts, a human runs).
+cutover, driven by **[PHASE7.md](PHASE7.md)** (the verified install runbook). Key fact:
+**NixOS CANNOT be installed from Windows/WSL2** (no UEFI runtime in WSL2 → the boot entry can't
+be written); a human boots a NixOS installer USB and installs there. The Windows Claude Code
+session only PREPARES (rotate keys/password, set the real disk by-id, remove Phase-6 scaffolding,
+build, make the USB, commit+push) — the actual `disko`/`nixos-install` runs in the booted installer.
 
 **Deferred cleanup:** superseded/legacy files are **not** deleted mid-migration — they're
 tracked in [CLEANUP.md](CLEANUP.md) and removed (plus the README/docs rewrite) in one final
