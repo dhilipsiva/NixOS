@@ -11,14 +11,14 @@
     initExtra = ''
       eval $(starship init bash)
       eval $(atuin init bash)
-    ''; [cite: 16]
+    '';
     shellAliases = {
       g = "git";
       e = "hx";
       q = "exit";
       # Agent Alias (Goose)
       gdev = "goose run --model qwen2.5-coder:32b";
-    }; [cite: 50]
+    };
   };
 
   programs.fish = {
@@ -39,8 +39,8 @@
   # --- GIT CONFIG ---
   programs.git = {
     enable = true;
-    userName = "Dhilip Siva";
-    userEmail = "dhilipsiva@gmail.com"; # Update this if needed
+    userName = "dhilipsiva";
+    userEmail = "dhilipsiva@pm.me";
   };
 
   # --- AI AGENT CONFIG (Goose) ---

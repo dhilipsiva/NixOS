@@ -154,19 +154,19 @@ This contains **everything** from your old config, ensuring you lose nothing (pa
 
 {
   # --- NIX SETTINGS ---
-  [cite_start]nix.settings.experimental-features = [ "nix-command" "flakes" ]; [cite: 2]
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
   nix.gc = {
     automatic = true;
     dates = "daily";
     options = "--delete-older-than 7d";
-  [cite_start]}; [cite: 3]
+  };
   nixpkgs.config = {
     allowUnfree = true;
     android_sdk.accept_license = true;
-  [cite_start]}; [cite: 5]
+  };
 
   # --- LOCALE & TIME ---
-  [cite_start]time.timeZone = "Asia/Kolkata"; [cite: 26]
+  time.timeZone = "Asia/Kolkata";
   i18n.defaultLocale = "en_IN";
   console.keyMap = "us";
 
@@ -175,19 +175,19 @@ This contains **everything** from your old config, ensuring you lose nothing (pa
   users.users.dhilipsiva = {
     isNormalUser = true;
     createHome = true;
-    [cite_start]extraGroups = [ "adbusers" "docker" "input" "kvm" "networkmanager" "dialout" "plugdev" "wheel" ]; [cite: 11]
-    [cite_start]hashedPassword = "$6$3TFqdE8hE9Hr9RS.$vd5EFAbzbHXn9qdQRRYtuwHyauBv/m1j.qe7LMo5tmz7KKhRZ1Fao8rS3BNPcS6f0yE4cOFHvf8ofcjzzkT671"; [cite: 12]
+    extraGroups = [ "adbusers" "docker" "input" "kvm" "networkmanager" "dialout" "plugdev" "wheel" ];
+    hashedPassword = "$6$3TFqdE8hE9Hr9RS.$vd5EFAbzbHXn9qdQRRYtuwHyauBv/m1j.qe7LMo5tmz7KKhRZ1Fao8rS3BNPcS6f0yE4cOFHvf8ofcjzzkT671";
     shell = pkgs.fish;
   };
 
-  [cite_start]security.polkit.enable = true; [cite: 8]
-  [cite_start]services.gnome.gnome-keyring.enable = true; [cite: 32]
+  security.polkit.enable = true;
+  services.gnome.gnome-keyring.enable = true;
 
   # --- NETWORKING & BLOCKLISTS ---
   networking.networkmanager.enable = true;
-  [cite_start]networking.firewall.allowedTCPPorts = [ 8080 ]; [cite: 42]
+  networking.firewall.allowedTCPPorts = [ 8080 ];
   networking.hosts = {
-    "127.0.0.1" = [ "reddit.com" "www.reddit.com" ]; # [cite_start]Keeping your Focus Mode [cite: 43]
+    "127.0.0.1" = [ "reddit.com" "www.reddit.com" ]; # Keeping your Focus Mode
   };
 
   # --- AUDIO & HARDWARE ---
@@ -196,38 +196,38 @@ This contains **everything** from your old config, ensuring you lose nothing (pa
     alsa.enable = true;
     pulse.enable = true;
     jack.enable = false;
-  [cite_start]}; [cite: 35]
-  [cite_start]services.pulseaudio.enable = false; [cite: 29]
+  };
+  services.pulseaudio.enable = false;
   
-  hardware.opentabletdriver = { enable = true; daemon.enable = true; [cite_start]}; [cite: 41]
-  [cite_start]programs.adb.enable = true; [cite: 20]
+  hardware.opentabletdriver = { enable = true; daemon.enable = true; };
+  programs.adb.enable = true;
   services.udev.extraRules = ''
     SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", ATTR{idProduct}=="4ee7", MODE="0660", GROUP="plugdev"
-  [cite_start]''; [cite: 37]
+  '';
 
   # --- CUSTOM SERVICES (Ported from your config) ---
   systemd.timers."backup-nix-config" = {
     wantedBy = [ "timers.target" ];
     timerConfig = { OnCalendar = "*-*-* *:00:00"; Persistent = true; };
-  [cite_start]}; [cite: 21]
+  };
   systemd.services."backup-nix-config" = {
     serviceConfig.ExecStart = "${pkgs.coreutils}/bin/cp -r /etc/nixos/configuration.nix /home/dhilipsiva/dotfiles/configuration_backup.nix";
-  [cite_start]}; [cite: 22]
+  };
 
   systemd.timers."show-time-notification" = {
     wantedBy = [ "timers.target" ];
     timerConfig = { OnCalendar = "-*-* *:00,15,30,45:00"; Persistent = true; };
-  [cite_start]}; [cite: 24]
+  };
   systemd.services."show-time-notification" = {
     serviceConfig.ExecStart = "/home/dhilipsiva/.files/scripts/show_time_notification.sh"; # Ensure this path exists!
-  [cite_start]}; [cite: 26]
+  };
 
   # --- PROGRAMS ---
   programs.hyprland.enable = true;
-  programs.nix-ld.enable = true; # [cite_start]Critical for running random binaries (VSCode server, etc) [cite: 19]
+  programs.nix-ld.enable = true; # Critical for running random binaries (VSCode server, etc)
   programs.dconf.enable = true;
   programs.fish.enable = true;
-  virtualisation.docker = { enable = true; enableOnBoot = false; [cite_start]}; [cite: 51]
+  virtualisation.docker = { enable = true; enableOnBoot = false; };
 
   # --- PACKAGES (Your complete legacy list) ---
   environment.systemPackages = with pkgs; [
@@ -254,7 +254,7 @@ This contains **everything** from your old config, ensuring you lose nothing (pa
     
     # Wine / Gaming
     lutris wineWowPackages.stable winetricks vulkan-tools
-  [cite_start]]; [cite: 45, 46, 47, 48]
+  ];
 
   # --- ENVIRONMENT VARIABLES ---
   environment.variables = {
@@ -262,9 +262,9 @@ This contains **everything** from your old config, ensuring you lose nothing (pa
     VISUAL = "hx";
     XDG_CONFIG_HOME = "/home/dhilipsiva/.files/.config";
     # Removed DRI_PRIME=1 because on Desktop your monitor is directly connected to the GPU
-  [cite_start]}; [cite: 49]
+  };
   
-  [cite_start]system.stateVersion = "24.11"; [cite: 6]
+  system.stateVersion = "24.11";
 }
 
 ```
@@ -289,14 +289,14 @@ This manages your user-specific configs. I moved your aliases and shell inits he
     initExtra = ''
       eval $(starship init bash)
       eval $(atuin init bash)
-    [cite_start]''; [cite: 16]
+    '';
     shellAliases = {
       g = "git";
       e = "hx";
       q = "exit";
       # Agent Alias (Goose)
       gdev = "goose run --model qwen2.5-coder:32b";
-    [cite_start]}; [cite: 50]
+    };
   };
 
   programs.fish = {
@@ -317,8 +317,8 @@ This manages your user-specific configs. I moved your aliases and shell inits he
   # --- GIT CONFIG ---
   programs.git = {
     enable = true;
-    userName = "Dhilip Siva";
-    userEmail = "dhilipsiva@gmail.com"; # Update this if needed
+    userName = "dhilipsiva";
+    userEmail = "dhilipsiva@pm.me"; # Update this if needed
   };
 
   # --- AI AGENT CONFIG (Goose) ---
