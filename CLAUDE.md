@@ -115,7 +115,24 @@ read their migrated configs. **Invariants (keep true):**
 - **`xdg.configFile.*.source` is a bridge, not the default** — only where no clean native
   option exists (currently waybar/hypr/zellij). Prefer native translation.
 
-**Next: Phase 4** (declarative secrets via sops-nix for the user password + UPS).
+**Phase 4 complete (GATE 4 passed 2026-07-07).** The user login password and the UPS
+password are now sops-nix secrets — no plaintext hash or `/etc/nixos/ups-password` in any
+`.nix`. `users.nix` uses `hashedPasswordFile` (sops `neededForUsers = true`, decrypted to
+`/run/secrets-for-users` before user creation, mandatory under `mutableUsers = false`); the
+UPS password comes from `sops.secrets."ups/monitorPassword"`. Verified in the VM (positive:
+sops self-decrypts via the host key, dhilipsiva logs in; negative: on decrypt failure
+dhilipsiva locks but the root break-glass still gets a shell — the box is not bricked).
+**Secrets invariants (keep true):**
+- **Never commit plaintext secrets.** Passwords/keys go through sops; only PUBLIC age
+  recipients (`.sops.yaml`) and ENCRYPTED files (`secrets/*.yaml`) are committed. `.gitignore`
+  blocks private-key patterns; `scripts/check-sops-recipients.sh` is the guardrail.
+- **`secrets/secrets.yaml` = real (owner-managed); `secrets/vm-test.yaml` = fake (VM only).**
+  The disposable `vmtest` key must NEVER be a recipient of `secrets.yaml`.
+- The current `&operator` key + root's `authorizedKeys` are **PLACEHOLDERS** (agent-generated,
+  private halves at `/home/nixos/phase4-keys/`, never committed) — **rotate to your own key**
+  and set a real rotated password (the old hash is already burned in git history). See CLEANUP.md.
+
+**Next: Phase 5** (declarative disk via disko + real `hardware-configuration.nix`).
 
 **Deferred cleanup:** superseded/legacy files are **not** deleted mid-migration — they're
 tracked in [CLEANUP.md](CLEANUP.md) and removed (plus the README/docs rewrite) in one final
@@ -126,12 +143,15 @@ pass after all phases are green. Update `CLEANUP.md` at the end of each phase.
 `modules/common.nix` and `home/default.nix` were AI-generated; the invalid `[cite: N]`
 markers that once blocked evaluation have been stripped. Placeholders that will still
 fail on a real machine:
-- `hosts/desktop/default.nix`: the UPS block references `/etc/nixos/ups-password`
-  which must exist (moves to sops in Phase 4). *(The dummy `sha256-AAAA…` firmware
-  override was removed in Phase 1.)*
 - `hosts/desktop/hardware-configuration.nix` is a generic `nixos-generate-config`
   scan (single ext4 root, no LUKS) and does **not** yet reflect the described desktop
-  hardware — regenerate it on the actual machine before a real install.
+  hardware — regenerate it on the actual machine before a real install (Phase 5/7).
+- Secrets placeholders: `&operator` in `.sops.yaml` and root's break-glass
+  `authorizedKeys` are throwaway agent-generated keys, and `secrets/secrets.yaml` holds a
+  random unknown password + `changeme-rotate` UPS value — **rotate all of these to your own
+  key + real password before real-hardware use** (Phase 7; tracked in CLEANUP.md).
+  *(The UPS `/etc/nixos/ups-password` path and the dummy `sha256-AAAA…` firmware override
+  are both gone — sops in Phase 4, firmware removal in Phase 1.)*
 
 ## Layout notes
 

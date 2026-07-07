@@ -1,0 +1,29 @@
+# sops creation rules — PUBLIC age recipients only. Private keys are NEVER committed.
+#
+#   operator = the edit key for secrets/secrets.yaml. Currently a PLACEHOLDER key
+#              (ssh-to-age of a throwaway ed25519 keypair the agent generated at
+#              /home/nixos/phase4-keys/operator_placeholder_ed25519 — outside the repo,
+#              never committed). ROTATE to your own key: replace the recipient below with
+#              `ssh-to-age < ~/.ssh/id_ed25519.pub`, then `sops updatekeys secrets/secrets.yaml`
+#              and re-set real values. Same key is committed as root's break-glass authorizedKey.
+#   vmtest   = a THROWAWAY key (ssh-to-age of a disposable host key, kept outside the repo).
+#              It is a recipient of secrets/vm-test.yaml ONLY, so it can never decrypt a real secret.
+keys:
+  - &operator age1aqnq0cm7j0zhlwsge72za09s8m0sh2sh2gucpaudaypkfsetu97sy68cqw
+  - &vmtest age10hwn77a4vpj33s9u9j8u698lwmgv0g8trd2x5hk24zt5a0fnvsss6dj8mg
+
+creation_rules:
+  # REAL secrets: operator only. In Phase 7, add the desktop's real host recipient
+  # (ssh-to-age of /etc/ssh/ssh_host_ed25519_key.pub) here, then `sops updatekeys`.
+  # NEVER add *vmtest here.
+  - path_regex: secrets/secrets\.yaml$
+    key_groups:
+      - age:
+          - *operator
+
+  # FAKE VM-mechanism secrets: the throwaway key only. Encrypted with no owner
+  # input so the agent can validate the sops mechanism headlessly.
+  - path_regex: secrets/vm-test\.yaml$
+    key_groups:
+      - age:
+          - *vmtest

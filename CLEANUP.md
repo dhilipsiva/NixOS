@@ -39,6 +39,30 @@
   `modules/nixos/environment.nix` in Phase 3.
 - Once all `.config/*` are deleted, remove the now-empty `.config/` directory.
 
+## Phase 4 (sops) — ROTATE before real hardware (not deletions; owner actions)
+
+These are **placeholders** the agent generated so the mechanism is complete and green.
+The private halves live OUTSIDE the repo at `/home/nixos/phase4-keys/` (never committed);
+they are throwaway and MUST be rotated by the owner before any real deployment.
+
+- **[ROTATE]** `&operator` in `.sops.yaml` — currently `ssh-to-age` of a throwaway keypair.
+  Replace with `ssh-to-age < ~/.ssh/id_ed25519.pub` (your key), then
+  `SOPS_AGE_SSH_PRIVATE_KEY_FILE=~/.ssh/id_ed25519 sops updatekeys secrets/secrets.yaml`.
+- **[ROTATE]** `secrets/secrets.yaml` values — currently a RANDOM UNKNOWN password hash
+  (machine stays safely locked → use root break-glass) + `changeme-rotate` UPS password.
+  `sops secrets/secrets.yaml` and set your REAL, freshly-rotated password (the old
+  `$6$3TFqdE8…` hash is already burned in git history) + the real CyberPower UPS password.
+- **[ROTATE]** root break-glass key in `hosts/desktop/default.nix`
+  (`users.users.root.openssh.authorizedKeys.keys`) — replace the `PLACEHOLDER` ed25519 pubkey
+  with your own.
+- **[PHASE 7]** enrol the real desktop host key: `ssh-to-age < /etc/ssh/ssh_host_ed25519_key.pub`
+  → add under the `secrets.yaml` rule in `.sops.yaml` → `sops updatekeys`. First real boot has
+  no enrolled host key yet → recover via GRUB `init=/bin/sh`.
+- **[CLEAN]** after rotation, delete `/home/nixos/phase4-keys/` (throwaway operator + vmtest
+  keys) once no longer needed for VM tests.
+- Guardrail: `scripts/check-sops-recipients.sh` must stay green (vmtest never a recipient of
+  secrets.yaml; no plaintext hash / ups-password in `.nix`).
+
 ## Docs to update in the final pass
 
 - **[DOC]** `README.md` — rewrite to document the live build/switch/VM-rehearsal/secret-rotation

@@ -164,15 +164,22 @@ Get the two committed/plaintext secrets out of the repo before any real install.
 **sops-nix** (not agenix) is required here because `users.mutableUsers = false` needs
 `neededForUsers = true` for a declarative `hashedPasswordFile`.
 
-- [ ] Add `sops-nix` as a flake input and import its nixos module.
-- [ ] Create `.sops.yaml` declaring recipients: your personal age key (for editing) **and** each host's SSH host key (so the machine self-decrypts at boot).
-- [ ] Generate the password hash (`mkpasswd -m sha-512`) and store it encrypted in `secrets/secrets.yaml` under e.g. `dhilipsiva/hashedPassword`.
-- [ ] Wire it: `sops.secrets."dhilipsiva/hashedPassword".neededForUsers = true;` then `users.users.dhilipsiva.hashedPasswordFile = config.sops.secrets."dhilipsiva/hashedPassword".path;`. **Remove** the plaintext `hashedPassword` currently in `modules/common.nix`/`users.nix`.
-- [ ] Move the **UPS** password: store `ups/monitorPassword` in sops (owner root); set `power.ups.users.upsmon.passwordFile = config.sops.secrets."ups/monitorPassword".path;`. **Remove** the `passwordFile = "/etc/nixos/ups-password"` reference and the inline `secret` literal in the `MONITOR` line of `hosts/desktop/default.nix`.
-- [ ] **Break-glass:** because `mutableUsers = false` has no fallback if decryption fails, set a temporary root `hashedPassword` for initial bring-up so a wrong host key can't lock you out. Validate decryption in the VM first.
-- [ ] Update `CLAUDE.md`: never commit plaintext secrets; secrets go through sops.
+> Design was research + adversarially verified (a workflow: 5 research agents → synthesis → 3 lockout/exposure/correctness reviewers). Key review fixes folded in: the VM tests the **real** `sshKeyPaths` decrypt path (not a divergent keyfile); the disposable `vmtest` key only ever decrypts fake `vm-test.yaml`; break-glass is a VM-only root **password** (not a committed hash → GATE-4 clean); mandatory committed root `authorizedKeys` break-glass for real HW; classic (perl) activation kept so a decrypt failure doesn't abort boot.
 
-**GATE 4:** No plaintext `hashedPassword` and no `/etc/nixos/ups-password` reference remain in the repo (`git grep` for the old hash / path returns nothing). In the VM, sops decrypts to `/run/secrets-for-users` **before** user creation, and login with the sops-managed password succeeds.
+- [x] Add `sops-nix` as a flake input (follows nixpkgs) and import `inputs.sops-nix.nixosModules.sops`. **(Done.)**
+- [x] Create `.sops.yaml` with PUBLIC recipients: `&operator` (edit key — currently a throwaway placeholder, rotate later) and `&vmtest` (throwaway, for `vm-test.yaml` only). Phase 7 enrols the real host key. **(Done.)**
+- [x] `secrets/secrets.yaml` (real, operator-encrypted — random placeholder pw for now) + `secrets/vm-test.yaml` (fake, vmtest-encrypted, `mkpasswd test`). **(Done.)**
+- [x] Wire `sops.secrets."dhilipsiva/hashedPassword".neededForUsers = true` (in `modules/nixos/sops.nix`) + `users.users.dhilipsiva.hashedPasswordFile = …path`; plaintext hash removed. **(Done — VM-verified: decrypts to `/run/secrets-for-users` before user creation, shadow == sops hash, dhilipsiva logs in.)**
+- [x] UPS: `sops.secrets."ups/monitorPassword"` (owner root, `restartUnits`) + `power.ups.users.upsmon.passwordFile = …path`; `/etc/nixos/ups-password` reference removed. **(Done — VM-verified: `/run/secrets/ups/monitorPassword` decrypts.)**
+- [x] **Break-glass** (does NOT commit a plaintext hash): VM = root **password** in `vmVariant`; real HW = committed root `authorizedKeys` (public key) + GRUB `init=/bin/sh`. Validated in the VM — **negative test: with the key absent, sops fails and dhilipsiva locks but root break-glass still gets a shell (box not bricked).** **(Done.)**
+- [x] Key source (real HW): `services.openssh.enable` + `openFirewall = false` so the host self-decrypts from its ed25519 host key; `sops.age.sshKeyPaths`. **(Done.)**
+- [x] Guardrail `scripts/check-sops-recipients.sh` (vmtest never a recipient of secrets.yaml; no plaintext hash/ups-password in `.nix`) + `.gitignore` private-key patterns. **(Done.)**
+- [x] Update `CLAUDE.md`: never commit plaintext secrets; secrets go through sops. **(Done.)**
+
+**GATE 4 (PASSED 2026-07-07):** `git grep -nE 'hashedPassword[[:space:]]*=' -- '*.nix'` empty; `git grep 'ups-password' -- '*.nix'` and `git grep '3TFqdE8' -- '*.nix'` empty; `hashedPasswordFile` wired. In the VM, sops decrypts to `/run/secrets-for-users` BEFORE user creation (shadow == the decrypted hash) and dhilipsiva logs in with the sops password; the negative test proves the break-glass. `nix flake check` green; `nixos-rebuild build .#desktop` completes.
+<!-- STATUS: complete on master. OWNER MUST ROTATE placeholder operator key + root break-glass key + secrets.yaml values (real password/UPS) before real hardware — see CLEANUP.md § Phase 4. -->
+
+**Cross-cutting (Phase 4):** [x] `modules/common.nix`/`users.nix` plaintext `hashedPassword` → sops `hashedPasswordFile`; [x] `/etc/nixos/ups-password` → sops.
 
 ---
 
@@ -233,7 +240,7 @@ Only after Gate 6. Per `PLAN.md`, real hardware stays human-in-the-loop. The age
 - [ ] `hosts/desktop/hardware-configuration.nix`: generic single-ext4 scan — **regenerate on real hardware / let disko own filesystems** (Phase 5/7).
 - [x] `home/default.nix`: `userName` fixed to `"dhilipsiva"` (email kept `dhilipsiva@pm.me`). **(Applied.)**
 - [x] `eval $(atuin init fish)` (wrong fish syntax) — **resolved** (Phase 3): the inline `home/default.nix` shell init is gone; `programs.atuin`/`programs.starship` integrations own shell setup.
-- [ ] `modules/common.nix`: plaintext `hashedPassword` — **→ sops `hashedPasswordFile`** (Phase 4).
+- [x] `users.nix`: plaintext `hashedPassword` — **→ sops `hashedPasswordFile`** (Phase 4, done). Owner must rotate the placeholder value + operator key (CLEANUP.md).
 - [x] `modules/common.nix`: `systemd` unit hardcoded paths — **resolved** (Phase 2): `common.nix` is gone; `show-time-notification` is now a home-manager user unit referencing a `writeShellScript` store path (no hardcoded path).
 - [x] Root `configuration.nix` (legacy ThinkPad monolith) — **deleted** (Phase 2); nothing salvaged into the active config (recoverable from git history).
 - [x] `backup-nix-config` service — **dropped** (Phase 2); no longer references the deleted `configuration.nix`.

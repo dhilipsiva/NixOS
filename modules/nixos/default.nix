@@ -6,6 +6,7 @@
   imports = [
     ./nix.nix
     ./locale.nix
+    ./sops.nix
     ./users.nix
     ./audio.nix
     ./desktop.nix

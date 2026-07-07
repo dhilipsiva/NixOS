@@ -107,3 +107,12 @@ result/*
 
 # Local, per-machine Claude Code overrides — never commit (keep settings.json + hooks/ tracked)
 .claude/settings.local.json
+
+# --- secrets hygiene (Phase 4): never commit private key material or decrypted output ---
+*.agekey
+*age*key*.txt
+keys.txt
+*.age.key
+age-key*.txt
+secrets/*.dec
+secrets/*.decrypted

@@ -16,6 +16,13 @@
       url = "github:nixos/nixos-hardware/master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # Declarative secrets. Pinned via flake.lock; re-verify the activation-script
+    # wiring (setupSecretsForUsers) after any `nix flake update` (see modules/nixos/sops.nix).
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = { self, nixpkgs, home-manager, ... }@inputs:
@@ -31,6 +38,7 @@
           modules = [
             ./hosts/desktop/default.nix
             ./modules/nixos
+            inputs.sops-nix.nixosModules.sops
             home-manager.nixosModules.home-manager
             {
               home-manager.useGlobalPkgs = true;
