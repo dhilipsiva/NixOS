@@ -59,16 +59,34 @@ following phase builds on a stable base. Small, verifiable diffs.
 
 - [x] In `flake.nix`, retarget the primary input to `nixpkgs.url = "github:nixos/nixpkgs/nixos-26.05";` and delete the "Unstable is mandatory" comment. **(Applied — declared only; the VM build still has to confirm it evaluates on stable.)**
 - [x] Pin home-manager to the matching release: `home-manager.url = "github:nix-community/home-manager/release-26.05";` (keeps `inputs.nixpkgs.follows = "nixpkgs"`). **(Applied.)**
-- [ ] Add `nixos-hardware` as an input; import `common-cpu-amd`, `common-gpu-nvidia`, and `common-pc-ssd` profiles into `hosts/desktop/default.nix` to offload microcode/firmware/GPU quirks.
-- [ ] **Stay pure-stable — no unstable input now.** *Only if* a later VM rehearsal proves stable genuinely lacks a hardware package do you add a scoped `nixpkgs-unstable` overlay for that one package (kernel/mesa/nvidia as a coherent set). Deferred, not part of the initial flake.
-- [ ] Fix the NVIDIA block in `hosts/desktop/default.nix` for Blackwell on 26.05:
-  - [ ] `hardware.nvidia.open = true;` (the **open** kernel module is *required* for 50-series Blackwell; proprietary is unsupported).
-  - [ ] `hardware.nvidia.package = config.boot.kernelPackages.nvidiaPackages.production;` — the current **production** branch on 26.05 (confirm the exact version with mcp-nixos / `nix eval` rather than hardcoding a number). **Remove** `.beta` (a pre-580 workaround). **Never** use `.legacy_580` (a different, misleadingly-named branch, currently broken in 26.05).
-- [ ] Reconsider `boot.kernelPackages = pkgs.linuxPackages_latest;` — 26.05's **default kernel** already covers Ryzen 9000 X3D scheduling; drop the `_latest` override unless the VM shows a concrete need, since it can fight the NVIDIA module ABI.
-- [ ] Bump `system.stateVersion` and `home.stateVersion` from `"24.11"` to **`"26.05"`** — correct because the desktop has **never been installed**, so this is a first-install anchor, not a bump on an existing machine. (If the ThinkPad is ever revived, it *keeps* its original stateVersion.)
-- [ ] Update `CLAUDE.md`: state the flake tracks latest STABLE (not unstable), and that unstable exists only as a reserved scoped overlay.
+- [x] Add `nixos-hardware` as an input; import `common-cpu-amd`, `common-gpu-nvidia`, and `common-pc-ssd` profiles into `hosts/desktop/default.nix` to offload microcode/firmware/GPU quirks. **(Done — with `inputs.nixpkgs.follows`. Used `common-gpu-nvidia-nonprime` instead of plain `common-gpu-nvidia`: the plain profile assumes PRIME/hybrid and asserts on missing GPU bus IDs; the desktop has a single discrete RTX 5090 with the monitor wired directly to it.)**
+- [x] **Stay pure-stable — no unstable input now.** *Only if* a later VM rehearsal proves stable genuinely lacks a hardware package do you add a scoped `nixpkgs-unstable` overlay for that one package (kernel/mesa/nvidia as a coherent set). Deferred, not part of the initial flake. **(Honored — no unstable input added.)**
+- [x] Fix the NVIDIA block in `hosts/desktop/default.nix` for Blackwell on 26.05:
+  - [x] `hardware.nvidia.open = true;` (the **open** kernel module is *required* for 50-series Blackwell; proprietary is unsupported). **(Done.)**
+  - [x] `hardware.nvidia.package = config.boot.kernelPackages.nvidiaPackages.production;` — the current **production** branch on 26.05. `.beta` removed; `.legacy_580` not used. **(Done.)**
+- [x] Reconsider `boot.kernelPackages = pkgs.linuxPackages_latest;` — dropped the `_latest` override; 26.05's default kernel covers Ryzen 9000 X3D and keeps NVIDIA binary-cache coverage. **(Done — removed.)**
+- [x] Bump `system.stateVersion` and `home.stateVersion` from `"24.11"` to **`"26.05"`** (first-install anchor for the never-installed desktop). **(Done — both files.)**
+- [x] Update `CLAUDE.md`: state the flake tracks latest STABLE (not unstable), and that unstable exists only as a reserved scoped overlay. **(Done — Architecture section rewritten.)**
 
-**GATE 1:** `nix flake check` is green against `nixos-26.05` in WSL2. `nixos-rebuild --flake .#desktop build` completes. A VM built from this base still boots. `flake.lock` is committed pinning all inputs.
+**Extra stable-reconciliation fixes surfaced by `nix flake check` on 26.05 (not in the original Phase 1 list, but required to green the build):**
+- [x] Removed the broken `linux-firmware` `fetchgit` override with the placeholder `sha256-AAAA…` hash (it could never build) — now just `hardware.enableRedistributableFirmware` + nixos-hardware. **This resolves the Phase 5 / cross-cutting firmware blocker early** (the preferred resolution was "delete the override" anyway).
+- [x] `programs.adb.enable` was removed on 26.05 (systemd 258 auto-handles uaccess) — replaced with `android-tools` in the package list; dropped the now-orphaned `adbusers` group from the user's `extraGroups`.
+- [x] `copilot-cli` removed upstream (EOL) — dropped from the package list (note left to re-add a replacement).
+- [x] `power.ups` moved to a structured schema — the old inline `users.upsmon.upsmonConf` MONITOR string no longer counts toward MINSUPPLIES; reworked to `power.ups.users.upsmon` + `power.ups.upsmon.monitor.cyberpower` + `settings.SHUTDOWNCMD`, and `master`→`primary` (NUT rename). `passwordFile` still plaintext `/etc/nixos/ups-password` (→ sops in Phase 4).
+- [x] `wineWowPackages` → `wineWow64Packages` (deprecation) and home-manager `programs.git.userName/userEmail` → `settings.user.name/email` (rename) — cleared to keep eval warning-free (git is fully restructured in Phase 3).
+
+**GATE 1 (2026-07-07 — 3/4 met, commit pending):** `nix flake check` is green against `nixos-26.05` in WSL2. `nixos-rebuild --flake .#desktop build` completes. A VM built from this base still boots. `flake.lock` is committed pinning all inputs.
+<!-- STATUS:
+  [x] `nix flake check` GREEN against nixos-26.05, zero warnings.
+  [x] `nixos-rebuild build --flake .#desktop` completed (exit 0) — full toplevel, kernel 6.18.37.
+  [x] VM boots: `nixos-rebuild build-vm --flake .#desktop` (headless via the vmVariant serial block)
+      reached `dhilipsiva-desktop login:` + Multi-User + Graphical targets; home-manager applied.
+      (UPS units FAIL in the VM — no physical CyberPower UPS / no password file; expected, not a regression.)
+  [ ] flake.lock commit — LEFT TO THE USER (on default branch `master`; many unrelated pre-existing
+      changes are unstaged). Phase 1 files to stage: flake.nix, flake.lock, hosts/desktop/default.nix,
+      modules/common.nix, home/default.nix, CLAUDE.md, TODO.md, PLAN.md.
+-->
+
 
 ---
 
@@ -209,9 +227,9 @@ Only after Gate 6. Per `PLAN.md`, real hardware stays human-in-the-loop. The age
 
 ## Cross-cutting known fixes (tracked here so none slip)
 
-- [ ] `hosts/desktop/default.nix`: dummy `sha256 = "sha256-AAAA…"` linux-firmware hash — **remove the override or use a real hash** (Phase 5).
-- [ ] `hosts/desktop/default.nix`: `/etc/nixos/ups-password` + inline `secret` in the `MONITOR` line — **move to sops** (Phase 4).
-- [ ] `hosts/desktop/default.nix`: NVIDIA `.beta` + `open = false` — **→ `production` + `open = true`** (Phase 1).
+- [x] `hosts/desktop/default.nix`: dummy `sha256 = "sha256-AAAA…"` linux-firmware hash — **removed the override entirely** (Phase 1, pulled forward — it blocked every `.#desktop` build). Now `hardware.enableRedistributableFirmware` + nixos-hardware only.
+- [~] `hosts/desktop/default.nix`: `/etc/nixos/ups-password` — the inline `secret`/`upsmonConf` MONITOR string is **gone** (reworked to the structured `power.ups.upsmon.monitor` schema in Phase 1); the plaintext `passwordFile` path remains → **still move to sops** (Phase 4).
+- [x] `hosts/desktop/default.nix`: NVIDIA `.beta` + `open = false` — **→ `production` + `open = true`** (Phase 1). **(Done.)**
 - [ ] `hosts/desktop/hardware-configuration.nix`: generic single-ext4 scan — **regenerate on real hardware / let disko own filesystems** (Phase 5/7).
 - [x] `home/default.nix`: `userName` fixed to `"dhilipsiva"` (email kept `dhilipsiva@pm.me`). **(Applied.)**
 - [ ] `home/default.nix`: `eval $(atuin init fish)` (wrong fish syntax) — **replaced by `programs.atuin` fish integration** (Phase 3, atuin/fish).
@@ -220,5 +238,5 @@ Only after Gate 6. Per `PLAN.md`, real hardware stays human-in-the-loop. The age
 - [ ] Root `configuration.nix` (legacy ThinkPad monolith) — **delete after salvage** (Phase 2).
 - [ ] `modules/common.nix`: `backup-nix-config` service copies the now-deleted `/etc/nixos/configuration.nix` — **drop or repoint** it so it doesn't break when `configuration.nix` is removed (Phase 2).
 - [ ] `tmp.txt` (repo-root scratch) — **delete**; `clash_royale.sh` / `signature.html` — **keep/delete decision** (Phase 2).
-- [x] `flake.nix`: `nixpkgs → nixos-26.05` + home-manager `release-26.05`. **(Applied.)** Still to add: `nixos-hardware`, `sops-nix`, `disko`, then commit `flake.lock` (Phases 1/4/5). No unstable input unless the VM proves one is needed.
+- [x] `flake.nix`: `nixpkgs → nixos-26.05` + home-manager `release-26.05` + **`nixos-hardware` (added Phase 1, follows nixpkgs)**. Still to add: `sops-nix`, `disko`, then commit `flake.lock` (Phases 4/5). No unstable input unless the VM proves one is needed.
 - [ ] `CLAUDE.md` — **update at every structural change**. Its whole "What this repo is" section is premised on the `XDG_CONFIG_HOME=~/.files/.config` direct-serve model, which Phase 3 **deletes** — so it needs a **full top-section rewrite**, not just appended invariants. (The `[cite: N]` warning in it is already stale — markers were stripped from the `.nix` files.)

@@ -23,7 +23,7 @@
   users.users.dhilipsiva = {
     isNormalUser = true;
     createHome = true;
-    extraGroups = [ "adbusers" "docker" "input" "kvm" "networkmanager" "dialout" "plugdev" "wheel" ];
+    extraGroups = [ "docker" "input" "kvm" "networkmanager" "dialout" "plugdev" "wheel" ];
     hashedPassword = "$6$3TFqdE8hE9Hr9RS.$vd5EFAbzbHXn9qdQRRYtuwHyauBv/m1j.qe7LMo5tmz7KKhRZ1Fao8rS3BNPcS6f0yE4cOFHvf8ofcjzzkT671";
     shell = pkgs.fish;
   };
@@ -48,7 +48,9 @@
   services.pulseaudio.enable = false;
   
   hardware.opentabletdriver = { enable = true; daemon.enable = true; };
-  programs.adb.enable = true;
+  # `programs.adb.enable` was removed on 26.05 (systemd 258 handles the uaccess
+  # udev rules automatically); the `adb` command comes from `android-tools` in the
+  # package list below.
   services.udev.extraRules = ''
     SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", ATTR{idProduct}=="4ee7", MODE="0660", GROUP="plugdev"
   '';
@@ -91,8 +93,10 @@
     
     # Dev Tools
     python3 nodejs_24 rustup rye gcc gnumake
-    docker bruno discord openconnect openssh
-    arduino-ide copilot-cli code-cursor codex
+    docker bruno discord openconnect openssh android-tools
+    # copilot-cli removed upstream (EOL) — dropped on 26.05; re-add a replacement
+    # (e.g. the `gh` copilot extension) if wanted.
+    arduino-ide code-cursor codex
     ssm-session-manager-plugin wasm-pack watchman
     typescript-language-server difftastic
     
@@ -101,7 +105,7 @@
     firefox
     
     # Wine / Gaming
-    lutris wineWowPackages.stable winetricks vulkan-tools
+    lutris wineWow64Packages.stable winetricks vulkan-tools
   ];
 
   # --- ENVIRONMENT VARIABLES ---
@@ -112,5 +116,7 @@
     # Removed DRI_PRIME=1 because on Desktop your monitor is directly connected to the GPU
   };
   
-  system.stateVersion = "24.11";
+  # First-install anchor for the never-installed desktop (NOT a bump on an existing
+  # machine). A revived ThinkPad would keep its own original stateVersion.
+  system.stateVersion = "26.05";
 }

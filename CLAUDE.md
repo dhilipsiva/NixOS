@@ -33,11 +33,18 @@ is automatic (daily, `--delete-older-than 7d`); run `nix-collect-garbage -d` to 
 
 ## Architecture
 
-The flake (`flake.nix`) tracks `nixos-unstable` (required for RTX 5090 / Ryzen 9000
-hardware) and composes `nixosConfigurations.desktop` from **three** module sources:
+The flake (`flake.nix`) tracks **latest-stable `nixos-26.05`** (the earlier
+"unstable is mandatory for RTX 5090 / Ryzen 9000" premise is obsolete — stable
+supports both via `hardware.nvidia.open = true` + `nvidiaPackages.production`).
+**No unstable input exists**; if the VM later proves a specific hardware package is
+missing on stable, add a *narrowly-scoped* `nixpkgs-unstable` overlay for just that
+package (kernel/mesa/nvidia as a coherent set) — never repoint the whole system.
+It composes `nixosConfigurations.desktop` from **three** module sources (plus
+`nixos-hardware` profiles imported by the host):
 
-- `hosts/desktop/default.nix` — machine-specific: GRUB dual-boot, NVIDIA (Blackwell
-  beta driver), Wi-Fi 7 firmware, CyberPower UPS. Imports `hardware-configuration.nix`.
+- `hosts/desktop/default.nix` — machine-specific: GRUB dual-boot, NVIDIA (Blackwell,
+  **open module + production driver**), CyberPower UPS; imports `hardware-configuration.nix`
+  and the `nixos-hardware` `common-cpu-amd` / `common-gpu-nvidia` / `common-pc-ssd` profiles.
 - `modules/common.nix` — the shared system config (users, packages, services, networking).
 - `home/default.nix` — the home-manager user config (shells, git, Goose→Ollama agent),
   wired in via `home-manager.users.dhilipsiva`.

@@ -1,9 +1,29 @@
-{ config, pkgs, ... }:
+{ config, pkgs, inputs, ... }:
 
 {
-  imports = [ ./hardware-configuration.nix ];
+  imports = [
+    ./hardware-configuration.nix
+    # Offload microcode / GPU / SSD quirks to nixos-hardware.
+    inputs.nixos-hardware.nixosModules.common-cpu-amd
+    # -nonprime: single discrete RTX 5090 with the monitor wired directly to it
+    # (no hybrid/PRIME offload). Plain common-gpu-nvidia assumes PRIME and would
+    # demand bus IDs we don't have on this desktop.
+    inputs.nixos-hardware.nixosModules.common-gpu-nvidia-nonprime
+    inputs.nixos-hardware.nixosModules.common-pc-ssd
+  ];
 
   networking.hostName = "dhilipsiva-desktop";
+
+  # --- VM-TEST-ONLY OVERRIDES (build-vm variant; ZERO effect on real hardware) ---
+  # Everything under virtualisation.vmVariant applies only when building
+  # `nixos-rebuild build-vm --flake .#desktop`, never to the installed system.
+  # This makes the desktop config bootable headless for the VM-first workflow
+  # (GATE 1 boot check and every later phase's VM rehearsal).
+  virtualisation.vmVariant = {
+    virtualisation.graphics = false;
+    boot.kernelParams = [ "console=ttyS0,115200n8" "console=tty1" ];
+    systemd.services."serial-getty@ttyS0".enable = true;
+  };
 
   # --- BOOTLOADER (Dual Boot Optimized) ---
   # We use GRUB because it detects Windows on a separate drive better than systemd-boot
@@ -21,37 +41,38 @@
   };
 
   # --- KERNEL & CPU ---
-  # Kernel 6.12+ is required for Ryzen 9000 X3D scheduling
-  boot.kernelPackages = pkgs.linuxPackages_latest;
-  
+  # 26.05's default kernel already covers Ryzen 9000 X3D scheduling; the
+  # linuxPackages_latest override is dropped (it can fight the NVIDIA module ABI
+  # and loses binary-cache coverage). Re-add only if the VM shows a concrete need.
+
   # --- GRAPHICS (RTX 5090) ---
   services.xserver.videoDrivers = [ "nvidia" ];
-  
+
   hardware.nvidia = {
     modesetting.enable = true;
     powerManagement.enable = false; # Desktop GPUs run better without aggressive power saving
-    open = false; # Proprietary drivers are currently more stable for 50-series
+    open = true; # REQUIRED for 50-series Blackwell (proprietary module is unsupported)
     nvidiaSettings = true;
-    
-    # Force the Beta driver branch (570+) for Blackwell architecture support
-    package = config.boot.kernelPackages.nvidiaPackages.beta;
+
+    # Current production branch on 26.05 (confirm exact version via nix eval, not a
+    # hardcoded number). NOT .beta (a pre-580 workaround) and NOT .legacy_580.
+    package = config.boot.kernelPackages.nvidiaPackages.production;
   };
 
-  # --- WIFI 7 (Firmware Fix) ---
-  # Fixes the missing firmware for MSI X870E Qualcomm chips
+  # --- FIRMWARE ---
+  # Rely on redistributable firmware + nixos-hardware (26.05's linux-firmware
+  # already carries the MSI X870E Qualcomm Wi-Fi firmware). The old hand-rolled
+  # fetchgit override with a placeholder sha256-AAAA… hash is removed — it could
+  # never build. If a specific firmware is later proven missing on real hardware,
+  # add a narrowly-scoped override with a real hash then (Phase 5/7).
   hardware.enableRedistributableFirmware = true;
-  hardware.firmware = [
-    pkgs.linux-firmware
-    (pkgs.linux-firmware.overrideAttrs (old: {
-      src = pkgs.fetchgit {
-        url = "https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git";
-        rev = "master"; 
-        sha256 = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="; # Run once, let it fail, replace hash
-      };
-    }))
-  ];
 
   # --- UPS MONITORING (CyberPower) ---
+  # 26.05's power.ups uses a structured schema: an upsd account under
+  # `users.<name>` plus a `upsmon.monitor.<name>` entry (the old inline
+  # `users.upsmon.upsmonConf` MONITOR string is gone, which is why the total
+  # power value evaluated to 0 < MINSUPPLIES). passwordFile still points at the
+  # plaintext /etc/nixos/ups-password here — Phase 4 moves it to sops.
   power.ups = {
     enable = true;
     mode = "standalone";
@@ -60,11 +81,17 @@
       port = "auto";
     };
     users.upsmon = {
-      passwordFile = "/etc/nixos/ups-password"; # Create this file!
-      upsmonConf = ''
-        MONITOR cyberpower@localhost 1 upsmon secret master
-        SHUTDOWNCMD "${pkgs.systemd}/bin/shutdown -h +0"
-      '';
+      passwordFile = "/etc/nixos/ups-password"; # Create this file! (→ sops in Phase 4)
+      upsmon = "primary"; # NUT renamed master/slave → primary/secondary
+    };
+    upsmon = {
+      monitor.cyberpower = {
+        system = "cyberpower@localhost";
+        user = "upsmon";
+        type = "primary";
+        # powerValue defaults to 1; passwordFile defaults to users.upsmon.passwordFile
+      };
+      settings.SHUTDOWNCMD = "${pkgs.systemd}/bin/shutdown -h +0";
     };
   };
 }

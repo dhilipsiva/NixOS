@@ -3,7 +3,7 @@
 {
   home.username = "dhilipsiva";
   home.homeDirectory = "/home/dhilipsiva";
-  home.stateVersion = "24.11";
+  home.stateVersion = "26.05";
 
   # --- SHELL CONFIG ---
   programs.bash = {
@@ -39,8 +39,12 @@
   # --- GIT CONFIG ---
   programs.git = {
     enable = true;
-    userName = "dhilipsiva";
-    userEmail = "dhilipsiva@pm.me";
+    # 26.05 home-manager renamed userName/userEmail → settings.user.* (Phase 3
+    # restructures git config fully; this keeps eval warning-free meanwhile).
+    settings.user = {
+      name = "dhilipsiva";
+      email = "dhilipsiva@pm.me";
+    };
   };
 
   # --- AI AGENT CONFIG (Goose) ---
