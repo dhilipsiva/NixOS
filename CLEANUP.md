@@ -82,6 +82,27 @@ they are throwaway and MUST be rotated by the owner before any real deployment.
   after** confirming the option exists on the pinned disko (it is NOT a module option today —
   it's a test-framework arg — so it was deliberately left out of Phase 5).
 
+## Phase 6 (--vm-test rehearsal) — TEST SCAFFOLDING to remove before Phase 7
+
+The GATE-6 install rehearsal needed test-only wiring. It is scoped to
+`config.system.build.installTest` and never reaches the real toplevel (verified), but
+**remove it before the real install** so no throwaway key or test override ships:
+
+- **[REMOVE]** `hosts/desktop/disko.nix` → the `disko.tests = { … }` block (bootCommands /
+  extraConfig / extraChecks). It's only read by `installTest`; delete once Phase 7 is done.
+- **[REMOVE]** `modules/nixos/vmtest-install.nix` — the TEST-ONLY overlay (forces
+  canTouchEfiVariables=false, useOSProber=false, sops→vm-test.yaml, injects the throwaway host key).
+- **[REMOVE]** `keys/vmtest_host_ed25519_key` — a committed THROWAWAY ed25519 host key. It is a
+  recipient of the FAKE `secrets/vm-test.yaml` ONLY (`&vmtest` = `age10hwn…`), so it cannot decrypt
+  real secrets — but it is a private key in the repo. **Guardrail: `&vmtest` must NEVER be added to
+  `secrets/secrets.yaml`'s creation_rules** (keep `scripts/check-sops-recipients.sh` green).
+- **[VERIFY on real HW]** GATE 6 proved the sops MECHANISM with a fake file + throwaway key. Real
+  login needs Phase 7: `ssh-to-age < /etc/ssh/ssh_host_ed25519_key.pub` → add to `secrets.yaml`'s
+  rule in `.sops.yaml` → `sops updatekeys secrets/secrets.yaml` → set the real `$6$` password. First
+  real boot uses the root break-glass / GRUB `init=/bin/sh` until that enrollment is confirmed.
+- **[HUMAN]** visual sign-off that the Hyprland desktop renders (waybar/wallpaper/terminal) — no
+  headless path can prove it.
+
 ## Docs to update in the final pass
 
 - **[DOC]** `README.md` — rewrite to document the live build/switch/VM-rehearsal/secret-rotation

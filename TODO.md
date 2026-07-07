@@ -210,13 +210,18 @@ Exercise the *whole* thing — disko partitioning + full closure + sops decrypti
 bootloader — in a QEMU VM, with the destructive-command guardrail (Phase 0) ensuring
 the target can only ever be the VM.
 
-- [ ] Run the install rehearsal against a **virtual** disk: `nix run github:nix-community/nixos-anywhere -- --flake .#desktop --vm-test` (partitions a QEMU virtual disk exactly per `disko.nix`, installs the closure, boots it — **no real hardware touched**).
-- [ ] If driving a persistent VM instead of `--vm-test`, pin `--target-host` to the VM's IP/SSH only (the build-image path bakes `sshd` + your pubkey so the first-boot SSH console gap is closed — see `PLAN.md`). Never point `--target-host` at a real machine in this phase.
-- [ ] Verify inside the booted VM: correct hostname, the sops-managed user password logs in, `hyprctl` responds (CLI-first), waybar/hyprland come up (corroborate with a screenshot), disko subvolume/mount layout is as specified, GRUB present.
-- [ ] **Parity check** the Nix-generated dotfiles reproduce the old `.config` behavior side-by-side (the Phase 3 gate list) inside this full-install VM, not just a `build-image` VM.
-- [ ] Capture any stable-vs-hardware gaps here (if 26.05 genuinely lacks Blackwell/X3D support the VM surfaces it) — this is where the reserved unstable overlay would be populated, as a coherent kernel/mesa/nvidia set, and re-tested.
+> Design was research + adversarially verified (workflow: 4 research agents → synthesis → hang / false-success / safety reviewers). Two blockers were found empirically and fixed: (A) an EVAL collision — disko's test harness forces `grub.efiInstallAsRemovable=true`, asserting against the real `canTouchEfiVariables=true`; (B) a RUN-TIME hang — an empty `bootCommands` leaves the stage-1 LUKS prompt unanswered. Fix = a TEST-ONLY overlay (`modules/nixos/vmtest-install.nix`) via `disko.tests.extraConfig`, never in `system.build.toplevel`.
 
-**GATE 6:** `nixos-anywhere … --vm-test` completes and boots green end-to-end (disko + closure + sops + bootloader). Human sign-off on the graphical session (Hyprland) per `PLAN.md`'s visual-truth gate. This is the **go/no-go** for touching real hardware.
+- [x] Run the install rehearsal against a **virtual** disk. Ran `nix build .#…config.system.build.installTest -L` (byte-identical to `nixos-anywhere --flake .#desktop --vm-test`, but pinned + guard-clean — no network/token). Partitions a virtual disk per `disko.nix`, installs, reboots into itself. **(Done — GREEN, 95s, no real hardware.)**
+- [x] **Verified inside the booted VM** via `disko.tests.extraChecks` (a wrong result FAILS the build): root = ext4 on `/dev/mapper/cryptroot`; `/boot` = vfat ESP; `cryptsetup status cryptroot` active + `lsblk` crypt device (**LUKS2 unlocked at boot** — passphrase typed via `bootCommands` + OCR); `/boot/EFI` + `/boot/grub/grub.cfg` (**GRUB-EFI**); hostname `dhilipsiva-desktop`; **sops decrypted** — `/run/secrets-for-users/dhilipsiva/hashedPassword` present + shadow is a `$6$` hash (not `!`), via the real host-key→ssh-to-age→age chain.
+- [x] Preflights + real-config-unweakened proof: `installTest` evaluates (EFI collision fixed); `bootCommands`/`extraChecks` wired (all 5 probes present); real toplevel unchanged (keyFile=null, canTouchEfiVariables=true, real secrets.yaml, useOSProber=true).
+- [~] `hyprctl`/waybar/graphical + **dotfile parity in the full-install VM** — CLI dotfile parity was proven in Phase 3 (build-vm); Hyprland *graphical render* is the **human sign-off** below (no headless GPU/compositor). Screenshot corroboration deferred to Phase 7 / a graphics-enabled VM.
+- [~] Stable-vs-hardware gaps (Blackwell/X3D) — not surfacable in a software-GL VM; a real-HW item (Phase 7). No unstable overlay needed so far.
+
+**GATE 6 (automated half PASSED 2026-07-07):** the install rehearsal is green end-to-end (disko + LUKS + closure + GRUB + sops), sandboxed, **no real hardware touched**. **Remaining for full GATE 6:** the HUMAN visual sign-off on the Hyprland session. **CAVEAT:** sops-green proves the MECHANISM (fake `vm-test.yaml` + throwaway key), NOT that the real host key decrypts `secrets.yaml` — real login is a Phase 7 enrollment step. This is the **go/no-go** for real hardware, pending the human sign-off.
+<!-- STATUS: automated GATE 6 green on master. Test scaffolding (disko.tests block, modules/nixos/vmtest-install.nix, keys/vmtest_host_ed25519_key) to REMOVE before Phase 7 — see CLEANUP.md § Phase 6. Human Hyprland sign-off outstanding. -->
+
+Old bullets (superseded — kept for reference): drive a persistent VM with `--target-host` pinned to the VM only; parity-check dotfiles; capture stable-vs-hardware gaps.
 
 ---
 

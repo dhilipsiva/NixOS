@@ -149,7 +149,29 @@ instead, so none block VM testing) — all tracked in [CLEANUP.md](CLEANUP.md):
 - `hosts/desktop/hardware-configuration.nix`: regenerate on the real machine (`nixos-generate-config`), keeping the fileSystems/swap removal.
 - LUKS passphrase, sops key rotation, UPS password — owner-provided (Phases 5–7).
 
-**Next: Phase 6** (full VM install rehearsal — `nixos-anywhere --flake .#desktop --vm-test` — which actually exercises disko partitioning + sops + bootloader end-to-end).
+**Phase 6 complete (GATE 6 automated half passed 2026-07-07).** The full install
+rehearsal (`nixos-anywhere --flake .#desktop --vm-test`, i.e. `nix build
+.#…config.system.build.installTest`) ran green in a sandboxed KVM VM — **no real
+hardware touched**. It proved end-to-end: disko partitions a virtual disk (GPT: vfat
+ESP + LUKS2), LUKS2 unlocks at stage-1 boot, the full desktop closure installs, GRUB-EFI
+installs, the system reboots into itself, and **sops decrypts** (root ext4 on
+`/dev/mapper/cryptroot`, `cryptsetup status cryptroot` active, `/boot/EFI` + `grub.cfg`,
+`/run/secrets-for-users/dhilipsiva/hashedPassword` present, dhilipsiva shadow is a `$6$`
+hash — all asserted by `disko.tests.extraChecks`).
+- **Test scaffolding** (remove before real Phase 7 — see CLEANUP.md): `hosts/desktop/disko.nix`'s
+  `disko.tests` block, `modules/nixos/vmtest-install.nix` (a TEST-ONLY overlay via
+  `disko.tests.extraConfig`, never in `system.build.toplevel`), and `keys/vmtest_host_ed25519_key`
+  (a committed THROWAWAY host key that only decrypts the fake `secrets/vm-test.yaml`). Verified
+  the real toplevel is unweakened (keyFile=null, canTouchEfiVariables=true, real secrets.yaml).
+- **CAVEAT — GATE 6 sops-green proves the MECHANISM only** (fake file + throwaway key), NOT that
+  the real host key can decrypt the operator-only `secrets.yaml`. Real login on first real boot
+  requires Phase 7: enroll the real host key (`ssh-to-age` → `.sops.yaml` → `sops updatekeys`)
+  and set the real password; until then rely on the root break-glass.
+- **HUMAN SIGN-OFF still required:** the Hyprland *graphical render* (waybar/wallpaper/terminal)
+  cannot be proven headless (no GPU, no live compositor) — a person must confirm it visually on
+  the real desktop (Phase 7) or a graphics-enabled VM.
+
+**Next: Phase 7** — real-hardware cutover (HUMAN-driven; the agent prepares/drafts, a human runs).
 
 **Deferred cleanup:** superseded/legacy files are **not** deleted mid-migration — they're
 tracked in [CLEANUP.md](CLEANUP.md) and removed (plus the README/docs rewrite) in one final
