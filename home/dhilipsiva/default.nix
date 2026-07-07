@@ -4,8 +4,9 @@
   imports = [
     ./shells.nix # fish, bash, starship, atuin
     ./git.nix
-    ./terminal.nix # alacritty (+ zellij in Tier 2)
+    ./terminal.nix # alacritty + zellij
     ./helix.nix
+    ./wayland.nix # waybar + hyprland (source bridges)
     ./services.nix # user timers (time notification)
   ];
 

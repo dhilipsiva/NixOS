@@ -1,8 +1,12 @@
-# Terminal emulator — ported from .config/alacritty/alacritty.toml.
-# (zellij is added here in Tier 2.)
+# Terminal emulator + multiplexer.
 { ... }:
 
 {
+  # zellij: the ~294-line hand-tuned KDL keybind block is kept as a source bridge
+  # (attrset->KDL translation of ordered action sequences is fragile). Native
+  # `programs.zellij.settings` translation is deferred. See CLEANUP.md.
+  xdg.configFile."zellij/config.kdl".source = ../../.config/zellij/config.kdl;
+
   programs.alacritty.enable = true;
   programs.alacritty.settings = {
     font = {

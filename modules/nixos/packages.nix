@@ -24,7 +24,7 @@
 
     # Desktop / GUI
     rofi waybar dunst mako grim slurp wl-clipboard flameshot
-    firefox
+    firefox kdePackages.dolphin # dolphin = hyprland $fileManager
 
     # Wine / Gaming
     lutris wineWow64Packages.stable winetricks vulkan-tools
