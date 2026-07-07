@@ -82,20 +82,18 @@ they are throwaway and MUST be rotated by the owner before any real deployment.
   after** confirming the option exists on the pinned disko (it is NOT a module option today —
   it's a test-framework arg — so it was deliberately left out of Phase 5).
 
-## Phase 6 (--vm-test rehearsal) — TEST SCAFFOLDING to remove before Phase 7
+## Phase 6 (--vm-test rehearsal) — TEST SCAFFOLDING (REMOVED 2026-07-07, Phase 7 Part A prep)
 
-The GATE-6 install rehearsal needed test-only wiring. It is scoped to
-`config.system.build.installTest` and never reaches the real toplevel (verified), but
-**remove it before the real install** so no throwaway key or test override ships:
+The GATE-6 install rehearsal needed test-only wiring; it has now been **removed** ahead of the
+real install (`nix flake check` + `nixos-rebuild build .#desktop` still green without it):
 
-- **[REMOVE]** `hosts/desktop/disko.nix` → the `disko.tests = { … }` block (bootCommands /
-  extraConfig / extraChecks). It's only read by `installTest`; delete once Phase 7 is done.
-- **[REMOVE]** `modules/nixos/vmtest-install.nix` — the TEST-ONLY overlay (forces
-  canTouchEfiVariables=false, useOSProber=false, sops→vm-test.yaml, injects the throwaway host key).
-- **[REMOVE]** `keys/vmtest_host_ed25519_key` — a committed THROWAWAY ed25519 host key. It is a
-  recipient of the FAKE `secrets/vm-test.yaml` ONLY (`&vmtest` = `age10hwn…`), so it cannot decrypt
-  real secrets — but it is a private key in the repo. **Guardrail: `&vmtest` must NEVER be added to
-  `secrets/secrets.yaml`'s creation_rules** (keep `scripts/check-sops-recipients.sh` green).
+- **[DONE]** `hosts/desktop/disko.nix` → the `disko.tests = { … }` block — removed.
+- **[DONE]** `modules/nixos/vmtest-install.nix` — removed.
+- **[DONE]** `keys/vmtest_host_ed25519_key` (committed throwaway host key) — removed; `keys/` gone.
+  *(NOTE: `secrets/vm-test.yaml` + the `&vmtest` recipient in `.sops.yaml` STAY — they're used by the
+  `build-vm` vmVariant, which injects the throwaway key at runtime via fw_cfg from
+  `/home/nixos/phase4-keys/`, not from the repo. Guardrail: `&vmtest` must NEVER become a recipient of
+  `secrets/secrets.yaml` — keep `scripts/check-sops-recipients.sh` green.)*
 - **[VERIFY on real HW]** GATE 6 proved the sops MECHANISM with a fake file + throwaway key. Real
   login needs Phase 7: `ssh-to-age < /etc/ssh/ssh_host_ed25519_key.pub` → add to `secrets.yaml`'s
   rule in `.sops.yaml` → `sops updatekeys secrets/secrets.yaml` → set the real `$6$` password. First

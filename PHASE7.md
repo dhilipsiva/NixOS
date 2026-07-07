@@ -43,9 +43,9 @@ silently run its Bash tool via Git Bash/PowerShell, which has no `nix`/`disko`/`
    - `sops secrets/secrets.yaml` → set the real login `$6$` hash (`mkpasswd -m sha-512`) + real UPS password.
    - `sops updatekeys secrets/secrets.yaml`; keep `bash scripts/check-sops-recipients.sh` green.
    - Replace the root break-glass `authorizedKeys` placeholder in `hosts/desktop/default.nix` with your real ed25519 pubkey.
-2. **Remove Phase-6 test scaffolding** (CLEANUP.md § Phase 6): the `disko.tests = { … }` block in
-   `hosts/desktop/disko.nix`, `modules/nixos/vmtest-install.nix`, and `keys/vmtest_host_ed25519_key`
-   (a committed throwaway private key — must not reach real hardware).
+2. **Remove Phase-6 test scaffolding** — **✅ DONE 2026-07-07** (the `disko.tests` block,
+   `modules/nixos/vmtest-install.nix`, and `keys/vmtest_host_ed25519_key` are removed;
+   `nix flake check` + `nixos-rebuild build .#desktop` verified green without them).
 3. **Set the target disk** — you can *pre-stage* a candidate from PowerShell
    `Get-PhysicalDisk | Get-Disk` (model+serial → `nvme-<model>_<serial>`) as a **cross-check only**;
    the real binding happens at the installer (Part B). Paste it into `targetDisk` in `hosts/desktop/disko.nix`.

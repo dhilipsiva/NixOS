@@ -97,42 +97,4 @@ in
     }
   ];
 
-  # --- Phase 6 `nixos-anywhere --vm-test` REHEARSAL ONLY -----------------------
-  # disko.tests.* is read EXCLUSIVELY by config.system.build.installTest (disko
-  # module.nix) and is NEVER part of config.system.build.toplevel — the real boot
-  # stays interactive (keyFile=null), canTouchEfiVariables stays true, and
-  # secrets.yaml stays the sops file. Remove this + modules/nixos/vmtest-install.nix
-  # + keys/ before the real Phase 7 install (see CLEANUP.md).
-  disko.tests = {
-    enableOCR = true; # OCR the OVMF framebuffer to see the stage-1 LUKS prompt.
-    # Type the FORMAT-TIME passphrase disko writes to /tmp/secret.key at luksFormat.
-    # send_key "ret" instead of a "\n" avoids Nix/tool escaping. Broad regex in case
-    # of OCR variance.
-    bootCommands = ''
-      machine.wait_for_text("[Pp]assphrase|[Uu]nlock")
-      machine.send_chars("secretsecret")
-      machine.send_key("ret")
-    '';
-    extraConfig = {
-      imports = [ ../../modules/nixos/vmtest-install.nix ];
-    };
-    # End-to-end assertions — a wrong result FAILS the build (never hangs; these run
-    # right after disko's wait_for_unit("local-fs.target"), no multi-user wait).
-    extraChecks = ''
-      # disko + LUKS: ext4 root on the LUKS mapper, active crypt device, vfat ESP.
-      machine.succeed("findmnt -no FSTYPE,SOURCE / | grep -E 'ext4[[:space:]]+/dev/mapper/cryptroot'")
-      machine.succeed("findmnt -no FSTYPE /boot | grep -qx vfat")
-      machine.succeed("cryptsetup status cryptroot | grep -qw active")
-      machine.succeed("lsblk -no TYPE | grep -qw crypt")
-      # bootloader: GRUB-EFI payload + config landed on the ESP.
-      machine.succeed("test -d /boot/EFI && test -e /boot/grub/grub.cfg")
-      # identity.
-      machine.succeed("grep -qx dhilipsiva-desktop /etc/hostname")
-      # sops end-to-end: neededForUsers secret decrypted AND dhilipsiva NOT locked
-      # (shadow is a real $6$ hash, not '!'). Proves ssh-host-key -> ssh-to-age ->
-      # age -> sops inside the installed system.
-      machine.succeed("test -s /run/secrets-for-users/dhilipsiva/hashedPassword")
-      machine.succeed("getent shadow dhilipsiva | cut -d: -f2 | grep -qE '^[$]6[$]'")
-    '';
-  };
 }
