@@ -1,4 +1,4 @@
-{ config, pkgs, inputs, ... }:
+{ config, pkgs, lib, inputs, ... }:
 
 {
   imports = [
@@ -23,6 +23,13 @@
     virtualisation.graphics = false;
     boot.kernelParams = [ "console=ttyS0,115200n8" "console=tty1" ];
     systemd.services."serial-getty@ttyS0".enable = true;
+    # VM-only: SSH + a throwaway password so the migration can be verified
+    # headlessly (parity checks, Phase 6 rehearsal). Never reaches real hardware.
+    services.openssh.enable = true;
+    services.openssh.settings.PermitRootLogin = "yes";
+    users.users.dhilipsiva.hashedPassword = lib.mkForce null;
+    users.users.dhilipsiva.password = "test";
+    users.users.root.password = "test";
   };
 
   # --- BOOTLOADER (Dual Boot Optimized) ---

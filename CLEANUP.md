@@ -24,13 +24,20 @@
   The loose copy is referenced by nothing. Delete after confirming the HM timer works on
   real hardware. *(If `scripts/` ends up empty, remove the directory too.)*
 
-### From Phase 3 (fill in as each tool is ported)
-- **[SUPERSEDED]** `.config/<tool>/` subtrees — delete **each** one as its tool is ported
-  to home-manager Nix and verified in the VM. Tools to port/retire:
-  `alacritty`, `atuin`, `cheat`, `fish` (incl. machine-generated `fish_variables`, NOT
-  ported), `git`, `helix`, `hypr`, `nvim`, `waybar`, `zellij`. (`.config/sway` already gone.)
-- **[SUPERSEDED]** the whole `.config/` directory + the `environment.variables.XDG_CONFIG_HOME`
-  override in `modules/nixos/environment.nix` — remove once `.config/` is empty.
+### From Phase 3 (done — XDG_CONFIG_HOME override already removed)
+- **[SUPERSEDED — safe to delete now]** these `.config/` subtrees are **inert** (ported to
+  native home-manager, or their tool was dropped, and nothing references them):
+  `.config/alacritty`, `.config/atuin`, `.config/git`, `.config/helix`, `.config/fish`
+  (incl. machine-generated `fish_variables`, intentionally NOT ported),
+  `.config/nvim` (dropped — neovim not installed), `.config/cheat` (dropped — cheat not installed).
+- **[STILL REFERENCED — do NOT delete yet]** `.config/waybar`, `.config/hypr`, `.config/zellij`
+  are still read as `xdg.configFile.source` bridges (`home/dhilipsiva/{wayland,terminal}.nix`).
+  Delete only **after** they're natively translated (`programs.waybar.settings` /
+  `wayland.windowManager.hyprland.settings` / `programs.zellij.settings`) and re-verified.
+  Native translation also prunes the laptop-era waybar modules (battery / battery#bat2 / backlight).
+- **[DONE]** `environment.variables.XDG_CONFIG_HOME` override — already removed from
+  `modules/nixos/environment.nix` in Phase 3.
+- Once all `.config/*` are deleted, remove the now-empty `.config/` directory.
 
 ## Docs to update in the final pass
 

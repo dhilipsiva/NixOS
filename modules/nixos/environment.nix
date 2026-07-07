@@ -5,9 +5,9 @@
   environment.variables = {
     EDITOR = "hx";
     VISUAL = "hx";
-    # Serves the raw .config/ tree directly. Phase 3 migrates those dotfiles into
-    # home-manager and REMOVES this override (see PLAN.md / TODO.md Phase 3).
-    XDG_CONFIG_HOME = "/home/dhilipsiva/.files/.config";
-    # DRI_PRIME dropped on the desktop — the monitor is wired directly to the GPU.
+    # XDG_CONFIG_HOME override REMOVED in Phase 3: dotfiles are now managed by
+    # home-manager, which writes to the default ~/.config. (The old override
+    # pointed at ~/.files/.config, i.e. the repo, which no longer holds the
+    # live configs.) DRI_PRIME dropped — the monitor is wired directly to the GPU.
   };
 }

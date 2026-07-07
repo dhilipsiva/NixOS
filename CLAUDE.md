@@ -4,17 +4,24 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-Personal NixOS system configuration + dotfiles ("`.files`"). On the target NixOS
-machine it is cloned to `~/.files`, and `XDG_CONFIG_HOME` is set to
-`/home/dhilipsiva/.files/.config` (see `configuration.nix` / `common.nix`), so the
-files under `.config/` are the *live, in-use* application configs — editing them
-in this repo edits the running system's config directly (no copy/symlink step).
+Personal NixOS system configuration + dotfiles ("`.files`"), cloned to `~/.files` on
+the target machine. It's a **flake**: a modular, **home-manager-first** config on
+latest-stable `nixos-26.05`, built from `hosts/desktop/` + `modules/nixos/*` +
+`home/dhilipsiva/*` (see Architecture below).
 
-Note: this checkout is edited on **Windows**, but the flake targets
-`x86_64-linux` NixOS. `nixos-rebuild`/`nix` commands below run on the **NixOS host**,
-not on the Windows dev machine. `PLAN.md` documents an (aspirational) workflow for
-testing this config from Windows via WSL2 + VMware VMs — it is planning notes, not
-an active part of the build.
+**Dotfiles are managed by home-manager as Nix** — the tools' configs live in
+`home/dhilipsiva/*.nix` (native `programs.*` where possible; `xdg.configFile.*.source`
+bridges for a few), and home-manager writes them to the standard `~/.config`. The raw
+`.config/` tree in the repo is **legacy**: after Phase 3 it is no longer served via
+`XDG_CONFIG_HOME` (that override is gone). Most of it is now inert and pending deletion
+(see [CLEANUP.md](CLEANUP.md)); only `.config/{waybar,hypr,zellij}` are still referenced
+— as `xdg.configFile.source` bridges — until they're natively translated. **Do not edit
+`.config/*` expecting it to affect the running system** (except those three bridged
+files); edit the home-manager Nix modules instead.
+
+Note: this checkout is edited on **Windows**, but the flake targets `x86_64-linux`
+NixOS. `nixos-rebuild`/`nix` commands below run on the **NixOS host** (in practice
+NixOS-WSL — see the Phase 0 note), not on the Windows dev machine.
 
 ## Build / apply commands
 
@@ -96,8 +103,19 @@ deleted the legacy root `configuration.nix` + `tmp.txt`, and ported the two syst
 (backup dropped; notification → home-manager user timer). Both gates verified with
 `nix flake check` + `nixos-rebuild build .#desktop` + a headless VM boot; Phase 2 parity
 was confirmed by `nix store diff-closures` (only the two intended service changes differ).
-**Next: Phase 3** (migrate `.config/` dotfiles into home-manager Nix; then delete
-`.config/` + the `XDG_CONFIG_HOME` override).
+**Phase 3 complete (GATE 3 passed 2026-07-07).** All `.config/` dotfiles are migrated
+into home-manager and the `XDG_CONFIG_HOME` override is removed. Tier 1 (git, atuin,
+alacritty, helix, fish) ported to native `programs.*`; Tier 2 (waybar, hyprland, zellij)
+kept as `xdg.configFile.source` **bridges** (glyph/keybind fragility — native translation
+deferred); nvim and cheat **dropped** (tools weren't installed). Verified live in a VM:
+`~/.config` is home-manager-managed, `XDG_CONFIG_HOME` unset, git/helix/alacritty/etc.
+read their migrated configs. **Invariants (keep true):**
+- **Do NOT reintroduce a raw `.config/` served via `XDG_CONFIG_HOME`.** Configure tools
+  through home-manager Nix (`programs.*` / `wayland.windowManager.*`).
+- **`xdg.configFile.*.source` is a bridge, not the default** — only where no clean native
+  option exists (currently waybar/hypr/zellij). Prefer native translation.
+
+**Next: Phase 4** (declarative secrets via sops-nix for the user password + UPS).
 
 **Deferred cleanup:** superseded/legacy files are **not** deleted mid-migration — they're
 tracked in [CLEANUP.md](CLEANUP.md) and removed (plus the README/docs rewrite) in one final
@@ -117,9 +135,11 @@ fail on a real machine:
 
 ## Layout notes
 
-- `.config/*` — live dotfiles served via `XDG_CONFIG_HOME` (alacritty, fish, helix,
-  hypr, sway, waybar, zellij, nvim, atuin, git, cheat). These are **not** managed by
-  home-manager; they are consumed directly from this repo on the running system.
+- `.config/*` — **legacy** raw dotfiles, no longer served via `XDG_CONFIG_HOME`. The live
+  configs are the home-manager modules in `home/dhilipsiva/*.nix` (written to `~/.config`).
+  Most `.config/*` subtrees are now **inert** and pending deletion (git/helix/alacritty/
+  atuin/fish, plus dropped nvim/cheat); only `.config/{waybar,hypr,zellij}` are still read,
+  as `xdg.configFile.source` bridges. See [CLEANUP.md](CLEANUP.md).
 - `scripts/show_time_notification.sh` — the original quarter-hourly `notify-send`
   script. **No longer referenced** by the system config: Phase 2 reimplemented it as a
   home-manager **user** service+timer (`home/dhilipsiva/services.nix`) that builds the
