@@ -167,11 +167,15 @@ hash — all asserted by `disko.tests.extraChecks`).
   the real host key can decrypt the operator-only `secrets.yaml`. Real login on first real boot
   requires Phase 7: enroll the real host key (`ssh-to-age` → `.sops.yaml` → `sops updatekeys`)
   and set the real password; until then rely on the root break-glass.
-- **HUMAN SIGN-OFF still required:** the Hyprland *graphical render* (waybar/wallpaper/terminal)
-  cannot be proven headless (no GPU, no live compositor) — a person must confirm it visually on
-  the real desktop (Phase 7) or a graphics-enabled VM.
+- **HUMAN SIGN-OFF DONE (2026-07-07):** the owner ran a graphics-enabled VM (temporary
+  greetd-autologin overlay, since reverted; software GL via llvmpipe) and confirmed Hyprland
+  renders — waybar with Font Awesome glyphs + the desktop came up with the home-manager dotfiles.
+  (True RTX 5090 behaviour is still a Phase 7 real-hardware check.) The visual check also caught
+  a **pre-existing dotfile bug**: `.config/hypr/hyprland.conf` bound the dwindle-only dispatchers
+  `togglesplit`/`pseudo` while `layout = master` — those two binds are now commented out.
 
-**Next: Phase 7** — real-hardware cutover (HUMAN-driven; the agent prepares/drafts, a human runs).
+**GATE 6 fully passed** (automated rehearsal + human visual). **Next: Phase 7** — real-hardware
+cutover (HUMAN-driven; the agent prepares/drafts, a human runs).
 
 **Deferred cleanup:** superseded/legacy files are **not** deleted mid-migration — they're
 tracked in [CLEANUP.md](CLEANUP.md) and removed (plus the README/docs rewrite) in one final
