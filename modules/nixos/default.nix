@@ -14,5 +14,6 @@
     ./hardware.nix
     ./packages.nix
     ./environment.nix
+    ./fonts.nix
   ];
 }

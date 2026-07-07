@@ -20,7 +20,7 @@
     # (e.g. the `gh` copilot extension) if wanted.
     arduino-ide code-cursor codex
     ssm-session-manager-plugin wasm-pack watchman
-    typescript-language-server difftastic
+    typescript-language-server biome difftastic
 
     # Desktop / GUI
     rofi waybar dunst mako grim slurp wl-clipboard flameshot
