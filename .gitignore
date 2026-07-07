@@ -104,3 +104,6 @@ ENV/
 .tmuxp/*
 .env
 result/*
+
+# Local, per-machine Claude Code overrides — never commit (keep settings.json + hooks/ tracked)
+.claude/settings.local.json

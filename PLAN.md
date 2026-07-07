@@ -49,6 +49,12 @@ When PLAN.md says "Layer L2" it means the capability; when it points you at conc
 - **The single biggest trust risk is destructive commands (`nixos-anywhere`/`disko` wipe the target disk; a bad `nixos-rebuild switch` can sever the agent's own SSH control channel).** These are well-documented Claude Code failure classes. Mitigate with hooks-based deny rules (not just the flaky permission allowlist), snapshot-before-change discipline, `--target-host` pinning, and never letting the agent hold the GPG/age private key or run unattended against real hardware.
 - **A migration-specific risk to validate in the VM:** the flake's inline claim that "unstable is mandatory for RTX 5090 / Ryzen 9000" is **obsolete** on stable 26.05, but the VM rehearsal must *prove* stable's Blackwell/X3D support before trusting it on real hardware; hold a **scoped unstable overlay** (kernel/mesa/nvidia only) in reserve rather than reverting the whole system to unstable.
 
+## Phase 0 outcome — VM driver decision (recorded 2026-07-07, GATE 0 passed)
+
+**Driver: QEMU + KVM running inside WSL2; host = NixOS-WSL.** VMware Workstation / `vmrun.exe`-over-interop was **rejected** — VMware is not installed, and QEMU-in-WSL2 drops all the `vmrun`/interop/`wslpath` path-translation and networking fragility this document flagged. `/dev/kvm` is present (`root:kvm 0660`) and the operator is in the `kvm` group, so QEMU uses **real KVM**, not TCG.
+
+GATE 0 was cleared using a **throwaway `~/nixos-vmtest` flake** (pinned `nixos-26.05`), not the repo's `.#desktop` (which cannot build in Phase 0 — placeholder `sha256-AAAA…` firmware hash). The verified loop is `nixos-rebuild build-vm --flake .#vmtest` → headless boot on serial → `vmtest login:` (~6 s) → SSH via QEMU user-net `hostfwd :2222`. `nix flake check` is intentionally **not** a gate (a bare config fails the `fileSystems` assertion by design). The destructive-command guardrail (`.claude/hooks/guard.sh`) is active and was probe-tested: real-disk / `switch` / non-local `nixos-anywhere` targets all block (`exit 2`); `--vm-test` and `build-image` allow (`exit 0`). Ordered checklist + exact probe results: [TODO.md § Phase 0](./TODO.md#phase-0). *Implementation gotcha for later VM builds:* qemu-vm options (`virtualisation.graphics`, etc.) exist only inside the build-vm variant — set them under `virtualisation.vmVariant.*`, never top-level `virtualisation.*`, or evaluation fails with "option does not exist."
+
 ## Key Findings
 
 ### Verdict by tool

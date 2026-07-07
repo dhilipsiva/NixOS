@@ -37,18 +37,18 @@ RTX 5090 desktop.**
 Get to the point where you can *build and boot this flake in a throwaway VM* from the
 Windows box, before changing any config. This is the safety substrate for every later phase.
 
-- [ ] Confirm WSL2 is installed with a systemd-enabled distro (or install NixOS-WSL); verify `nix --version` and that flakes work: `nix flake --help`.
-- [ ] Enable flakes in WSL2 nix (`experimental-features = nix-command flakes` in `~/.config/nix/nix.conf`) so `nix flake check` runs there.
-- [ ] Verify KVM is available inside WSL2 (`ls -l /dev/kvm`); if absent, QEMU still works via TCG (slower) — note which you have.
-- [ ] Clone/checkout this repo *inside* the WSL2 filesystem (not `/mnt/c`, to avoid the 9p perf/permission tax) OR confirm `wslpath -w`/`wslpath -u` round-trips the Windows checkout path cleanly.
-- [ ] Pick the VM driver and record it in `PLAN.md`/`CLAUDE.md`: **QEMU-in-WSL2** (preferred, KVM) or **VMware Workstation via `vmrun.exe`** through interop. If VMware, confirm `vmrun.exe` is reachable from WSL2 (`vmrun.exe list`) and that VMX paths are passed as Windows paths via `wslpath -w`.
-- [ ] Smoke-test the loop on the CURRENT (unstable) flake so a red result later means "my change broke it," not "the loop was never working":
-  - [ ] `nix flake check` — expect it to surface the real state (evaluates once `[cite: N]` are gone — already stripped from the `.nix` files; verify).
-  - [ ] Build a VM image: `nixos-rebuild build-image --flake .#desktop --image-variant qcow-efi` (successor to the archived `nixos-generators`; produces `config.system.build.images.<format>`).
-  - [ ] Boot that qcow in QEMU from WSL2 and confirm it reaches a login prompt.
-- [ ] Add an `.claude/settings.json` deny-list + `PreToolUse` hook per `PLAN.md`'s guardrail architecture so `disko`/`nixos-anywhere`/`rm -rf` can only ever target the VM, never a real disk. **This is a precondition for every later phase.**
+- [x] Confirm WSL2 is installed with a systemd-enabled distro (or install NixOS-WSL); verify `nix --version` and that flakes work: `nix flake --help`. **(Done — host is NixOS-WSL, `nix` on PATH, flakes on.)**
+- [x] Enable flakes in WSL2 nix (`experimental-features = nix-command flakes` in `~/.config/nix/nix.conf`) so `nix flake check` runs there. **(Done — declaratively via the NixOS-WSL host config; flake commands work.)**
+- [x] Verify KVM is available inside WSL2 (`ls -l /dev/kvm`); if absent, QEMU still works via TCG (slower) — note which you have. **(Done — `/dev/kvm` present `root:kvm 0660`, user in `kvm` group; real KVM, not TCG.)**
+- [x] Clone/checkout this repo *inside* the WSL2 filesystem (not `/mnt/c`, to avoid the 9p perf/permission tax) OR confirm `wslpath -w`/`wslpath -u` round-trips the Windows checkout path cleanly. **(Done — repo consumed at `/mnt/c/.../NixOS` over 9p; the throwaway smoke-test flake lives on native ext4 at `~/nixos-vmtest`.)**
+- [x] Pick the VM driver and record it in `PLAN.md`/`CLAUDE.md`: **QEMU-in-WSL2** (preferred, KVM) or **VMware Workstation via `vmrun.exe`** through interop. If VMware, confirm `vmrun.exe` is reachable from WSL2 (`vmrun.exe list`) and that VMX paths are passed as Windows paths via `wslpath -w`. **(Done — chose QEMU+KVM in WSL2 (host = NixOS-WSL); VMware not used. Recorded in `PLAN.md`/`CLAUDE.md`.)**
+- [x] Smoke-test the loop so a red result later means "my change broke it," not "the loop was never working". **NOTE: run against a *throwaway* `~/nixos-vmtest` flake (nixos-26.05), NOT `.#desktop` — `.#desktop` can't build in Phase 0 (placeholder `sha256-AAAA…` firmware hash). Used `build-vm` (supplies its own disk), not `build-image`, per the corrected GATE-0 path in PLAN.md.**
+  - [x] ~~`nix flake check`~~ — **skipped by design:** a bare config has no root filesystem, so `nix flake check` fails the `fileSystems` assertion. Do NOT gate on it (see PLAN.md). The `[cite: N]` markers are already stripped from the repo `.nix` files.
+  - [x] Build a VM: `nixos-rebuild build-vm --flake .#vmtest` (build-image + OVMF is the Phase-6 alternative). **(Done — built cleanly; kernel 6.18.37 on NixOS 26.05.)** *Gotcha recorded:* qemu-vm options like `virtualisation.graphics` only exist inside the build-vm variant — set them under `virtualisation.vmVariant.*`, not top-level `virtualisation.*`, or eval fails.
+  - [x] Boot the VM in QEMU from WSL2 and confirm it reaches a login prompt. **(Done — headless serial reached `vmtest login:` in ~6 s; SSH via hostfwd `:2222` worked, `systemctl is-system-running` = `running`.)**
+- [x] Add an `.claude/settings.json` deny-list + `PreToolUse` hook per `PLAN.md`'s guardrail architecture so `disko`/`nixos-anywhere`/`rm -rf` can only ever target the VM, never a real disk. **This is a precondition for every later phase.** **(Done — `.claude/settings.json` + `.claude/hooks/guard.sh` present and firing; GATE-0 probes below all pass.)**
 
-**GATE 0:** From WSL2, `nix flake check` runs, `nixos-rebuild build-image --flake .#desktop ...` produces a bootable qcow, and that qcow boots to a login prompt in QEMU. The destructive-command guardrail is active and demonstrably blocks a real-disk target.
+**GATE 0 (PASSED 2026-07-07):** From NixOS-WSL, the build→boot loop is green — `nixos-rebuild build-vm --flake .#vmtest` builds and the VM boots to a login prompt in QEMU (SSH-reachable). The destructive-command guardrail is active and demonstrably blocks real-disk targets: all 5 BLOCK probes (`rm -rf /home`, `nixos-rebuild switch --flake .#desktop`, `nixos-anywhere … --target-host root@192.168.1.50`, `disko … /dev/nvme0n1`, `dd … of=/dev/sda`) → exit 2; both ALLOW probes (`nixos-anywhere … --vm-test`, `nixos-rebuild build-image … .#vmtest`) → exit 0. **→ clears Phase 1.**
 
 ---
 

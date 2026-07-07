@@ -65,6 +65,25 @@ When you change structure, keep this file in sync — after the migration lands,
 "What this repo is" section above (built on the `XDG_CONFIG_HOME` direct-serve model)
 will need a full rewrite.
 
+**Phase 0 is complete (GATE 0 passed 2026-07-07).** The VM test loop is stood up and the
+safety substrate is live:
+- **VM driver: QEMU + KVM inside WSL2; host = NixOS-WSL** (VMware/`vmrun` rejected — not
+  installed, and this drops all interop/`wslpath` fragility). Real KVM (`/dev/kvm` present),
+  not TCG.
+- The build→boot loop is validated with a **throwaway `~/nixos-vmtest` flake** (pinned
+  `nixos-26.05`), **not** `.#desktop` (blocked by the `sha256-AAAA…` firmware hash). The
+  loop is `nixos-rebuild build-vm --flake .#vmtest` → headless serial boot → login prompt →
+  SSH via hostfwd `:2222`. **Do not gate on `nix flake check`** for a bare VM config — it
+  fails the `fileSystems` assertion by design.
+- **The guardrail is active and applies to you:** `.claude/settings.json` + the
+  `.claude/hooks/guard.sh` PreToolUse hook hard-block `rm -r`, `nixos-rebuild
+  switch/boot/test`, `disko`, raw block-device writes (`dd`/`mkfs`/… to `/dev/*`),
+  `git push --force`/`reset --hard`, and any `nixos-anywhere` that is not `--vm-test` or
+  localhost-targeted. Phase 0–6 only ever `build`/`build-image`/`build-vm`/`--vm-test`.
+- *Nix gotcha:* qemu-vm options (`virtualisation.graphics`, etc.) exist only inside the
+  build-vm variant — set them under `virtualisation.vmVariant.*`, never top-level
+  `virtualisation.*`, or evaluation fails.
+
 ### Known rough edges
 
 `modules/common.nix` and `home/default.nix` were AI-generated; the invalid `[cite: N]`

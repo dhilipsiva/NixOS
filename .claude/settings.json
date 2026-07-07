@@ -1,0 +1,59 @@
+{
+  "permissions": {
+    "defaultMode": "default",
+    "allow": [
+      "Bash(nix build*)",
+      "Bash(nix flake check*)",
+      "Bash(nix flake show*)",
+      "Bash(nix flake metadata*)",
+      "Bash(nix eval*)",
+      "Bash(nix run github:nixos/nixpkgs*)",
+      "Bash(nix develop*)",
+      "Bash(nix profile install*)",
+      "Bash(nixos-rebuild build*)",
+      "Bash(nixos-rebuild build-image*)",
+      "Bash(nixos-rebuild build-vm*)",
+      "Bash(qemu-system-x86_64*)",
+      "Bash(qemu-img*)",
+      "Bash(nc -z localhost*)",
+      "Bash(ssh -p 2222*)",
+      "Bash(hyprctl*)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git show*)",
+      "Bash(git branch*)"
+    ],
+    "ask": [
+      "Bash(git push*)",
+      "Bash(git commit*)"
+    ],
+    "deny": [
+      "Bash(rm -rf*)",
+      "Bash(nixos-rebuild switch*)",
+      "Bash(nixos-rebuild boot*)",
+      "Bash(nixos-rebuild test*)",
+      "Bash(disko*)",
+      "Bash(git push --force*)",
+      "Bash(git reset --hard*)",
+      "Read(./secrets/**)",
+      "Read(**/*.age)",
+      "Read(~/.config/sops/**)",
+      "Read(~/.gnupg/**)",
+      "Read(~/.ssh/id_*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/guard.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
