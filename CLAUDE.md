@@ -99,6 +99,10 @@ was confirmed by `nix store diff-closures` (only the two intended service change
 **Next: Phase 3** (migrate `.config/` dotfiles into home-manager Nix; then delete
 `.config/` + the `XDG_CONFIG_HOME` override).
 
+**Deferred cleanup:** superseded/legacy files are **not** deleted mid-migration — they're
+tracked in [CLEANUP.md](CLEANUP.md) and removed (plus the README/docs rewrite) in one final
+pass after all phases are green. Update `CLEANUP.md` at the end of each phase.
+
 ### Known rough edges
 
 `modules/common.nix` and `home/default.nix` were AI-generated; the invalid `[cite: N]`
