@@ -41,11 +41,13 @@ Then, manually in MSI firmware:
    entry**, containing `PCI(1|2)\PCI(0|0)`. This matches the Linux SSD's actual PCI
    path. Its EFI partition is 1 GiB, UUID `85B9-1188`; the other paths beginning
    with `PCI(2|1)` lead to the Windows SSD.
-4. Select **`nixos-dbx-restore.esl`** at the partition's root. This is an
-   **EFI Signature List**, containing the original revocations. If the firmware
-   offers that exact format, select it. Inspect or photograph any differently
-   worded format dialog before confirming. Do not choose an operation that
-   hashes the file as an executable.
+4. Select **`nixos-dbx-restore.esl`** at the partition's root. At **Input File
+   Format**, choose **Public Key Certificate**, the first/top option shown in
+   `PXL_20261003_151808889.MP.jpg`. This menu groups raw **EFI Signature Lists**
+   under that label. The saved `.esl` contains the original revocations and has
+   no authenticated-update wrapper, so **Authenticated Variable** does not
+   apply. **EFI PE/COFF Image** is for executable images and does not apply to
+   this list either.
 5. Complete only the append to **dbx**, save and return to Linux using
    **NixOS generation 2**, entry `nixos-generation-2.conf`.
 
@@ -57,8 +59,11 @@ enabled in Custom mode. Staging will verify the actual saved entries after the
 reboot; displayed key counts alone do not establish successful restoration.
 
 The [MSI AM5 BIOS manual](https://download.msi.com/archive/mnu_exe/mb/AMDAM5BIOS.pdf),
-page 22, documents appending to Forbidden Signatures. The exact file-format
-dialog on this firmware has not yet been observed.
+page 22, documents appending to Forbidden Signatures. Your latest photo shows
+the three input-format labels. Their mapping is supported by the
+[AMI BIOS documentation in Supermicro's manual](https://www.supermicro.com/manuals/motherboard/H270/MNL-1914.pdf#page=105),
+printed page 4-37, which includes EFI Signature Lists under Public Key Certificate.
+Successful import on this board remains to be verified after reboot.
 
 ## 2. Stage the published configuration
 

@@ -100,12 +100,20 @@ entries. Ignoring owner GUIDs gives the same missing set, so this is not a
 comparison-format issue. The cause of the reset to factory content is unknown.
 The guard remains correct and must not be bypassed or given a new baseline.
 
-Next: copy the saved public `dbx.esl` to the Linux ESP and manually append it to
-**Forbidden Signatures (dbx)** following [DEPLOYMENT.md](DEPLOYMENT.md). This file
-export and firmware restoration are still pending. Then rerun
-`stage --host desktop`, reboot manually, perform physical acceptance and run the
-one-time cleanup. Never clear firmware keys, format a disk, switch the live
-system, or reboot automatically.
+The owner attempted the dbx recovery import and supplied
+`PXL_20261003_151808889.MP.jpg`. Its **Input File Format** menu has **Public Key
+Certificate**, **Authenticated Variable**, and **EFI PE/COFF Image**. Use the
+first option for `nixos-dbx-restore.esl`: the AMI BIOS documentation linked in
+DEPLOYMENT.md groups EFI Signature Lists under Public Key Certificate. The
+backup file is raw ESL data without an authenticated-update wrapper. A fresh
+read still shows dbx at 416 entries, db at 7, SecureBoot 1 and SetupMode 0;
+successful restoration has not yet been established.
+
+Next: complete the pending manual append of `nixos-dbx-restore.esl` to
+**Forbidden Signatures (dbx)** following [DEPLOYMENT.md](DEPLOYMENT.md). Then
+rerun `stage --host desktop`, reboot manually, perform physical acceptance and
+run the one-time cleanup. Never clear firmware keys, format a disk, switch the
+live system, or reboot automatically.
 
 The reported `bash: atuin: command not found` came from the preexisting shell
 history integration. The local Home Manager Bash configuration initializes old
