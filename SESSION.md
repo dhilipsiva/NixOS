@@ -18,8 +18,8 @@ Slack, Chrome with the official Teams web-app launcher, Lanzaboote, host-checked
 Git publication/staging, acceptance-gated timers/GC, unique Home Manager backups,
 and removal of obsolete reinstall material. Existing filesystems are preserved.
 
-The GitHub write deploy key at `~/.ssh/nixos-update` has been authorized and a push
-dry run succeeded. Private keys remain outside Git. Use `git status --short
+The GitHub write deploy key at `~/.ssh/nixos-update` has been authorized, and the
+implementation was published as `82024bb`. Private keys remain outside Git. Use `git status --short
 --branch` and `git log -1` to inspect the current publication state.
 
 The running installation is still the original system. This implementation has
@@ -28,21 +28,25 @@ The running/booted installation is generation 2; the system profile already
 pointed to generation 9 before this work (its link is dated 2026-01-31). The
 profile alone does not establish the EFI default. Inspect `sudo bootctl list`
 before the first reboot and retain the working generation 2 entry.
-The real encrypted login/UPS credentials still need local enrollment. Sudo requires
-the owner's password in their terminal. Windows encryption/recovery status remains
-unchecked (owner confirmed this during implementation).
+The owner successfully ran `prepare-credentials --host desktop` locally. The
+helper verified real host decryption and preservation of the installed login
+password; a fresh UPS secret is encrypted for the separate owner and host
+identities. The owner age identity is mode 0600 outside Git at
+`~/.config/sops/age/keys.txt`; back it up securely off the machine. Sudo requires
+the owner's password in their terminal. Windows encryption/recovery status
+remains unchecked (owner confirmed this during implementation).
 
-Next local step:
-
-```bash
-scripts/nixosctl prepare-credentials --host desktop
-```
-
-Then follow [DEPLOYMENT.md](DEPLOYMENT.md): verify Windows recovery readiness,
+Next local step: follow [DEPLOYMENT.md](DEPLOYMENT.md) to verify Windows recovery readiness,
 back up/signing preparation, append only the local db certificate while preserving
-Microsoft/OEM trust, commit/publish encrypted credentials, `stage --host desktop`,
+Microsoft/OEM trust, confirm the encrypted credentials are published, `stage --host desktop`,
 manual reboot, physical acceptance, then one-time cleanup. Never clear firmware
 keys, format a disk, switch the live system, or reboot automatically.
+
+The reported `bash: atuin: command not found` came from the preexisting shell
+history integration. The local Home Manager Bash configuration initializes old
+Atuin 18.10.0 while the user's profile lacks its executable. It did not prevent
+credential preparation. The new configuration includes Atuin and its shell
+integration; it has not been activated yet.
 
 Validation so far: four flake checks pass, covering the Hyprland parser, Ollama VM,
 release/channel decisions, real SOPS/age recipient isolation, repeated home-file

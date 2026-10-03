@@ -255,8 +255,9 @@ must use a clean Git checkout with every required file tracked.
 
 Follow [DEPLOYMENT.md](DEPLOYMENT.md) for local credential preparation, preservation
 of Microsoft/OEM Secure Boot trust, exact-revision staging, manual reboot and
-acceptance. The initial encrypted host file still requires local enrollment of
-the actual password/host identity; `stage` fails closed until that is complete.
+acceptance. The desktop's encrypted credentials are enrolled with the owner and
+actual host identities. Staging still verifies decryption and that the preserved
+password matches the installed account. Each new host needs its own enrollment.
 Cleanup policy is in [CLEANUP.md](CLEANUP.md). Session resumption is in
 [SESSION.md](SESSION.md).
 

@@ -3,7 +3,7 @@
 creation_rules:
 # BEGIN desktop
   - path_regex: secrets/desktop\.yaml$
-    age: age1aqnq0cm7j0zhlwsge72za09s8m0sh2sh2gucpaudaypkfsetu97sy68cqw
+    age: age1usxzsnee5tz5ns3qlzzpaff8hmtv8pydcfgq32kpu439gh4qjukqa0x202,age1mwgtkh3ty9d2s96hy2lpguuxc5sfkyda9s3j7uvjv2s04qha79dskd6a6s
 # END desktop
   - path_regex: secrets/vm-test\.yaml$
     age: age10hwn77a4vpj33s9u9j8u698lwmgv0g8trd2x5hk24zt5a0fnvsss6dj8mg
