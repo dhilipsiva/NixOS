@@ -19,6 +19,7 @@ Detected on 2026-10-03:
 | CPU | AMD Ryzen 9 9950X3D |
 | Motherboard | MSI MAG X870E TOMAHAWK WIFI, MS-7E59 |
 | GPU | NVIDIA RTX 5090; AMD integrated GPU also present |
+| Display | Samsung Odyssey G81SF, connected to the RTX 5090 over HDMI |
 | Memory | About 92 GiB visible to Linux |
 | Linux SSD | 4 TB XPG MARS 980 BLADE, serial `2P10291S7BAY` |
 | Windows SSD | Separate 4 TB SSD, serial `2P102LAC7BA1` |
@@ -33,6 +34,17 @@ AMD P-State performance policy, 25% zstd zram, periodic SSD TRIM, larger file-wa
 limits, and two concurrent Nix builds with all visible cores available to each.
 The Nix daemon has reduced CPU/I/O scheduling weight to help interactive work.
 These are workload choices, not measured benchmark improvements.
+
+**Temporary HDMI compatibility setting:** generation 10 lost its display when
+NVIDIA took over the framebuffer and logged an HDMI FRL link-training failure,
+although blind login started Hyprland. `hosts/desktop/graphics.nix` now disables
+HDMI FRL and deep colour and pins the NVIDIA HDMI-A-1 console/session to 4K60,
+8-bit SDR. Both module parameters are present in the selected
+[NVIDIA driver source](https://github.com/NVIDIA/open-gpu-kernel-modules/blob/595.104.02/kernel-open/nvidia-modeset/nvidia-modeset-linux.c).
+This deliberately limits refresh/HDR while establishing a working display;
+the retry and physical validation are still pending. Retest higher display modes
+over a working HDMI or DisplayPort link before removing the workaround. It is
+desktop-only and does not change the GPU's compute configuration.
 
 **Firmware needs attention:** Linux currently sees only 8 cores / 8 threads on this
 9950X3D, with SMT reported unavailable. Check BIOS settings for enabled CCDs/cores
@@ -253,9 +265,10 @@ selected kernel. These checks do not establish physical GPU, login or firmware
 behavior. During editing, `path:$PWD` includes untracked files; final validation
 must use a clean Git checkout with every required file tracked.
 
-Follow [DEPLOYMENT.md](DEPLOYMENT.md) for the remaining boot-menu check, manual
-reboot, physical validation and acceptance steps. Generation 10 has been staged;
-firmware preparation and the staged revision are recorded in [SESSION.md](SESSION.md).
+Follow [DEPLOYMENT.md](DEPLOYMENT.md) to stage the HDMI compatibility change,
+reboot manually and complete physical validation before acceptance. Generation 10
+failed display validation; the desktop is back on generation 2. Firmware preparation
+and the boot evidence are recorded in [SESSION.md](SESSION.md).
 The desktop's encrypted credentials are enrolled with the owner and
 actual host identities. Staging still verifies decryption and that the preserved
 password matches the installed account. Each new host needs its own enrollment.

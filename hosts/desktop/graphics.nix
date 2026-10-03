@@ -9,6 +9,33 @@ let
 in
 {
   boot.kernelPackages = pkgs.linuxPackagesFor (import ../../pkgs/kernel.nix { inherit pkgs; });
+
+  # Generation 10 lost video at the NVIDIA framebuffer takeover: "HDMI FRL
+  # link training failed." Blind login still started Hyprland. The Samsung
+  # Odyssey G81SF works at 4K60 on the recovery system. Use a conservative
+  # HDMI/TMDS, 8-bit baseline for BOTH the text console and the compositor.
+  # These parameters exist in the selected production driver's modeset module.
+  # Temporary: retest higher refresh/HDR over a working link before removing.
+  # HDMI-A-1 is the NVIDIA connector observed in generation 10, not nouveau's
+  # HDMI-A-2 name in recovery. Do not copy these settings onto another host.
+  boot.kernelParams = [
+    "nvidia-modeset.disable_hdmi_frl=1"
+    "nvidia-modeset.hdmi_deepcolor=0"
+    "video=HDMI-A-1:3840x2160@60"
+  ];
+
+  home-manager.users.dhilipsiva.wayland.windowManager.hyprland.settings.monitor = [
+    {
+      output = "HDMI-A-1";
+      mode = "3840x2160@60";
+      position = "auto";
+      scale = "auto";
+      bitdepth = 8;
+      cm = "srgb";
+      vrr = 0;
+    }
+  ];
+
   services.xserver.videoDrivers = [ "nvidia" ];
   hardware.graphics.extraPackages = [ pkgs.nvidia-vaapi-driver ];
   environment.sessionVariables = {

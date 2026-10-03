@@ -154,6 +154,18 @@ class FirmwareTests(unittest.TestCase):
 
 
 class HomeBackupTests(unittest.TestCase):
+    def test_home_manager_collision_probe_does_not_move_files(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / 'config.toml'
+            source.write_text('original')
+            helper = Path(ctl.__file__).with_name('backup-home-file.py')
+            result = subprocess.run([sys.executable, helper], cwd=directory,
+                                    check=True, capture_output=True, text=True)
+            self.assertEqual(result.stdout.strip(), 'unique-file backup')
+            self.assertEqual(result.stderr, '')
+            self.assertEqual(source.read_text(), 'original')
+            self.assertEqual(list(Path(directory).iterdir()), [source])
+
     def test_repeated_collisions_keep_both_originals(self):
         with tempfile.TemporaryDirectory() as directory:
             source = Path(directory) / 'config.toml'

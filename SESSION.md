@@ -22,21 +22,22 @@ The GitHub write deploy key at `~/.ssh/nixos-update` has been authorized, and th
 implementation was published as `82024bb`. Private keys remain outside Git. Use `git status --short
 --branch` and `git log -1` to inspect the current publication state.
 
-The running/booted installation is still the original generation 2. The owner
-has now successfully staged **generation 10**, revision
+The running/booted installation is back on the original generation 2 after
+generation 10 failed display validation. The owner previously staged
+**generation 10**, revision
 `3a9fa98970d18e2198a8d2ff334d4479d8479b01`, with system path
 `/nix/store/s5mcwfgiihwlya0rjjf03yvg86a5947m-nixos-system-dhilipsiva-desktop-26.05.20261002.774debe`.
 Read-only inspection confirms that the system profile resolves to that path
-through `system-10-link`; `/run/current-system` and `/run/booted-system` still
-resolve to the original generation 2. No live activation, automatic reboot or
+through `system-10-link`; `/run/current-system` and `/run/booted-system` now
+resolve to the original generation 2 again. No live switch, automatic reboot or
 Nix store GC has run. The owner manually enrolled the local certificate and
 restored dbx; the agent has not written firmware variables.
 
 Before staging, the system profile already pointed to generation 9 (its link
 was dated 2026-01-31), while the owner's earlier `sudo bootctl list` showed
 generation 2 as default/selected and generation 1 available. That older boot-menu
-listing does not establish the new default. A fresh privileged `bootctl list`
-check is pending because this agent cannot read the root-only ESP. The current
+listing does not establish the new default. After staging the display fix, check
+`bootctl list` again; this agent cannot read the root-only ESP. The current
 EFI variables have no LoaderEntryDefault or LoaderEntryOneShot override.
 The owner successfully ran `prepare-credentials --host desktop` locally. The
 helper verified real host decryption and preservation of the installed login
@@ -135,18 +136,52 @@ signature verification passed. Lanzaboote's `Collecting garbage...` message is
 its EFI-file housekeeping under its own ESP directories. The separate Nix store
 GC command remains gated by first-boot acceptance.
 
-Next: inspect `sudo bootctl list` for generation 10 as default and the protected
-recovery entry, reboot manually, then complete physical validation and acceptance
-following [DEPLOYMENT.md](DEPLOYMENT.md). Cleanup remains pending until acceptance.
-Never clear firmware keys, format a disk, switch the live system, or reboot
-automatically. Subsequent documentation-only commits do not require repeating
-the completed stage when the built system path remains unchanged.
+The first generation 10 attempt was on 2026-10-03 at 21:15:45–21:17:04 Asia/Colombo,
+boot ID `a1c3c950831d4237857194185ea71d3b`. NVIDIA's **open** 595.104.02 module loaded
+on Linux 7.2.9. At 21:15:57, immediately after the NVIDIA framebuffer takeover,
+the kernel logged `HDMI FRL link training failed`. The owner saw no login screen,
+typed the password anyway, and authenticated successfully at 21:16:36. UWSM then
+started Hyprland, its Lua configuration, Waybar and Hypridle. Waybar identified the
+connected output as HDMI-A-1. The system stayed alive until shutdown. These logs
+point to the HDMI link as the display failure; they do not prove a working desktop.
+
+Do not confuse this with boot `9f079c1040f04cd8a63a9d5b17aacc35`, the subsequent
+attempt at the preexisting generation 9, Linux 6.18.1 / NVIDIA proprietary 590.44.01.
+That older configuration fails because Blackwell requires open kernel modules;
+generation 10 already uses them. The owner then returned to the working original
+generation 2 (Plasma/nouveau). The protected recovery entry contains that original
+system, not generation 9.
+
+Recovery-session EDID identifies the Samsung Odyssey G81SF. Its current working
+mode is 3840×2160 at 60 Hz; its EDID supports 600 MHz TMDS and HDMI FRL. The NVIDIA
+595.104.02 source and built module both expose `disable_hdmi_frl` and
+`hdmi_deepcolor`. The desktop-only retry disables FRL and deep colour, requests
+4K60 for the console, and adds a matching 8-bit SDR/VRR-off Hyprland rule. The
+observed NVIDIA connector is HDMI-A-1; nouveau currently calls it HDMI-A-2.
+This is a temporary refresh/HDR limitation, not a proven physical fix. No kernel
+or driver downgrade, firmware change or live graphics change was performed.
+
+The same boot exposed a separate Home Manager warning: its collision-check
+message executes `backupCommand` without arguments because of unescaped shell
+backticks. The backup helper now treats that invocation as a read-only description;
+the one-file invocation still retains each original in a unique directory. A
+regression test checks that the no-argument invocation cannot move files. During
+generation 10, the two real Atuin/Zellij collisions were nevertheless backed up
+successfully after the warning.
+
+Next: stage the published HDMI compatibility change through `nixosctl stage`,
+check the new default and protected recovery entries, then retry a manual boot
+following [DEPLOYMENT.md](DEPLOYMENT.md). Acceptance and cleanup remain pending
+until the display and other physical checks pass. Never clear firmware keys,
+format a disk, switch the live system, or reboot automatically.
 
 The reported `bash: atuin: command not found` came from the preexisting shell
 history integration. The local Home Manager Bash configuration initializes old
 Atuin 18.10.0 while the user's profile lacks its executable. It did not prevent
 credential preparation. The new configuration includes Atuin and its shell
-integration; it has not been activated yet.
+integration; it activated during the failed display attempt, but this recovery
+session runs the old generation again. Do not treat the old-shell warning as a
+failure of the credential or staging helpers.
 
 Validation so far: four flake checks pass, covering the Hyprland parser, Ollama VM,
 release/channel decisions, real SOPS/age recipient isolation, repeated home-file
