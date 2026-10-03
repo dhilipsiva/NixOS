@@ -32,9 +32,23 @@ The owner successfully ran `prepare-credentials --host desktop` locally. The
 helper verified real host decryption and preservation of the installed login
 password; a fresh UPS secret is encrypted for the separate owner and host
 identities. The owner age identity is mode 0600 outside Git at
-`~/.config/sops/age/keys.txt`; back it up securely off the machine. Sudo requires
-the owner's password in their terminal. Windows encryption/recovery status
-remains unchecked (owner confirmed this during implementation).
+`~/.config/sops/age/keys.txt`. The owner confirmed that this file is backed up.
+Sudo requires the owner's password in their terminal; this agent's session cannot
+reuse that terminal's authentication.
+
+Linux's lsblk/UDisks metadata reports the Windows system partition as NTFS UUID
+`263CE1813CE14BFD`, with no crypto backing device. A fresh raw-device probe and a
+read-only UDisks mount were denied for lack of local administrator authentication;
+no Windows filesystem was mounted or modified. This is preliminary evidence only,
+not confirmation of encryption/protection state or an off-machine recovery-key
+backup. The owner can run this read-only check without rebooting into Windows:
+
+```bash
+sudo blkid --probe --output export /dev/disk/by-partuuid/fb38feee-5c40-4b28-ae3f-68faac3342e5
+```
+
+Windows recovery readiness remains unresolved. Do not treat the owner age-key
+backup as a Windows BitLocker recovery-key backup; they are separate keys.
 
 Next local step: follow [DEPLOYMENT.md](DEPLOYMENT.md) to verify Windows recovery readiness,
 back up/signing preparation, append only the local db certificate while preserving
