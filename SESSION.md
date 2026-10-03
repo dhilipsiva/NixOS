@@ -36,22 +36,28 @@ identities. The owner age identity is mode 0600 outside Git at
 Sudo requires the owner's password in their terminal; this agent's session cannot
 reuse that terminal's authentication.
 
-Linux's lsblk/UDisks metadata reports the Windows system partition as NTFS UUID
-`263CE1813CE14BFD`, with no crypto backing device. A fresh raw-device probe and a
-read-only UDisks mount were denied for lack of local administrator authentication;
-no Windows filesystem was mounted or modified. This is preliminary evidence only,
-not confirmation of encryption/protection state or an off-machine recovery-key
-backup. The owner can run this read-only check without rebooting into Windows:
+The owner successfully ran a fresh read-only probe of the raw Windows system
+partition on 2026-10-03:
 
 ```bash
 sudo blkid --probe --output export /dev/disk/by-partuuid/fb38feee-5c40-4b28-ae3f-68faac3342e5
 ```
 
-Windows recovery readiness remains unresolved. Do not treat the owner age-key
-backup as a Windows BitLocker recovery-key backup; they are separate keys.
+It returned `TYPE=ntfs`, `USAGE=filesystem`, UUID `263CE1813CE14BFD`, and the
+expected partition UUID. No BitLocker container was detected on this partition;
+this is the evidence for the `unencrypted` assessment used in signing preparation.
+The probe did not query Windows policy or verify a recovery-key backup. The owner
+age-key backup is separate from any Windows recovery key. No Windows filesystem
+was mounted or modified.
 
-Next local step: follow [DEPLOYMENT.md](DEPLOYMENT.md) to verify Windows recovery readiness,
-back up/signing preparation, append only the local db certificate while preserving
+Next local step (requires the owner's sudo authentication):
+
+```bash
+scripts/nixosctl prepare-boot --host desktop --windows-status unencrypted
+```
+
+Then follow [DEPLOYMENT.md](DEPLOYMENT.md): back up the signing keys and boot/trust
+backup securely off the machine, append only the local db certificate while preserving
 Microsoft/OEM trust, confirm the encrypted credentials are published, `stage --host desktop`,
 manual reboot, physical acceptance, then one-time cleanup. Never clear firmware
 keys, format a disk, switch the live system, or reboot automatically.

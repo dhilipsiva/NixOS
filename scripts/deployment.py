@@ -258,7 +258,7 @@ def prepare_boot(cfg, windows_status):
         'windowsStatus': windows_status,
     })
     print(f'ESP, trust variables and signature inventory saved in {backup}')
-    print('Check Windows device encryption/BitLocker and store its recovery key externally before firmware changes.')
+    print(f'Windows readiness recorded: {windows_status}.')
     print('In MSI firmware: Authorized Signatures (db) -> Append Key -> Linux ESP /nixos-db.cer.')
     print('Keep PK, KEK, Microsoft/OEM db and dbx entries. Never clear or replace them.')
     print('No firmware keys were enrolled and no boot generation was staged.')

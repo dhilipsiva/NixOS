@@ -32,11 +32,25 @@ on their own hosts. Do not copy the desktop host identity to the ThinkPad.
 
 ## 2. Check Windows and prepare signing
 
-In Windows, inspect Device encryption / BitLocker (or run `manage-bde -status`
-in an administrator terminal). If encryption is enabled, verify that the correct
-recovery key is accessible from a separate device or offline copy. Do not assume
-an NTFS filesystem means encryption is disabled. Firmware trust changes can
-trigger Windows recovery.
+For this desktop, the owner ran a fresh read-only probe directly against the raw
+Windows system partition:
+
+```bash
+sudo blkid --probe --output export /dev/disk/by-partuuid/fb38feee-5c40-4b28-ae3f-68faac3342e5
+```
+
+The result was `TYPE=ntfs`, `USAGE=filesystem`, UUID `263CE1813CE14BFD`. No
+BitLocker container was detected; this supports the `unencrypted` assessment for
+this partition. This goes beyond a cached `lsblk` label: blkid validates NTFS
+metadata on the raw partition and has a separate BitLocker probe. See its
+[NTFS](https://github.com/util-linux/util-linux/blob/master/libblkid/src/superblocks/ntfs.c)
+and [BitLocker](https://github.com/util-linux/util-linux/blob/master/libblkid/src/superblocks/bitlocker.c)
+format checks. This Linux probe does not query Windows policy or verify a backup.
+
+For an encrypted or uncertain result, inspect Device encryption / BitLocker in
+Windows (or run `manage-bde -status` in an administrator terminal). If encryption
+is enabled, verify that the correct recovery key is accessible from a separate
+device or offline copy. Firmware trust changes can trigger Windows recovery.
 
 Use the command matching the status you actually checked:
 
