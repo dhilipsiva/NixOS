@@ -23,22 +23,30 @@ implementation was published as `82024bb`. Private keys remain outside Git. Use 
 --branch` and `git log -1` to inspect the current publication state.
 
 The running/booted installation is back on the original generation 2 after
-generation 10 failed display validation. The owner previously staged
+generation 10 failed display validation. The HDMI compatibility change is now
+staged as **generation 11**, revision `0258f5db7c92b37f933841c4700a16f7b7ccb3e5`,
+with system path
+`/nix/store/z4bsvhjn75dcn1dyr3q4cq7cxjvqdrqy-nixos-system-dhilipsiva-desktop-26.05.20261002.774debe`.
+Read-only inspection confirms the system profile resolves to that new path;
+the running system remains the original generation 2. The owner's `bootctl list`
+confirms generation 11 as **default** and the protected recovery entry as
+**selected**. A physical boot of generation 11 remains pending.
+
+The owner previously staged
 **generation 10**, revision
 `3a9fa98970d18e2198a8d2ff334d4479d8479b01`, with system path
 `/nix/store/s5mcwfgiihwlya0rjjf03yvg86a5947m-nixos-system-dhilipsiva-desktop-26.05.20261002.774debe`.
-Read-only inspection confirms that the system profile resolves to that path
-through `system-10-link`; `/run/current-system` and `/run/booted-system` now
-resolve to the original generation 2 again. No live switch, automatic reboot or
-Nix store GC has run. The owner manually enrolled the local certificate and
-restored dbx; the agent has not written firmware variables.
+At that time, read-only inspection confirmed the system profile pointed through
+`system-10-link`. No live switch, automatic reboot or Nix store GC has run. The owner
+manually enrolled the local certificate and restored dbx; the agent has not written
+firmware variables.
 
 Before staging, the system profile already pointed to generation 9 (its link
 was dated 2026-01-31), while the owner's earlier `sudo bootctl list` showed
 generation 2 as default/selected and generation 1 available. That older boot-menu
-listing does not establish the new default. After staging the display fix, check
-`bootctl list` again; this agent cannot read the root-only ESP. The current
-EFI variables have no LoaderEntryDefault or LoaderEntryOneShot override.
+listing predates both new staged generations. The latest owner-supplied boot-menu
+output now confirms generation 11 as the default; this agent cannot directly read
+the root-only ESP.
 The owner successfully ran `prepare-credentials --host desktop` locally. The
 helper verified real host decryption and preservation of the installed login
 password; a fresh UPS secret is encrypted for the separate owner and host
@@ -125,7 +133,8 @@ are unchanged, all six original db entries are retained, and the original local
 signing certificate remains enrolled as the seventh entry. SecureBoot is 1 and
 SetupMode is 0. Firmware restoration is complete.
 
-The successful stage output records revision `3a9fa98` and the system path above.
+The first successful stage output records revision `3a9fa98` and the generation 10
+system path above.
 The helper checked/built the published snapshot, verified the host credentials
 and trust before and after the build, installed signed boot files, assembled the
 protected recovery image at `/boot/EFI/nixos-recovery/pre-migration.efi`, and
@@ -169,11 +178,28 @@ regression test checks that the no-argument invocation cannot move files. During
 generation 10, the two real Atuin/Zellij collisions were nevertheless backed up
 successfully after the warning.
 
-Next: stage the published HDMI compatibility change through `nixosctl stage`,
-check the new default and protected recovery entries, then retry a manual boot
-following [DEPLOYMENT.md](DEPLOYMENT.md). Acceptance and cleanup remain pending
-until the display and other physical checks pass. Never clear firmware keys,
-format a disk, switch the live system, or reboot automatically.
+The owner successfully staged the HDMI compatibility revision `0258f5d`. The
+helper again verified credential decryption and completed Lanzaboote installation.
+The following `bootctl list` confirms generation 11 is the default, its UKI points
+to the expected `z4bsvhjn...` system, and its embedded command line includes:
+
+```text
+nvidia-modeset.disable_hdmi_frl=1 nvidia-modeset.hdmi_deepcolor=0 video=HDMI-A-1:3840x2160@60
+```
+
+The protected entry `nixos-protected-recovery.conf` is present and selected, with
+`efi /EFI/nixos-recovery/pre-migration.efi`. The separate legacy generation 1/2
+`.conf` entries refer to missing kernel/initrd files in `/EFI/nixos`; those entries
+are not usable recovery choices. The self-contained protected recovery UKI is the
+fallback. Older generation 6 is reported/absent, and older generations 7–9 are
+still listed. No boot-menu files were removed by the agent.
+
+Next: retry a manual boot into **generation 11** following
+[DEPLOYMENT.md](DEPLOYMENT.md). Staging and boot-menu confirmation are complete;
+acceptance and cleanup remain pending until the display and other physical checks
+pass. Documentation-only updates do not require another stage when the system
+path is unchanged. Never clear firmware keys, format a disk, switch the live system,
+or reboot automatically.
 
 The reported `bash: atuin: command not found` came from the preexisting shell
 history integration. The local Home Manager Bash configuration initializes old

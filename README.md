@@ -265,10 +265,11 @@ selected kernel. These checks do not establish physical GPU, login or firmware
 behavior. During editing, `path:$PWD` includes untracked files; final validation
 must use a clean Git checkout with every required file tracked.
 
-Follow [DEPLOYMENT.md](DEPLOYMENT.md) to stage the HDMI compatibility change,
-reboot manually and complete physical validation before acceptance. Generation 10
-failed display validation; the desktop is back on generation 2. Firmware preparation
-and the boot evidence are recorded in [SESSION.md](SESSION.md).
+The HDMI compatibility change is staged as **generation 11**, confirmed as the
+boot default. Follow [DEPLOYMENT.md](DEPLOYMENT.md) to reboot manually and complete
+physical validation before acceptance. The protected recovery entry currently
+runs the original generation 2. Firmware preparation and the boot evidence are
+recorded in [SESSION.md](SESSION.md).
 The desktop's encrypted credentials are enrolled with the owner and
 actual host identities. Staging still verifies decryption and that the preserved
 password matches the installed account. Each new host needs its own enrollment.
