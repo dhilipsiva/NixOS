@@ -1,95 +1,47 @@
 # Remaining desktop deployment
 
 Run commands from `/home/dhilipsiva/projects/dhilipsiva/NixOS` as dhilipsiva.
-Completed preparation and the reported backup copy are recorded in [SESSION.md](SESSION.md).
-Keep the copied recovery archive and the separately backed-up owner age identity
-available during the firmware change.
+Firmware enrollment, restoration of all saved dbx entries and staging are complete.
+Generation **10**, from published revision `3a9fa98970d18e2198a8d2ff334d4479d8479b01`,
+is staged. Generation 2 is still running. Completed preparation and the reported
+backup copy are recorded in [SESSION.md](SESSION.md). Keep the copied recovery
+archive, separately backed-up owner age identity and recovery media available.
 
-## 1. Restore the missing dbx revocations
+## 1. Check the boot menu and reboot manually
 
-Certificate enrollment is complete and verified against the preparation backup.
-Secure Boot is enabled in User mode; PK, KEK and all six original db certificates
-are preserved, with the local certificate added as the seventh entry.
-
-Staging stopped before changing the system profile or boot entries because the
-forbidden-signature database (`dbx`) has lost 29 SHA-256 revocations. The backup
-has 445 entries; the current 416 entries exactly match the firmware's factory
-`dbxDefault`. This is a real loss of revocations, not an entry-order or owner-GUID
-difference. Its cause has not been established. Keep the staging guard and its
-original backup intact.
-
-Copy the saved public revocation list to the Linux ESP from your local terminal:
-
-```bash
-sudo install -m 0600 \
-  /var/lib/nixos-deployment/boot-backup-20261003T190354/dbx.esl \
-  /boot/nixos-dbx-restore.esl
-sudo cmp \
-  /var/lib/nixos-deployment/boot-backup-20261003T190354/dbx.esl \
-  /boot/nixos-dbx-restore.esl
-```
-
-A successful `cmp` prints nothing. The file contains only the public revocation
-list that was installed before preparation. These commands do not enroll it.
-Private signing keys and the original backup stay in place.
-
-Then, manually in MSI firmware:
-
-1. Open **Security → Secure Boot → Key Management → Forbidden Signatures (dbx)**.
-2. Choose **Append Key → Local File**.
-3. Select the Linux ESP. In `PXL_20261003_142445764.jpg`, it is the **first/top
-   entry**, containing `PCI(1|2)\PCI(0|0)`. This matches the Linux SSD's actual PCI
-   path. Its EFI partition is 1 GiB, UUID `85B9-1188`; the other paths beginning
-   with `PCI(2|1)` lead to the Windows SSD.
-4. Select **`nixos-dbx-restore.esl`** at the partition's root. At **Input File
-   Format**, choose **Public Key Certificate**, the first/top option shown in
-   `PXL_20261003_151808889.MP.jpg`. This menu groups raw **EFI Signature Lists**
-   under that label. The saved `.esl` contains the original revocations and has
-   no authenticated-update wrapper, so **Authenticated Variable** does not
-   apply. **EFI PE/COFF Image** is for executable images and does not apply to
-   this list either.
-5. Complete only the append to **dbx**, save and return to Linux using
-   **NixOS generation 2**, entry `nixos-generation-2.conf`.
-
-Use the recovery `.esl` only with **Forbidden Signatures (dbx)**. Never put
-`nixos-db.cer` in dbx: that would revoke your new signing certificate. Preserve
-PK, KEK and db, and leave **Set New Var**, **Delete Var**, **Restore Factory
-Keys**, **Reset To Setup Mode** and **Enroll Efi Image** unused. Keep Secure Boot
-enabled in Custom mode. Staging will verify the actual saved entries after the
-reboot; displayed key counts alone do not establish successful restoration.
-
-The [MSI AM5 BIOS manual](https://download.msi.com/archive/mnu_exe/mb/AMDAM5BIOS.pdf),
-page 22, documents appending to Forbidden Signatures. Your latest photo shows
-the three input-format labels. Their mapping is supported by the
-[AMI BIOS documentation in Supermicro's manual](https://www.supermicro.com/manuals/motherboard/H270/MNL-1914.pdf#page=105),
-printed page 4-37, which includes EFI Signature Lists under Public Key Certificate.
-Successful import on this board remains to be verified after reboot.
-
-## 2. Stage the published configuration
-
-After restoring the missing revocations and returning from firmware:
-
-```bash
-scripts/nixosctl stage --host desktop
-```
-
-The helper verifies the published revision, credentials, hardware, actual
-certificate enrollment and preservation of existing firmware trust before
-staging. It checks/builds the configuration, installs signed boot entries and a
-protected recovery image, and records the staged revision. It does not change
-the running session or reboot.
-
-After staging, inspect the newly written entries:
+Inspect the newly written entries from your local terminal:
 
 ```bash
 sudo bootctl list
 ```
 
-Confirm the new generation is the default and the protected recovery entry is
-present. Then reboot manually into the new generation. Keep installer/recovery
-media and firmware boot-menu access available.
+Confirm that **NixOS generation 10** is the **default**, and that
+**NixOS (protected pre-migration recovery)** is present, with entry ID
+`nixos-protected-recovery.conf`. The current/selected entry can still refer to
+generation 2 until the reboot. If the new default or recovery entry is missing,
+resolve the boot-menu output before rebooting.
 
-## 3. Validate the new desktop
+Once those entries are confirmed, save your work and reboot manually into
+generation 10. If the new system cannot boot or provide a usable login, select
+**NixOS (protected pre-migration recovery)** from the boot menu; it contains the
+original generation 2 kernel/initrd in a signed recovery image.
+
+## 2. Validate the new desktop
+
+Log in through the text login screen and open Alacritty with **Super+Enter**.
+Collect the initial read-only checks:
+
+```bash
+scripts/nixosctl status
+sudo bootctl status
+nvidia-smi
+systemctl --failed
+systemctl --user --failed
+```
+
+The running system must match the staged system:
+`/nix/store/s5mcwfgiihwlya0rjjf03yvg86a5947m-nixos-system-dhilipsiva-desktop-26.05.20261002.774debe`.
+Secure Boot must remain enabled. Inspect any failed units before acceptance.
 
 - Check password login and sudo, greetd/Hyprland, Alacritty/fish, Atuin, zoxide
   and ripgrep. The old shell's Atuin warning should be resolved after activation.
@@ -101,7 +53,7 @@ media and firmware boot-menu access available.
   starts on request, unloads the model after a default request and stops when idle.
 - Check Slack and Teams sign-in, microphone, camera and screen sharing.
 
-## 4. Accept the deployment and run cleanup
+## 3. Accept the deployment and run cleanup
 
 Only after the physical checks pass:
 

@@ -22,14 +22,22 @@ The GitHub write deploy key at `~/.ssh/nixos-update` has been authorized, and th
 implementation was published as `82024bb`. Private keys remain outside Git. Use `git status --short
 --branch` and `git log -1` to inspect the current publication state.
 
-The running installation is still the original system. No new generation has
-been staged/activated and no Nix store GC has run. The owner has manually enrolled
-the local certificate in firmware; the agent has not written firmware variables.
-The running/booted installation is generation 2; the system profile already
-pointed to generation 9 before this work (its link is dated 2026-01-31). The
-owner has now checked `sudo bootctl list`: `nixos-generation-2.conf` is both
-default and selected, and generation 1 is also available. Retain generation 2
-as the working entry when returning from firmware enrollment.
+The running/booted installation is still the original generation 2. The owner
+has now successfully staged **generation 10**, revision
+`3a9fa98970d18e2198a8d2ff334d4479d8479b01`, with system path
+`/nix/store/s5mcwfgiihwlya0rjjf03yvg86a5947m-nixos-system-dhilipsiva-desktop-26.05.20261002.774debe`.
+Read-only inspection confirms that the system profile resolves to that path
+through `system-10-link`; `/run/current-system` and `/run/booted-system` still
+resolve to the original generation 2. No live activation, automatic reboot or
+Nix store GC has run. The owner manually enrolled the local certificate and
+restored dbx; the agent has not written firmware variables.
+
+Before staging, the system profile already pointed to generation 9 (its link
+was dated 2026-01-31), while the owner's earlier `sudo bootctl list` showed
+generation 2 as default/selected and generation 1 available. That older boot-menu
+listing does not establish the new default. A fresh privileged `bootctl list`
+check is pending because this agent cannot read the root-only ESP. The current
+EFI variables have no LoaderEntryDefault or LoaderEntryOneShot override.
 The owner successfully ran `prepare-credentials --host desktop` locally. The
 helper verified real host decryption and preservation of the installed login
 password; a fresh UPS secret is encrypted for the separate owner and host
@@ -93,8 +101,8 @@ certificate matches its preparation receipt and is now present in firmware db.
 PK (1 entry), KEK (3 entries), and all original db certificates (6 entries) are
 preserved exactly. The local certificate brings db to 7 entries.
 
-The saved dbx has 445 entries/21500 bytes. Current dbx has 416 entries/19996 bytes
-and exactly equals current firmware dbxDefault. All 29 missing entries are SHA-256
+The saved dbx has 445 entries/21500 bytes. At that point dbx had 416 entries/19996
+bytes and exactly equaled firmware dbxDefault. All 29 missing entries were SHA-256
 revocations with their original Microsoft owner GUID; there are no new dbx
 entries. Ignoring owner GUIDs gives the same missing set, so this is not a
 comparison-format issue. The cause of the reset to factory content is unknown.
@@ -103,17 +111,36 @@ The guard remains correct and must not be bypassed or given a new baseline.
 The owner attempted the dbx recovery import and supplied
 `PXL_20261003_151808889.MP.jpg`. Its **Input File Format** menu has **Public Key
 Certificate**, **Authenticated Variable**, and **EFI PE/COFF Image**. Use the
-first option for `nixos-dbx-restore.esl`: the AMI BIOS documentation linked in
-DEPLOYMENT.md groups EFI Signature Lists under Public Key Certificate. The
-backup file is raw ESL data without an authenticated-update wrapper. A fresh
-read still shows dbx at 416 entries, db at 7, SecureBoot 1 and SetupMode 0;
-successful restoration has not yet been established.
+first option for `nixos-dbx-restore.esl`: the
+[AMI BIOS documentation](https://www.supermicro.com/manuals/motherboard/H270/MNL-1914.pdf#page=105),
+printed page 4-37, groups EFI Signature Lists under Public Key Certificate. The
+backup file is raw ESL data without an authenticated-update wrapper.
 
-Next: complete the pending manual append of `nixos-dbx-restore.esl` to
-**Forbidden Signatures (dbx)** following [DEPLOYMENT.md](DEPLOYMENT.md). Then
-rerun `stage --host desktop`, reboot manually, perform physical acceptance and
-run the one-time cleanup. Never clear firmware keys, format a disk, switch the
-live system, or reboot automatically.
+The owner completed **Forbidden Signatures (dbx) → Append Key → Local File**
+using that file and format, then successfully ran `stage --host desktop`.
+Independent read-only comparison with the authenticated recovery archive now
+confirms that **all 445 original dbx entries are restored exactly**. PK and KEK
+are unchanged, all six original db entries are retained, and the original local
+signing certificate remains enrolled as the seventh entry. SecureBoot is 1 and
+SetupMode is 0. Firmware restoration is complete.
+
+The successful stage output records revision `3a9fa98` and the system path above.
+The helper checked/built the published snapshot, verified the host credentials
+and trust before and after the build, installed signed boot files, assembled the
+protected recovery image at `/boot/EFI/nixos-recovery/pre-migration.efi`, and
+verified their signatures before recording success. The recovery GC root still
+resolves to the original generation 2. The unsigned-image messages occurred
+while inspecting the old bootloader and recovery kernel before signing; final
+signature verification passed. Lanzaboote's `Collecting garbage...` message is
+its EFI-file housekeeping under its own ESP directories. The separate Nix store
+GC command remains gated by first-boot acceptance.
+
+Next: inspect `sudo bootctl list` for generation 10 as default and the protected
+recovery entry, reboot manually, then complete physical validation and acceptance
+following [DEPLOYMENT.md](DEPLOYMENT.md). Cleanup remains pending until acceptance.
+Never clear firmware keys, format a disk, switch the live system, or reboot
+automatically. Subsequent documentation-only commits do not require repeating
+the completed stage when the built system path remains unchanged.
 
 The reported `bash: atuin: command not found` came from the preexisting shell
 history integration. The local Home Manager Bash configuration initializes old
