@@ -22,8 +22,9 @@ The GitHub write deploy key at `~/.ssh/nixos-update` has been authorized, and th
 implementation was published as `82024bb`. Private keys remain outside Git. Use `git status --short
 --branch` and `git log -1` to inspect the current publication state.
 
-The running installation is still the original system. This implementation has
-not staged/activated a generation, changed firmware trust, or run Nix store GC.
+The running installation is still the original system. No new generation has
+been staged/activated and no Nix store GC has run. The owner has manually enrolled
+the local certificate in firmware; the agent has not written firmware variables.
 The running/booted installation is generation 2; the system profile already
 pointed to generation 9 before this work (its link is dated 2026-01-31). The
 owner has now checked `sudo bootctl list`: `nixos-generation-2.conf` is both
@@ -57,7 +58,8 @@ The boot/trust/signature backup is
 `/var/lib/sbctl` (owner UUID `7c29ce15-60f3-4f72-bcb4-7fe735961261`). The helper
 exported the public certificate to `/boot/nixos-db.cer`. The recovery GC root
 now resolves to the original running generation 2; the existing Fish configuration
-also has a protected GC root. No firmware keys were enrolled or new generation staged.
+also has a protected GC root. That preparation did not enroll firmware keys or
+stage a generation.
 
 The owner created and successfully decrypted the local encrypted recovery archive
 `/home/dhilipsiva/nixos-boot-recovery.INuBPo.tar.age` (mode 0600, 131360248 bytes).
@@ -68,21 +70,42 @@ the archive copy is done. The external destination and verification output were
 not supplied; record this as the owner's confirmation, not an independently
 verified off-machine copy. The owner age-key backup is already confirmed.
 
-The owner rebooted into MSI firmware and supplied four local photos in `images/`.
+The owner rebooted into MSI firmware and supplied local photos in `images/`.
 They show User mode, Secure Boot Enabled, Custom mode, and Key Management with
 six factory db certificates. `PXL_20261003_140507657.jpg` shows the action menu
 with Append Key highlighted; `PXL_20261003_140520312.jpg` shows the existing
-certificate list. No append-result dialog or local certificate enrollment is
-shown. The next step is to return from the list with Esc, activate Append Key
-with the keyboard, and inspect the subsequent file-selection dialog. These
+certificate list. The subsequent `PXL_20261003_142445764.jpg` shows the Local File
+filesystem selector. Its first/top entry, `PCI(1|2)\PCI(0|0)`, matches the Linux
+SSD at `/sys/devices/pci0000:00/0000:00:01.2/0000:02:00.0/nvme/nvme0/nvme0n1`.
+The other entries start with `PCI(2|1)` and lead to the Windows SSD. These
 troubleshooting photos remain local and are ignored by Git.
 
-Next: complete manual firmware enrollment following [DEPLOYMENT.md](DEPLOYMENT.md).
+The owner then reported successful local certificate enrollment and ran
+`stage --host desktop`. Credential verification passed, but the firmware trust
+guard stopped at `Existing dbx trust entries were removed`. It stopped before
+building/staging or changing the system profile/ESP.
 
-Then manually append only the local db certificate in MSI firmware while preserving
-Microsoft/OEM trust, run `stage --host desktop`,
-manual reboot, physical acceptance, then one-time cleanup. Never clear firmware
-keys, format a disk, switch the live system, or reboot automatically.
+Read-only diagnosis compared the currently readable EFI variables with the
+authenticated encrypted recovery archive. The archive was decrypted as a stream;
+only its public trust data was retained in memory, and no plaintext archive or
+private key was written out. SecureBoot is 1 and SetupMode is 0. The saved public
+certificate matches its preparation receipt and is now present in firmware db.
+PK (1 entry), KEK (3 entries), and all original db certificates (6 entries) are
+preserved exactly. The local certificate brings db to 7 entries.
+
+The saved dbx has 445 entries/21500 bytes. Current dbx has 416 entries/19996 bytes
+and exactly equals current firmware dbxDefault. All 29 missing entries are SHA-256
+revocations with their original Microsoft owner GUID; there are no new dbx
+entries. Ignoring owner GUIDs gives the same missing set, so this is not a
+comparison-format issue. The cause of the reset to factory content is unknown.
+The guard remains correct and must not be bypassed or given a new baseline.
+
+Next: copy the saved public `dbx.esl` to the Linux ESP and manually append it to
+**Forbidden Signatures (dbx)** following [DEPLOYMENT.md](DEPLOYMENT.md). This file
+export and firmware restoration are still pending. Then rerun
+`stage --host desktop`, reboot manually, perform physical acceptance and run the
+one-time cleanup. Never clear firmware keys, format a disk, switch the live
+system, or reboot automatically.
 
 The reported `bash: atuin: command not found` came from the preexisting shell
 history integration. The local Home Manager Bash configuration initializes old

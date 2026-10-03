@@ -5,43 +5,64 @@ Completed preparation and the reported backup copy are recorded in [SESSION.md](
 Keep the copied recovery archive and the separately backed-up owner age identity
 available during the firmware change.
 
-## 1. Append the public certificate in MSI firmware
+## 1. Restore the missing dbx revocations
 
-Your photos show **System Mode: User**, **Secure Boot: Enabled** and **Secure
-Boot Mode: Custom**. Keep those settings, the preset and factory-key provisioning
-unchanged. Key Management is already available.
+Certificate enrollment is complete and verified against the preparation backup.
+Secure Boot is enabled in User mode; PK, KEK and all six original db certificates
+are preserved, with the local certificate added as the seventh entry.
 
-1. Return to **Security → Secure Boot → Key Management**.
-2. Open **Authorized Signatures (db)**, the row showing six existing keys in
-   your screenshot.
-3. The action menu contains **Details**, **Save To File**, **Set New Var**,
-   **Append Key** and **Delete Var**. Use the keyboard arrows to select
-   **Append Key**, then press **Enter** to activate it.
-4. The screen listing Microsoft certificates and `MSI SHIP DB` shows the
-   existing signatures. If you are there, press **Esc** to return to the action
-   menu and activate **Append Key**. The highlighted row in a photo alone does
-   not establish that the append action ran.
-5. In the file-selection flow, choose the public certificate `/nixos-db.cer`
-   at the root of the **1 GiB Linux EFI partition**, UUID `85B9-1188`. There is
-   no `boot` directory to open first. The `.tar.age` archive is the recovery
-   backup; the certificate for firmware enrollment is `nixos-db.cer`.
-6. If activating Append Key opens a different dialog, keep it unchanged and
-   inspect its exact wording before choosing anything. The supplied photos do
-   not show this next dialog, so no Yes/No choice is assumed here.
-7. After the append succeeds, save the change and return to Linux using
+Staging stopped before changing the system profile or boot entries because the
+forbidden-signature database (`dbx`) has lost 29 SHA-256 revocations. The backup
+has 445 entries; the current 416 entries exactly match the firmware's factory
+`dbxDefault`. This is a real loss of revocations, not an entry-order or owner-GUID
+difference. Its cause has not been established. Keep the staging guard and its
+original backup intact.
+
+Copy the saved public revocation list to the Linux ESP from your local terminal:
+
+```bash
+sudo install -m 0600 \
+  /var/lib/nixos-deployment/boot-backup-20261003T190354/dbx.esl \
+  /boot/nixos-dbx-restore.esl
+sudo cmp \
+  /var/lib/nixos-deployment/boot-backup-20261003T190354/dbx.esl \
+  /boot/nixos-dbx-restore.esl
+```
+
+A successful `cmp` prints nothing. The file contains only the public revocation
+list that was installed before preparation. These commands do not enroll it.
+Private signing keys and the original backup stay in place.
+
+Then, manually in MSI firmware:
+
+1. Open **Security → Secure Boot → Key Management → Forbidden Signatures (dbx)**.
+2. Choose **Append Key → Local File**.
+3. Select the Linux ESP. In `PXL_20261003_142445764.jpg`, it is the **first/top
+   entry**, containing `PCI(1|2)\PCI(0|0)`. This matches the Linux SSD's actual PCI
+   path. Its EFI partition is 1 GiB, UUID `85B9-1188`; the other paths beginning
+   with `PCI(2|1)` lead to the Windows SSD.
+4. Select **`nixos-dbx-restore.esl`** at the partition's root. This is an
+   **EFI Signature List**, containing the original revocations. If the firmware
+   offers that exact format, select it. Inspect or photograph any differently
+   worded format dialog before confirming. Do not choose an operation that
+   hashes the file as an executable.
+5. Complete only the append to **dbx**, save and return to Linux using
    **NixOS generation 2**, entry `nixos-generation-2.conf`.
 
-Preserve the existing PK, KEK, Microsoft/OEM db and dbx entries. Leave **Set New
-Var**, **Delete Var**, **Restore Factory Keys**, **Reset To Setup Mode** and
-**Enroll Efi Image** unused. Staging will check the actual certificate and all
-original trust entries; the displayed key count alone is not sufficient proof.
+Use the recovery `.esl` only with **Forbidden Signatures (dbx)**. Never put
+`nixos-db.cer` in dbx: that would revoke your new signing certificate. Preserve
+PK, KEK and db, and leave **Set New Var**, **Delete Var**, **Restore Factory
+Keys**, **Reset To Setup Mode** and **Enroll Efi Image** unused. Keep Secure Boot
+enabled in Custom mode. Staging will verify the actual saved entries after the
+reboot; displayed key counts alone do not establish successful restoration.
 
 The [MSI AM5 BIOS manual](https://download.msi.com/archive/mnu_exe/mb/AMDAM5BIOS.pdf),
-pages 21–22, documents appending to db. The menu labels above match your photos.
+page 22, documents appending to Forbidden Signatures. The exact file-format
+dialog on this firmware has not yet been observed.
 
 ## 2. Stage the published configuration
 
-After returning from firmware enrollment:
+After restoring the missing revocations and returning from firmware:
 
 ```bash
 scripts/nixosctl stage --host desktop
