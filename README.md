@@ -128,8 +128,8 @@ scripts/nixosctl stage --host desktop  # exact published revision, next manual b
 
 Use `--host thinkpad` only after its hardware configuration has been added. Sync
 never stashes, discards local changes, merges or resolves divergence automatically.
-The desktop's publisher uses a repository-scoped SSH deploy key; see the deployment
-procedure for GitHub enrollment. Git never runs as root. The stage receipt records
+The desktop's publisher uses its enrolled repository-scoped SSH deploy key;
+the completed setup is recorded in SESSION.md. Git never runs as root. The stage receipt records
 the exact Git revision and store path under `/var/lib/nixos-deployment/staged.json`.
 
 ```bash
@@ -253,9 +253,9 @@ selected kernel. These checks do not establish physical GPU, login or firmware
 behavior. During editing, `path:$PWD` includes untracked files; final validation
 must use a clean Git checkout with every required file tracked.
 
-Follow [DEPLOYMENT.md](DEPLOYMENT.md) for local credential preparation, preservation
-of Microsoft/OEM Secure Boot trust, exact-revision staging, manual reboot and
-acceptance. The desktop's encrypted credentials are enrolled with the owner and
+Follow [DEPLOYMENT.md](DEPLOYMENT.md) for the remaining archive-copy, firmware
+enrollment, exact-revision staging, manual reboot and acceptance steps. Completed
+preparation is recorded in [SESSION.md](SESSION.md). The desktop's encrypted credentials are enrolled with the owner and
 actual host identities. Staging still verifies decryption and that the preserved
 password matches the installed account. Each new host needs its own enrollment.
 Cleanup policy is in [CLEANUP.md](CLEANUP.md). Session resumption is in

@@ -26,8 +26,9 @@ The running installation is still the original system. This implementation has
 not staged/activated a generation, changed firmware trust, or run Nix store GC.
 The running/booted installation is generation 2; the system profile already
 pointed to generation 9 before this work (its link is dated 2026-01-31). The
-profile alone does not establish the EFI default. Inspect `sudo bootctl list`
-before the first reboot and retain the working generation 2 entry.
+owner has now checked `sudo bootctl list`: `nixos-generation-2.conf` is both
+default and selected, and generation 1 is also available. Retain generation 2
+as the working entry when returning from firmware enrollment.
 The owner successfully ran `prepare-credentials --host desktop` locally. The
 helper verified real host decryption and preservation of the installed login
 password; a fresh UPS secret is encrypted for the separate owner and host
@@ -58,13 +59,19 @@ exported the public certificate to `/boot/nixos-db.cer`. The recovery GC root
 now resolves to the original running generation 2; the existing Fish configuration
 also has a protected GC root. No firmware keys were enrolled or new generation staged.
 
-Next: use the encrypted backup command in [DEPLOYMENT.md](DEPLOYMENT.md) and copy
-the verified archive off the machine. This signing-key/boot backup is still pending;
-the already confirmed owner age-key backup is separate. Check `sudo bootctl list`
-before rebooting so generation 2 is identifiable.
+The owner created and successfully decrypted the local encrypted recovery archive
+`/home/dhilipsiva/nixos-boot-recovery.INuBPo.tar.age` (mode 0600, 131360248 bytes).
+Archive creation is complete. The attempted copy verification used the literal
+placeholder `/path/to/copied.tar.age` and failed because that file did not exist;
+it did not indicate a problem with the local archive. An off-machine copy and
+verification remain unconfirmed. DEPLOYMENT.md now prompts for the actual mounted
+backup directory, copies this existing archive and verifies the copy.
+
+Next: copy and verify the archive off this machine, following the remaining steps
+in [DEPLOYMENT.md](DEPLOYMENT.md). The owner age-key backup is already confirmed.
 
 Then manually append only the local db certificate in MSI firmware while preserving
-Microsoft/OEM trust, confirm the encrypted credentials are published, `stage --host desktop`,
+Microsoft/OEM trust, run `stage --host desktop`,
 manual reboot, physical acceptance, then one-time cleanup. Never clear firmware
 keys, format a disk, switch the live system, or reboot automatically.
 
