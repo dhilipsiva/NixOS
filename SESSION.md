@@ -32,6 +32,26 @@ owner reports a working session and supplied successful `nvidia-smi` and
 that output predates this successful generation 11 boot. The reduced-effects
 profile requested afterward still needs staging and a manual reboot.
 
+Wi-Fi is an outstanding deployment issue. The owner confirms the external antenna
+connects to the motherboard sockets and is using USB tethering. Historical boot
+`2d659db92e814782b151ab2e622623b7` detects Qualcomm WCN7850 hw2.0, PCI
+`17cb:1107` at `0000:08:00.0`, and creates `wlp8s0` with `ath12k_pci`. The next
+recorded boot, `47303a5180c046a59446b4731d6c618a` at 18:52 on 2026-10-03,
+has no Wi-Fi PCI endpoint. Both use the identical original generation 2 system
+path and Linux 6.18.1. The disappearance predates generation 10/11.
+
+Generation 11 still has no Wi-Fi PCI endpoint or wireless PHY. `nmcli radio`
+reports `WIFI-HW missing` with software Wi-Fi enabled. The USB Bluetooth function
+(`0489:e10a`) remains present and unblocked. The running 7.2.9 module alias for
+`17cb:1107` resolves to `ath12k_wifi7`; a dry-run dependency check finds all modules,
+and the configured firmware directory contains WCN7850 hw2.0 board/firmware files.
+No missing-firmware Wi-Fi probe appears in the current boot log because the PCI
+device never enumerates. Firmware disabling or a retained controller power state
+are possibilities, not confirmed causes. No driver/configuration change or live
+network/PCI reset was applied. The next physical steps are the MSI Wi-Fi control
+check and, if needed, a cold power cycle documented in DEPLOYMENT.md. Tethering
+through `enp19s0u4` was left connected; networking acceptance remains pending.
+
 The owner previously staged
 **generation 10**, revision
 `3a9fa98970d18e2198a8d2ff334d4479d8479b01`, with system path
@@ -224,8 +244,8 @@ startup log registers NVIDIA as the primary DRM device and AMD as secondary;
 The compositor renders on NVIDIA. No cursor override or GPU-routing change was
 introduced during cosmetic tuning.
 
-Next: stage the published reduced-effects profile and reboot manually following
-[DEPLOYMENT.md](DEPLOYMENT.md). Acceptance and cleanup remain pending until all
+Next: recover onboard Wi-Fi, then stage the published reduced-effects profile
+and reboot manually following [DEPLOYMENT.md](DEPLOYMENT.md). Acceptance and cleanup remain pending until all
 remaining physical checks pass. Never clear firmware keys, format a disk, switch
 the live system, or reboot automatically.
 
