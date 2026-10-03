@@ -124,3 +124,6 @@ secrets/*.decrypted
 *.p12
 *.pfx
 .nixosctl/
+
+# Local firmware troubleshooting photos.
+/images/

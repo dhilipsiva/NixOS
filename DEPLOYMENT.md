@@ -1,61 +1,45 @@
 # Remaining desktop deployment
 
 Run commands from `/home/dhilipsiva/projects/dhilipsiva/NixOS` as dhilipsiva.
-Completed preparation is recorded in [SESSION.md](SESSION.md).
+Completed preparation and the reported backup copy are recorded in [SESSION.md](SESSION.md).
+Keep the copied recovery archive and the separately backed-up owner age identity
+available during the firmware change.
 
-## 1. Copy and verify the recovery archive off this machine
+## 1. Append the public certificate in MSI firmware
 
-Copy `/home/dhilipsiva/nixos-boot-recovery.INuBPo.tar.age` to a USB backup drive
-or a network share on another machine. This archive contains the signing keys
-and boot/trust backups. Keep the separately backed-up owner age identity available
-to decrypt it.
+Your photos show **System Mode: User**, **Secure Boot: Enabled** and **Secure
+Boot Mode: Custom**. Keep those settings, the preset and factory-key provisioning
+unchanged. Key Management is already available.
 
-For a mounted backup destination, run the block below. When prompted, enter its
-actual directory path, without adding quotes. It copies the archive, checks that
-the copy matches, and verifies decryption. An existing different file is left
-untouched and fails verification.
-
-```bash
-nix shell .#nixosConfigurations.desktop.pkgs.age --command bash -c '
-set -euo pipefail
-nixos_source=/home/dhilipsiva/nixos-boot-recovery.INuBPo.tar.age
-read -r -p "Mounted external backup directory: " nixos_backup_dir </dev/tty
-test -d "$nixos_backup_dir" || { echo "Backup directory does not exist." >&2; exit 1; }
-nixos_copy="$nixos_backup_dir/nixos-boot-recovery.INuBPo.tar.age"
-if [ "$nixos_source" -ef "$nixos_copy" ]; then
-  echo "Choose a destination on your external backup storage." >&2
-  exit 1
-fi
-if [ ! -e "$nixos_copy" ]; then
-  cp -- "$nixos_source" "$nixos_copy"
-fi
-cmp -- "$nixos_source" "$nixos_copy"
-sync -f "$nixos_copy"
-age -d -i "$HOME/.config/sops/age/keys.txt" "$nixos_copy" >/dev/null
-printf "Verified backup copy: %s\n" "$nixos_copy"
-'
-```
-
-Proceed after the archive is copied off this machine and that copy is verified.
-
-## 2. Append the public certificate in MSI firmware
-
-1. Reboot manually into MSI firmware. In Advanced Mode (F7), open
-   **Settings → Security → Secure Boot** and keep Secure Boot enabled.
-2. Set **Secure Boot Mode → Custom** if needed to expose **Key Management**.
-3. Select **Authorized Signatures (db) → Append Key**. Choose `/nixos-db.cer`
-   at the root of the **1 GiB Linux EFI partition**, UUID `85B9-1188`.
-4. Preserve the existing PK, KEK, Microsoft/OEM db and dbx entries. Do not clear
-   or replace keys, restore factory keys, enter Secure Boot Setup Mode, or run
-   `sbctl enroll-keys`. If the menu offers no append operation, leave it unchanged.
-5. Save the append operation and return to the existing Linux installation using
+1. Return to **Security → Secure Boot → Key Management**.
+2. Open **Authorized Signatures (db)**, the row showing six existing keys in
+   your screenshot.
+3. The action menu contains **Details**, **Save To File**, **Set New Var**,
+   **Append Key** and **Delete Var**. Use the keyboard arrows to select
+   **Append Key**, then press **Enter** to activate it.
+4. The screen listing Microsoft certificates and `MSI SHIP DB` shows the
+   existing signatures. If you are there, press **Esc** to return to the action
+   menu and activate **Append Key**. The highlighted row in a photo alone does
+   not establish that the append action ran.
+5. In the file-selection flow, choose the public certificate `/nixos-db.cer`
+   at the root of the **1 GiB Linux EFI partition**, UUID `85B9-1188`. There is
+   no `boot` directory to open first. The `.tar.age` archive is the recovery
+   backup; the certificate for firmware enrollment is `nixos-db.cer`.
+6. If activating Append Key opens a different dialog, keep it unchanged and
+   inspect its exact wording before choosing anything. The supplied photos do
+   not show this next dialog, so no Yes/No choice is assumed here.
+7. After the append succeeds, save the change and return to Linux using
    **NixOS generation 2**, entry `nixos-generation-2.conf`.
 
-See the [MSI AM5 BIOS manual](https://download.msi.com/archive/mnu_exe/mb/AMDAM5BIOS.pdf),
-pages 21–22. In the firmware file picker the certificate is `/nixos-db.cer`;
-there is no `boot` directory to open first.
+Preserve the existing PK, KEK, Microsoft/OEM db and dbx entries. Leave **Set New
+Var**, **Delete Var**, **Restore Factory Keys**, **Reset To Setup Mode** and
+**Enroll Efi Image** unused. Staging will check the actual certificate and all
+original trust entries; the displayed key count alone is not sufficient proof.
 
-## 3. Stage the published configuration
+The [MSI AM5 BIOS manual](https://download.msi.com/archive/mnu_exe/mb/AMDAM5BIOS.pdf),
+pages 21–22, documents appending to db. The menu labels above match your photos.
+
+## 2. Stage the published configuration
 
 After returning from firmware enrollment:
 
@@ -79,7 +63,7 @@ Confirm the new generation is the default and the protected recovery entry is
 present. Then reboot manually into the new generation. Keep installer/recovery
 media and firmware boot-menu access available.
 
-## 4. Validate the new desktop
+## 3. Validate the new desktop
 
 - Check password login and sudo, greetd/Hyprland, Alacritty/fish, Atuin, zoxide
   and ripgrep. The old shell's Atuin warning should be resolved after activation.
@@ -91,7 +75,7 @@ media and firmware boot-menu access available.
   starts on request, unloads the model after a default request and stops when idle.
 - Check Slack and Teams sign-in, microphone, camera and screen sharing.
 
-## 5. Accept the deployment and run cleanup
+## 4. Accept the deployment and run cleanup
 
 Only after the physical checks pass:
 

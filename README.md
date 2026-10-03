@@ -253,8 +253,8 @@ selected kernel. These checks do not establish physical GPU, login or firmware
 behavior. During editing, `path:$PWD` includes untracked files; final validation
 must use a clean Git checkout with every required file tracked.
 
-Follow [DEPLOYMENT.md](DEPLOYMENT.md) for the remaining archive-copy, firmware
-enrollment, exact-revision staging, manual reboot and acceptance steps. Completed
+Follow [DEPLOYMENT.md](DEPLOYMENT.md) for the remaining firmware enrollment,
+exact-revision staging, manual reboot and acceptance steps. Completed
 preparation is recorded in [SESSION.md](SESSION.md). The desktop's encrypted credentials are enrolled with the owner and
 actual host identities. Staging still verifies decryption and that the preserved
 password matches the installed account. Each new host needs its own enrollment.

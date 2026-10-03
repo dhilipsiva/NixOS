@@ -63,12 +63,21 @@ The owner created and successfully decrypted the local encrypted recovery archiv
 `/home/dhilipsiva/nixos-boot-recovery.INuBPo.tar.age` (mode 0600, 131360248 bytes).
 Archive creation is complete. The attempted copy verification used the literal
 placeholder `/path/to/copied.tar.age` and failed because that file did not exist;
-it did not indicate a problem with the local archive. An off-machine copy and
-verification remain unconfirmed. DEPLOYMENT.md now prompts for the actual mounted
-backup directory, copies this existing archive and verifies the copy.
+it did not indicate a problem with the local archive. The owner now reports that
+the archive copy is done. The external destination and verification output were
+not supplied; record this as the owner's confirmation, not an independently
+verified off-machine copy. The owner age-key backup is already confirmed.
 
-Next: copy and verify the archive off this machine, following the remaining steps
-in [DEPLOYMENT.md](DEPLOYMENT.md). The owner age-key backup is already confirmed.
+The owner rebooted into MSI firmware and supplied four local photos in `images/`.
+They show User mode, Secure Boot Enabled, Custom mode, and Key Management with
+six factory db certificates. `PXL_20261003_140507657.jpg` shows the action menu
+with Append Key highlighted; `PXL_20261003_140520312.jpg` shows the existing
+certificate list. No append-result dialog or local certificate enrollment is
+shown. The next step is to return from the list with Esc, activate Append Key
+with the keyboard, and inspect the subsequent file-selection dialog. These
+troubleshooting photos remain local and are ignored by Git.
+
+Next: complete manual firmware enrollment following [DEPLOYMENT.md](DEPLOYMENT.md).
 
 Then manually append only the local db certificate in MSI firmware while preserving
 Microsoft/OEM trust, run `stage --host desktop`,
