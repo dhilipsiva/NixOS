@@ -50,14 +50,20 @@ The probe did not query Windows policy or verify a recovery-key backup. The owne
 age-key backup is separate from any Windows recovery key. No Windows filesystem
 was mounted or modified.
 
-Next local step (requires the owner's sudo authentication):
+The owner successfully ran `prepare-boot --host desktop --windows-status unencrypted`.
+The boot/trust/signature backup is
+`/var/lib/nixos-deployment/boot-backup-20261003T190354`; new signing keys are in
+`/var/lib/sbctl` (owner UUID `7c29ce15-60f3-4f72-bcb4-7fe735961261`). The helper
+exported the public certificate to `/boot/nixos-db.cer`. The recovery GC root
+now resolves to the original running generation 2; the existing Fish configuration
+also has a protected GC root. No firmware keys were enrolled or new generation staged.
 
-```bash
-scripts/nixosctl prepare-boot --host desktop --windows-status unencrypted
-```
+Next: use the encrypted backup command in [DEPLOYMENT.md](DEPLOYMENT.md) and copy
+the verified archive off the machine. This signing-key/boot backup is still pending;
+the already confirmed owner age-key backup is separate. Check `sudo bootctl list`
+before rebooting so generation 2 is identifiable.
 
-Then follow [DEPLOYMENT.md](DEPLOYMENT.md): back up the signing keys and boot/trust
-backup securely off the machine, append only the local db certificate while preserving
+Then manually append only the local db certificate in MSI firmware while preserving
 Microsoft/OEM trust, confirm the encrypted credentials are published, `stage --host desktop`,
 manual reboot, physical acceptance, then one-time cleanup. Never clear firmware
 keys, format a disk, switch the live system, or reboot automatically.

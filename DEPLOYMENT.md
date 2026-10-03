@@ -63,18 +63,60 @@ scripts/nixosctl prepare-boot --host desktop --windows-status recovery-key-backe
 The helper checks the motherboard, root UUID and Linux ESP UUID. It backs up that
 ESP, PK/KEK/db/dbx and an EFI signature inventory; generates local sbctl signing
 keys when absent; protects the current system/home closures from GC; and exports
-only the public certificate to `/boot/nixos-db.cer`. Copy the backup directory
-and signing-key backup securely to offline storage. It does not enroll keys,
+only the public certificate to `/boot/nixos-db.cer`. The signing keys themselves
+remain in `/var/lib/sbctl`; they are separate from the ESP backup. It does not enroll keys,
 change the boot default, touch the Windows ESP or reboot.
 
-In MSI firmware, use **Authorized Signatures (db) → Append Key**, selecting the
+Before firmware enrollment, create an encrypted recovery archive as dhilipsiva:
+
+```bash
+nix shell .#nixosConfigurations.desktop.pkgs.age .#nixosConfigurations.desktop.pkgs.gnutar --command bash <<'SH'
+set -euo pipefail
+umask 077
+nixos_backup=$(mktemp "$HOME/nixos-boot-recovery.XXXXXX.tar.age")
+trap 'rm -f -- "$nixos_backup"' EXIT
+nixos_recipient=$(age-keygen -y "$HOME/.config/sops/age/keys.txt")
+sudo -v
+sudo tar -C / -cf - var/lib/sbctl var/lib/nixos-deployment |
+  age -r "$nixos_recipient" -o "$nixos_backup"
+age -d -i "$HOME/.config/sops/age/keys.txt" "$nixos_backup" >/dev/null
+trap - EXIT
+printf 'Verified encrypted backup: %s\n' "$nixos_backup"
+SH
+```
+
+This streams the signing keys and deployment backups directly into encryption;
+it writes no plaintext archive. It checks decryption with the owner identity
+before reporting success. Copy the resulting `.tar.age` file off the machine and
+verify the copied file (substitute its actual destination):
+
+```bash
+nix shell .#nixosConfigurations.desktop.pkgs.age --command age -d \
+  -i ~/.config/sops/age/keys.txt /path/to/copied.tar.age >/dev/null
+```
+
+Keep the already backed-up owner age identity available separately; it is needed
+to decrypt this archive. Creating the local archive alone is not an off-machine
+backup.
+
+Run `sudo bootctl list` and identify `nixos-generation-2.conf`, the currently
+working Linux entry, before the manual reboot into firmware.
+
+In MSI Advanced Mode (F7), open **Settings → Security → Secure Boot**. Keep
+Secure Boot enabled. Set **Secure Boot Mode → Custom** if needed to expose
+**Key Management**. Use **Authorized Signatures (db) → Append Key**, selecting the
 public `nixos-db.cer` on the Linux ESP. Preserve the existing PK, KEK, Microsoft/OEM
 db and dbx entries. Keep Secure Boot enabled. Do not use Clear Keys, Replace Key,
-factory-key replacement, Setup Mode or sbctl enroll-keys. If firmware does not
+factory-key replacement, Secure Boot Setup Mode or sbctl enroll-keys. MSI's Custom
+mode exposes key management; it does not require deleting the Platform Key.
+If firmware does not
 provide the append flow, stop and inspect the menu before proceeding. See the
-[MSI AM5 BIOS manual](https://download.msi.com/archive/mnu_exe/mb/AMDAM5BIOS.pdf).
+[MSI AM5 BIOS manual](https://download.msi.com/archive/mnu_exe/mb/AMDAM5BIOS.pdf),
+pages 21–22. In the firmware file picker the certificate is `/nixos-db.cer`, at
+the root of the 1 GiB Linux ESP (UUID `85B9-1188`), not inside a `boot` directory.
 
-Return to the existing Linux installation. Staging checks that the local db
+Save the append operation, then return to the existing Linux installation using
+generation 2. Staging checks that the local db
 certificate is actually enrolled and all prior trust entries remain. A Secure
 Boot enabled flag alone is not accepted as proof of correct signing.
 
