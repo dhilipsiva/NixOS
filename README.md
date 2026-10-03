@@ -41,8 +41,8 @@ although blind login started Hyprland. `hosts/desktop/graphics.nix` now disables
 HDMI FRL and deep colour and pins the NVIDIA HDMI-A-1 console/session to 4K60,
 8-bit SDR. Both module parameters are present in the selected
 [NVIDIA driver source](https://github.com/NVIDIA/open-gpu-kernel-modules/blob/595.104.02/kernel-open/nvidia-modeset/nvidia-modeset-linux.c).
-This deliberately limits refresh/HDR while establishing a working display;
-the retry and physical validation are still pending. Retest higher display modes
+Generation 11 now has a user-confirmed working Hyprland session at 4K60 with
+NVIDIA 595.104.02 and 8-bit SDR. This deliberately limits refresh/HDR; retest higher display modes
 over a working HDMI or DisplayPort link before removing the workaround. It is
 desktop-only and does not change the GPU's compute configuration.
 
@@ -170,6 +170,17 @@ Alacritty, PipeWire, and the matching Hyprland screen-sharing portal. Xwayland
 remains available for applications that need it. Home Manager generates the current
 Lua configuration format in `hypr/hyprland.lua`; old raw dotfiles are not loaded.
 
+The shared desktop profile disables window/workspace animations, shadows, glow,
+rounded corners and compositor opacity effects. The focus border stays visible.
+Colour-transform fades, Hyprlock animations and Waybar CSS transitions/animations
+are disabled too. Blur remains off. Hyprland's `debug.vfr` stays enabled so an idle
+desktop does not continuously redraw; this is the current option name, replacing
+the old `misc.vfr`. These are supported
+[Hyprland configuration options](https://wiki.hypr.land/configuring/core/config-options/),
+not measured performance gains. Display mode and NVIDIA tuning stay in the desktop
+host; cursor handling uses Hyprland's defaults.
+The reduced-effects profile needs staging and the next manual boot to take effect.
+
 Login uses the text-based **greetd + tuigreet** screen, which starts Hyprland through
 UWSM for session/service lifecycle management. **Fuzzel** provides a native Wayland
 application launcher on Super+D. **Alacritty** explicitly starts **fish**, with
@@ -265,11 +276,12 @@ selected kernel. These checks do not establish physical GPU, login or firmware
 behavior. During editing, `path:$PWD` includes untracked files; final validation
 must use a clean Git checkout with every required file tracked.
 
-The HDMI compatibility change is staged as **generation 11**, confirmed as the
-boot default. Follow [DEPLOYMENT.md](DEPLOYMENT.md) to reboot manually and complete
-physical validation before acceptance. The protected recovery entry currently
-runs the original generation 2. Firmware preparation and the boot evidence are
-recorded in [SESSION.md](SESSION.md).
+**Generation 11 is running successfully** with the HDMI compatibility change.
+The owner confirmed a working session; NVIDIA/monitor output, Secure Boot and
+system/user service checks pass. Follow [DEPLOYMENT.md](DEPLOYMENT.md) to stage the
+reduced-effects profile and finish the remaining physical checks before acceptance.
+The protected recovery entry retains the original generation 2. Firmware preparation
+and boot evidence are recorded in [SESSION.md](SESSION.md).
 The desktop's encrypted credentials are enrolled with the owner and
 actual host identities. Staging still verifies decryption and that the preserved
 password matches the installed account. Each new host needs its own enrollment.

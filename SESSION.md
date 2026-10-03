@@ -22,15 +22,15 @@ The GitHub write deploy key at `~/.ssh/nixos-update` has been authorized, and th
 implementation was published as `82024bb`. Private keys remain outside Git. Use `git status --short
 --branch` and `git log -1` to inspect the current publication state.
 
-The running/booted installation is back on the original generation 2 after
-generation 10 failed display validation. The HDMI compatibility change is now
-staged as **generation 11**, revision `0258f5db7c92b37f933841c4700a16f7b7ccb3e5`,
+The owner has successfully booted **generation 11**, revision
+`0258f5db7c92b37f933841c4700a16f7b7ccb3e5`,
 with system path
 `/nix/store/z4bsvhjn75dcn1dyr3q4cq7cxjvqdrqy-nixos-system-dhilipsiva-desktop-26.05.20261002.774debe`.
-Read-only inspection confirms the system profile resolves to that new path;
-the running system remains the original generation 2. The owner's `bootctl list`
-confirms generation 11 as **default** and the protected recovery entry as
-**selected**. A physical boot of generation 11 remains pending.
+Read-only inspection confirms `/run/current-system` resolves to that path. The
+owner reports a working session and supplied successful `nvidia-smi` and
+`hyprctl monitors` output. The earlier boot-menu output selected protected recovery;
+that output predates this successful generation 11 boot. The reduced-effects
+profile requested afterward still needs staging and a manual reboot.
 
 The owner previously staged
 **generation 10**, revision
@@ -194,20 +194,49 @@ are not usable recovery choices. The self-contained protected recovery UKI is th
 fallback. Older generation 6 is reported/absent, and older generations 7–9 are
 still listed. No boot-menu files were removed by the agent.
 
-Next: retry a manual boot into **generation 11** following
-[DEPLOYMENT.md](DEPLOYMENT.md). Staging and boot-menu confirmation are complete;
-acceptance and cleanup remain pending until the display and other physical checks
-pass. Documentation-only updates do not require another stage when the system
-path is unchanged. Never clear firmware keys, format a disk, switch the live system,
-or reboot automatically.
+The subsequent generation 11 boot succeeded: boot ID
+`826c45a3-4f09-49dc-8fc2-64b144d6f2c5`. The owner reports everything working so far.
+At 21:49:53 Asia/Colombo, their GPU snapshot showed NVIDIA 595.104.02, RTX 5090,
+P8, 28 W, 1% utilization and 421 MiB allocated, including Hyprland and Alacritty.
+Hyprland itself used 119 MiB (about 0.36% of VRAM); the utilization percentage is
+GPU-wide, not a per-process measurement. This is one observation, not a benchmark.
+HDMI-A-1 reports 3840×2160 at 60 Hz,
+XRGB8888, sRGB and VRR off. Both system and user failed-unit lists are empty.
+Read-only EFI checks confirm SecureBoot=1 and SetupMode=0; this boot's journal
+contains no NVIDIA FRL link-training failure or Xid report. Ollama's backend and
+proxy service are inactive while its proxy socket is active. Real inference and
+the five-minute screen/lock behavior still need the owner's physical checks.
+
+The owner then requested disabling animations and cosmetic effects for performance
+(their "display animations" was interpreted as "disable animations" from context).
+The shared profile now disables compositor and lock-screen animations, rounded
+window/input corners, shadows/glow and Waybar CSS transitions. Blur remains off;
+window opacity is 1 and the useful focus border remains. `debug.vfr = true` is
+the installed Hyprland 0.56 option that avoids continuous idle redraws. The former
+`misc.vfr` option does not exist in this version. Working display mode/driver,
+five-minute screen-off and no-sleep policy were retained. These changes have not
+been activated in the running session; they need the next staged boot.
+
+The software cursor report is explained by the installed compositor's automatic
+cursor policy: NVIDIA plus multiple GPU backends selects software cursors. Its
+startup log registers NVIDIA as the primary DRM device and AMD as secondary;
+`cursor:no_hardware_cursors` and `cursor:use_cpu_buffer` both use the default 2.
+The compositor renders on NVIDIA. No cursor override or GPU-routing change was
+introduced during cosmetic tuning.
+
+Next: stage the published reduced-effects profile and reboot manually following
+[DEPLOYMENT.md](DEPLOYMENT.md). Acceptance and cleanup remain pending until all
+remaining physical checks pass. Never clear firmware keys, format a disk, switch
+the live system, or reboot automatically.
 
 The reported `bash: atuin: command not found` came from the preexisting shell
 history integration. The local Home Manager Bash configuration initializes old
 Atuin 18.10.0 while the user's profile lacks its executable. It did not prevent
 credential preparation. The new configuration includes Atuin and its shell
-integration; it activated during the failed display attempt, but this recovery
-session runs the old generation again. Do not treat the old-shell warning as a
-failure of the credential or staging helpers.
+integration; it activated during the failed display attempt and is present in
+generation 11. The new terminal transcript no longer contains the old warning.
+Do not treat warnings in the earlier recovery shell as failures of the credential
+or staging helpers.
 
 Validation so far: four flake checks pass, covering the Hyprland parser, Ollama VM,
 release/channel decisions, real SOPS/age recipient isolation, repeated home-file

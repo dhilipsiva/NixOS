@@ -12,7 +12,7 @@ in
 
   # Generation 10 lost video at the NVIDIA framebuffer takeover: "HDMI FRL
   # link training failed." Blind login still started Hyprland. The Samsung
-  # Odyssey G81SF works at 4K60 on the recovery system. Use a conservative
+  # Odyssey G81SF now works at 4K60 in generation 11. Keep the conservative
   # HDMI/TMDS, 8-bit baseline for BOTH the text console and the compositor.
   # These parameters exist in the selected production driver's modeset module.
   # Temporary: retest higher refresh/HDR over a working link before removing.

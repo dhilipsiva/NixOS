@@ -37,7 +37,22 @@ in
           };
         };
         dwindle.preserve_split = true;
-        decoration = { rounding = 8; blur.enabled = false; };
+        # Immediate window/workspace changes; retain the useful focus border.
+        animations.enabled = false;
+        decoration = {
+          rounding = 0;
+          blur.enabled = false;
+          shadow.enabled = false;
+          glow.enabled = false;
+          active_opacity = 1.0;
+          inactive_opacity = 1.0;
+          fullscreen_opacity = 1.0;
+          dim_inactive = false;
+        };
+        render.ctm_animation = 0;
+        # Hyprland 0.56 keeps VFR under debug, not the old misc namespace.
+        # Render on damage instead of continuously redrawing an idle desktop.
+        debug.vfr = true;
         input = {
           kb_layout = "us";
           follow_mouse = 1;
@@ -116,7 +131,14 @@ in
       tray.spacing = 8;
     };
     style = ''
-      * { font-family: "Fira Code", sans-serif; font-size: 13px; }
+      * {
+        font-family: "Fira Code", sans-serif;
+        font-size: 13px;
+        animation: none;
+        transition: none;
+        box-shadow: none;
+        text-shadow: none;
+      }
       window#waybar { background: #1e222a; color: #abb2bf; }
       #workspaces button { color: #abb2bf; padding: 0 8px; border-radius: 0; }
       #workspaces button.active { background: #61afef; color: #1e222a; }
@@ -134,12 +156,15 @@ in
     enable = true;
     settings = {
       general = { hide_cursor = true; ignore_empty_input = true; };
-      background = [ { monitor = ""; color = "rgba(1e222aff)"; } ];
+      animations.enabled = false;
+      background = [ { monitor = ""; color = "rgba(1e222aff)"; blur_passes = 0; } ];
       input-field = [ {
         monitor = "";
         size = "300, 50";
         position = "0, -80";
         font_family = "Fira Code";
+        rounding = 0;
+        shadow_passes = 0;
         fade_on_empty = false;
         inner_color = "rgba(282c34ff)";
         outer_color = "rgba(61afefff)";

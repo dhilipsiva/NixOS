@@ -1,36 +1,37 @@
 # Remaining desktop deployment
 
 Run commands from `/home/dhilipsiva/projects/dhilipsiva/NixOS` as dhilipsiva.
-Generation **11**, revision `0258f5db7c92b37f933841c4700a16f7b7ccb3e5`, is staged
-and confirmed as the boot default. The protected recovery entry is present and
-currently selected; it runs the original generation 2. Firmware preparation,
-staging and the boot-menu check are complete. The remaining work is a manual boot
-and physical validation. Completed preparation and boot evidence are recorded in
-[SESSION.md](SESSION.md). Keep the recovery archive, owner age identity and recovery
-media available.
+Generation **11**, revision `0258f5db7c92b37f933841c4700a16f7b7ccb3e5`, is running.
+The owner reports a working session. NVIDIA 595.104.02 drives the RTX 5090 and
+HDMI-A-1 at 3840×2160/60 Hz, 8-bit SDR. Secure Boot is enabled; system/user failed
+unit lists are empty and no NVIDIA HDMI link failure appears in this boot's log.
+Full deployment acceptance still awaits the remaining physical checks below.
+Completed preparation and boot evidence are in [SESSION.md](SESSION.md).
 
-## 1. Reboot manually into generation 11
+## 1. Stage the reduced-effects profile
 
-The desktop configuration now disables NVIDIA HDMI FRL and deep colour and uses
-**3840×2160 at 60 Hz, 8-bit SDR** for the connected Samsung Odyssey G81SF. This is
-a temporary compatibility baseline; high refresh/HDR still need separate testing.
-These settings are confined to the desktop host. The generation 11 boot entry
-contains all three expected kernel parameters, but display validation is pending.
+The published configuration disables Hyprland/Hyprlock animations, window shadows,
+glow and rounded corners, and Waybar transitions. Blur remains off, window opacity
+is 1, and Hyprland renders on damage with `debug.vfr = true`. The working HDMI
+settings, five-minute display policy and NVIDIA driver are retained.
 
-Save your work and reboot manually into **generation 11**. If the screen remains
-blank or login is unusable, select
-**NixOS (protected pre-migration recovery)** from the boot menu; it contains the
-original generation 2 kernel/initrd in a signed recovery image, with entry ID
-`nixos-protected-recovery.conf`. The separate old **generation 1/2** entries refer
-to missing kernel/initrd files and are not usable fallbacks. Use the protected
-recovery entry instead. Leave acceptance and cleanup pending if validation fails.
-Record the attempt's time and `journalctl --list-boots`
-output so its logs can be identified even if other generations were tried.
+From your local terminal:
 
-## 2. Validate the new desktop
+```bash
+scripts/nixosctl stage --host desktop
+sudo bootctl list
+```
 
-Log in through the text login screen and open Alacritty with **Super+Enter**.
-Collect the initial read-only checks:
+Confirm the newly staged generation is the default and the protected recovery
+entry remains present. Save your work and reboot manually into the new generation.
+If needed, **NixOS (protected pre-migration recovery)** contains the original
+generation 2 in `/EFI/nixos-recovery/pre-migration.efi`. The separate legacy
+generation 1/2 entries have missing files and are not usable fallbacks. Keep the
+recovery archive, owner age identity and recovery media available.
+
+## 2. Verify the new profile and remaining hardware behavior
+
+After login, open Alacritty with **Super+Enter**:
 
 ```bash
 scripts/nixosctl status
@@ -44,30 +45,28 @@ systemctl --user --failed
 ```
 
 The running system must match the `system` path in the new staged receipt.
-For generation 11 this is
-`/nix/store/z4bsvhjn75dcn1dyr3q4cq7cxjvqdrqy-nixos-system-dhilipsiva-desktop-26.05.20261002.774debe`.
-Secure Boot must remain enabled. Confirm the login screen is visible and Hyprland
-reports HDMI-A-1 at 3840×2160, approximately 60 Hz and 8-bit SDR. Inspect any failed
-units before acceptance. Check the HDMI workaround and kernel log:
+Check that window/workspace changes are immediate and shadows/rounded corners are
+gone. Verify the active options:
 
 ```bash
-sudo cat /sys/module/nvidia_modeset/parameters/disable_hdmi_frl
-sudo cat /sys/module/nvidia_modeset/parameters/hdmi_deepcolor
-journalctl -b -k --grep='nvidia|NVRM|HDMI'
+hyprctl getoption animations:enabled
+hyprctl getoption decoration:shadow:enabled
+hyprctl getoption decoration:rounding
+hyprctl getoption debug:vfr
 ```
 
-The two parameter values should be `Y` and `N`, respectively. There should be no
-new HDMI FRL link-training failure. A successful build or blind login alone is
-not a successful display validation.
+Expect `false`, `false`, `0`, and `true`, respectively. Secure Boot must remain
+enabled and HDMI-A-1 must retain the working 4K60/8-bit mode. Inspect failed units
+or new display errors before acceptance. Higher refresh/HDR is a separate future
+test; the FRL workaround stays enabled for this rollout.
 
-- Check password login and sudo, greetd/Hyprland, Alacritty/fish, Atuin, zoxide
-  and ripgrep. The old shell's Atuin warning should be resolved after activation.
-- Check NVIDIA rendering and `nvidia-smi`, networking, audio and the UPS.
+- Finish checking sudo, Atuin history, zoxide/ripgrep, networking, audio and the UPS.
 - Confirm the screen locks/powers off after five minutes while the machine keeps
   running without suspend or hibernation.
 - Check read-only Windows file copying and Secure Boot status/signatures.
-- Exercise Ollama with a real model: confirm the backend is absent at boot,
-  starts on request, unloads the model after a default request and stops when idle.
+- Exercise Ollama with a real model: its backend was confirmed idle before use;
+  verify request startup, model unloading after a default request and stopping
+  after idle connections close.
 - Check Slack and Teams sign-in, microphone, camera and screen sharing.
 
 ## 3. Accept the deployment and run cleanup
