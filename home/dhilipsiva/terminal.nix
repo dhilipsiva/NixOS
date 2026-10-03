@@ -1,5 +1,5 @@
 # Terminal emulator + multiplexer.
-{ ... }:
+{ pkgs, ... }:
 
 {
   # zellij: the ~294-line hand-tuned KDL keybind block is kept as a source bridge
@@ -9,6 +9,7 @@
 
   programs.alacritty.enable = true;
   programs.alacritty.settings = {
+    terminal.shell.program = "${pkgs.fish}/bin/fish";
     font = {
       normal.family = "Fira Code";
       bold.family = "Fira Code";

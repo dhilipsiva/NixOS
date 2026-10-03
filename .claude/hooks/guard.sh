@@ -1,19 +1,7 @@
 #!/usr/bin/env bash
-# PreToolUse guard for the Bash tool (Phase 0 safety substrate — see PLAN.md).
-#
-# The settings.json allow/deny matcher is a convenience first line only; it is
-# bypassable with compound/quoted commands (CVE-2025-66032). THIS hook is the real
-# boundary: it reads the tool-call JSON on stdin and blocks with `exit 2`.
-#
-#   exit 0 = allow    exit 2 = block (message on stderr is shown to the model)
-#
-# Blocks: rm -rf, nixos-rebuild switch/boot/test/dry-activate, disko, git push
-# --force / reset --hard, and raw block-device writes (dd/mkfs/wipefs/sgdisk/
-# parted/blkdiscard/shred on /dev/{sd,nvme,vd,hd}). Permits `nixos-anywhere` ONLY
-# with --vm-test or --target-host localhost/127.0.0.1 (the QEMU hostfwd endpoint).
-#
-# Invoked as `bash .claude/hooks/guard.sh` so it does not depend on the exec bit
-# surviving the /mnt/c 9p mount.
+# Conservative command guard for Claude Code. Deployment is routed through
+# nixosctl stage, which checks published revisions, credentials and firmware.
+# This is a convenience guard, not a security boundary or an authorization source.
 set -euo pipefail
 
 INPUT="$(cat)"
@@ -23,9 +11,6 @@ else
   # Fallback: no jq — treat the whole payload as the command (errs toward blocking).
   CMD="$(printf '%s' "$INPUT" | tr -d '\n')"
 fi
-
-# Audit every inspected command (best-effort; never fail the hook on logging).
-printf '%s\t%s\n' "$(date -Is)" "$CMD" >> "${HOME}/.claude/guard-audit.log" 2>/dev/null || true
 
 blk() { echo "BLOCKED by guard.sh: $1" >&2; exit 2; }
 
@@ -42,7 +27,7 @@ echo "$N" | grep -Eq '(^|[^a-zA-Z0-9_])rm +(-[a-zA-Z]*[rR]|--recursive)' \
 # fallback tool `nixos-rebuild-ng` (no space after -rebuild) used for build-image.
 if echo "$N" | grep -Eq '(^|[^a-zA-Z0-9_])nixos-rebuild +'; then
   echo " $N " | grep -Eq ' (switch|boot|test|dry-activate) ' \
-    && blk "nixos-rebuild switch/boot/test — Phase 0 only builds (build/build-image/build-vm)"
+    && blk "Use nixosctl stage --host HOST for boot-only deployment; live activation is not part of this workflow"
 fi
 
 # --- declarative partitioner run directly (must go through nixos-anywhere --vm-test) ---

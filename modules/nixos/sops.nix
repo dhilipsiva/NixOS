@@ -13,9 +13,8 @@
 { ... }:
 
 {
-  # Real, age-encrypted secrets (owner-managed; created/edited only by the owner
-  # with their operator age key — the agent never encrypts to this file).
-  sops.defaultSopsFile = ../../secrets/secrets.yaml;
+  # Each host sets defaultSopsFile to its owner-managed, age-encrypted file.
+  # Never reuse the desktop's host identity or a VM test key on the ThinkPad.
   sops.defaultSopsFormat = "yaml";
 
   # Real-hardware key source: the machine's ed25519 SSH host key is converted to

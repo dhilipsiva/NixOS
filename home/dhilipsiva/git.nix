@@ -36,9 +36,9 @@
         a = "add";
         f = "fetch";
         d = "diff";
-        pl = "pull --rebase";
+        pl = "pull --ff-only";
         p = "push";
-        sy = "!git pull && git push";
+        sy = "!git pull --ff-only && git push";
         pt = "push --tags";
         cl = "clone --recursive";
         c = "commit";
@@ -79,9 +79,11 @@
         status = { added = "yellow"; changed = "green"; untracked = "cyan"; };
       };
       merge = { log = true; tool = "vimdiff"; };
-      push.default = "matching";
+      push.default = "simple";
+      pull.ff = "only";
       rebase.autosquash = true;
-      credential.helper = "store";
+      # Reset inherited helpers; repository automation uses a scoped SSH key.
+      credential.helper = "";
       http.sslVerify = true;
       init.defaultBranch = "main";
     };

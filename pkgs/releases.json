@@ -1,0 +1,30 @@
+{
+  "atuin": {
+    "version": "18.23.0",
+    "hash": "sha256:d1b40dd6e7cd3d823867ffe22b39a025bc420f7875926ae9ca974155378da14d"
+  },
+  "herdr": {
+    "version": "0.9.3",
+    "hash": "sha256:18a8dc65f1c2fa485884344356dea1cfd911c6f06cf46fa78e193f4087f4dba7"
+  },
+  "ollama": {
+    "version": "0.35.1",
+    "hash": "sha256:9fcd79ac4575b2bd31b992eee18b1000c8ad126b451627c8f8cd091714cfbb10"
+  },
+  "python": {
+    "version": "3.14.8",
+    "hash": "sha256-wiFZBPArF1WW3Ek1FYUQT0vCA0HhxHN4smosJ0NgznM="
+  },
+  "slack": {
+    "version": "4.52.171",
+    "hash": "sha256-xhmYFubYQiiYaanoSgUEKvbg3miVnfehXnJzhzuG3DY="
+  },
+  "uv": {
+    "version": "0.12.22",
+    "hash": "sha256:a50fd68c653b0cfb1c85e0a7db62cb78cf5c22b6f3dcf3ae173e5f222d084470"
+  },
+  "linux": {
+    "version": "7.2.9",
+    "hash": "sha256:b4c5dfbe51a364a6c7f03869200f88c8e1f77403539005f14b7fc6bc91b8d8ba"
+  }
+}

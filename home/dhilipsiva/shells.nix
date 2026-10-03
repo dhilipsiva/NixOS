@@ -10,14 +10,22 @@ let
     g = "git";
     e = "hx";
     q = "exit";
-    # Agent alias (Goose)
-    gdev = "goose run --model qwen2.5-coder:32b";
   };
 in
 {
   programs.starship.enable = true;
+  programs.zoxide = {
+    enable = true;
+    enableFishIntegration = true;
+    enableBashIntegration = true;
+  };
+  programs.direnv = {
+    enable = true;
+    nix-direnv.enable = true;
+  };
   programs.atuin = {
     enable = true;
+    enableFishIntegration = true;
     # config.toml was 99% commented defaults; only these two differ.
     settings = {
       enter_accept = true;
@@ -27,6 +35,9 @@ in
 
   programs.fish = {
     enable = true;
+    # Fish 4.9 removed the Python manpage generator used by HM 26.05. Packaged
+    # vendor completions and Atuin's integration remain enabled.
+    generateCompletions = false;
     inherit shellAliases;
     interactiveShellInit = ''
       set -g theme_display_date no
@@ -38,6 +49,6 @@ in
     inherit shellAliases;
   };
 
-  # config.fish added ~/.cargo/bin to PATH; fnm line was commented out (dropped).
-  home.sessionPath = [ "$HOME/.cargo/bin" ];
+  # Rust comes from the pinned stable Nix toolchain. Do not prepend legacy
+  # ~/.cargo/bin rustup shims that could silently select an older compiler.
 }

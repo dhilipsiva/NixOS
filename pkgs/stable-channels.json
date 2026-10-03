@@ -1,0 +1,98 @@
+{
+  "alacritty": {
+    "source": "https://api.github.com/repos/alacritty/alacritty/releases/latest",
+    "version": "0.17.0"
+  },
+  "atuin": {
+    "source": "https://api.github.com/repos/atuinsh/atuin/releases/latest",
+    "version": "18.23.0"
+  },
+  "claude-code": {
+    "source": "https://downloads.claude.ai/claude-code-releases/stable",
+    "version": "2.1.285"
+  },
+  "codex": {
+    "source": "https://api.github.com/repos/openai/codex/releases/latest",
+    "version": "0.160.0"
+  },
+  "fish": {
+    "source": "https://api.github.com/repos/fish-shell/fish-shell/releases/latest",
+    "version": "4.9.3"
+  },
+  "fuzzel": {
+    "source": "https://codeberg.org/api/v1/repos/dnkl/fuzzel/releases/latest",
+    "version": "1.15.0"
+  },
+  "google-chrome": {
+    "source": "https://dl.google.com/linux/chrome/deb/dists/stable/main/binary-amd64/Packages.gz",
+    "version": "154.0.8037.97"
+  },
+  "helix": {
+    "source": "https://api.github.com/repos/helix-editor/helix/releases/latest",
+    "version": "25.07.1"
+  },
+  "herdr": {
+    "source": "https://api.github.com/repos/herdrdev/herdr/releases/latest",
+    "version": "0.9.3"
+  },
+  "hypridle": {
+    "source": "https://api.github.com/repos/hyprwm/hypridle/releases/latest",
+    "version": "0.1.8"
+  },
+  "hyprland": {
+    "source": "https://api.github.com/repos/hyprwm/Hyprland/releases/latest",
+    "version": "0.56.2"
+  },
+  "hyprlock": {
+    "source": "https://api.github.com/repos/hyprwm/hyprlock/releases/latest",
+    "version": "0.9.6"
+  },
+  "linux": {
+    "source": "https://www.kernel.org/releases.json",
+    "version": "7.2.9"
+  },
+  "nvidia": {
+    "source": "https://gfwsl.geforce.com/services_toolkit/services/com/nvidia/services/AjaxDriverService.php?func=DriverManualLookup&psid=133&pfid=1075&osID=12&languageCode=1033&beta=0&isWHQL=0&dltype=-1&dch=0&upCRD=null&qnf=0&ctk=null&sort1=&numberOfResults=1",
+    "version": "595.104.02"
+  },
+  "ollama": {
+    "source": "https://api.github.com/repos/ollama/ollama/releases/latest",
+    "version": "0.35.1"
+  },
+  "python-latest": {
+    "source": "https://www.python.org/api/v2/downloads/release/?is_published=true",
+    "version": "3.14.8"
+  },
+  "ripgrep": {
+    "source": "https://api.github.com/repos/BurntSushi/ripgrep/releases/latest",
+    "version": "15.2.0"
+  },
+  "rust-toolchain": {
+    "source": "https://static.rust-lang.org/dist/channel-rust-stable.toml",
+    "version": "1.99.0"
+  },
+  "slack": {
+    "source": "https://slack.com/downloads/instructions/linux",
+    "version": "4.52.171"
+  },
+  "tuigreet": {
+    "source": "https://api.github.com/repos/apognu/tuigreet/releases/latest",
+    "version": "0.11.1"
+  },
+  "uv": {
+    "source": "https://api.github.com/repos/astral-sh/uv/releases/latest",
+    "version": "0.12.22"
+  },
+  "uwsm": {
+    "source": "https://api.github.com/repos/Vladimir-csp/uwsm/tags?per_page=100",
+    "version": "0.27.0"
+  },
+  "zed-editor": {
+    "source": "https://api.github.com/repos/zed-industries/zed/releases/latest",
+    "version": "1.22.0"
+  },
+  "zoxide": {
+    "source": "https://api.github.com/repos/ajeetdsouza/zoxide/releases/latest",
+    "version": "0.10.0"
+  }
+}

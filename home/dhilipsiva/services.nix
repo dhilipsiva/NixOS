@@ -13,7 +13,11 @@ let
 in
 {
   systemd.user.services.show-time-notification = {
-    Unit.Description = "Show a notification with the current time";
+    Unit = {
+      Description = "Show a notification with the current time";
+      Requisite = [ "graphical-session.target" ];
+      After = [ "graphical-session.target" ];
+    };
     Service = {
       Type = "oneshot";
       ExecStart = "${showTimeNotification}";

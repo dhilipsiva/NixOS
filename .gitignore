@@ -100,15 +100,17 @@ ENV/
 # mypy
 .mypy_cache/
 
-.config
+.config/*
+!.config/zellij/
 .tmuxp/*
 .env
-result/*
+result
+result-*
 
 # Local, per-machine Claude Code overrides — never commit (keep settings.json + hooks/ tracked)
 .claude/settings.local.json
 
-# --- secrets hygiene (Phase 4): never commit private key material or decrypted output ---
+# --- secrets hygiene: never commit private key material or decrypted output ---
 *.agekey
 *age*key*.txt
 keys.txt
@@ -116,3 +118,9 @@ keys.txt
 age-key*.txt
 secrets/*.dec
 secrets/*.decrypted
+
+# Signing and deployment material belongs outside this checkout.
+*.key
+*.p12
+*.pfx
+.nixosctl/
