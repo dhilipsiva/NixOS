@@ -1,56 +1,29 @@
 # Remaining desktop deployment
 
 Run commands from `/home/dhilipsiva/projects/dhilipsiva/NixOS` as dhilipsiva.
-Generation **14** is running (published `2652a41`, booted 2026-10-04 14:16
-Asia/Colombo) with the redesigned Waybar, all 16 cores / 32 threads, the recovered
-Wi-Fi adapter, Secure Boot and empty failed-unit lists. Acceptance and the first
-cleanup are complete; do not repeat enrollment, CPU troubleshooting or
-first-deployment cleanup.
+Generation **15** is running: the published `44d446b` modernisation (systemd
+initrd, userborn, sudo-rs, Nix 2.35, nftables with systemd-resolved, rootless
+Docker, compositor scale 1.5 and the rest listed in README.md). The owner
+confirmed the scaling; the post-boot checks in section 2 still apply to it.
 
-## 1. Stage the modernised configuration
+## 1. Stage the DisplayPort display policy
 
-The published revision after `2652a41` modernises the whole configuration while
-keeping hardware, filesystems, secrets and the no-sleep policy unchanged:
-
-- systemd initrd; boot menu editor off; readable 4K boot menu
-- userborn-managed accounts with sops-nix systemd activation; `sudo-rs`
-- Nix 2.35 (`nixVersions.latest`), XDG base directories, kept outputs,
-  nix-community cache, `nix-channel` removed, `command-not-found` off
-- systemd-resolved, nftables firewall, port 8080 no longer open
-- rootless Docker (user service limited to dhilipsiva, `DOCKER_HOST` set);
-  docker/input/plugdev groups removed
-- Bluetooth + Blueman, fwupd, systemd-oomd for user slices, tmpfs `/tmp`
-- compositor scale 1.5 on the 4K panel, Terminus 32px console font, Bibata
-  cursor, dark colour-scheme preference, `xdg-open` through the portal
-- hyprpolkitagent, Zellij through its Home Manager module (upstream keybindings,
-  fish), applications moved to the Home Manager profile, Helix with wrapped
-  language servers, Alacritty 12pt (scaled), Waybar 12px/30px (scaled)
-- nixfmt formatting, deadnix and ruff enforced by the `formatting` check
-
-It builds as
-`/nix/store/vwbdamgnanaghnwwafwg27mbd8p9q6ng-nixos-system-dhilipsiva-desktop-26.05.20261002.774debe`
-and passes `nix flake check` and `scripts/nixosctl check --stable`. A headless
-QEMU rehearsal of this configuration (without the VM secrets key) booted through
-the systemd initrd in 3.5 s, ran userborn successfully, kept start-up going while
-the two sops units failed as designed, and showed sudo-rs, Nix 2.35.2, nftables,
-systemd-resolved, tmpfs `/tmp`, the console font and the rootless Docker user
-unit in place; root reached a shell over SSH. The UPS units fail in the VM because
-the hardware and its secret are absent. The 52 dbus-broker "Ignoring duplicate
-name" journal warnings already occur on generation 14 and are unrelated. Staging
+The monitor moved from HDMI to DisplayPort on 2026-10-04. The checkout now
+targets `DP-1` at 3840x2160@240 with 10-bit colour, adaptive sync in fullscreen
+and scale 1.5, removes the HDMI FRL kernel parameters, lets fullscreen games scan
+out directly, and restricts the compositor to the NVIDIA card by PCI path so
+hardware cursors work. The same mode, depth and scale were applied live with
+`hyprctl eval` and confirmed working before the change was committed. Staging
 needs the owner's sudo password in their own terminal:
 
 ```bash
 scripts/nixosctl stage --host desktop && systemctl reboot
 ```
 
-The helper re-verifies the published revision, credentials and firmware trust,
-installs the signed entries and leaves the running system untouched until the
-reboot.
-
 ## 2. Verify after the reboot
 
 ```bash
-hyprctl monitors | grep -E 'scale|3840'          # scale 1.5; Firefox at 100 % zoom should now be readable
+hyprctl monitors | grep -E 'scale|3840|Format|Cursors'   # 240 Hz, scale 1.5, XBGR2101010, hardware cursors
 systemctl --failed; systemctl --user --failed
 systemctl status userborn.service sops-install-secrets-for-users.service --no-pager
 sudo -v                                           # sudo-rs prompts for your password
@@ -127,6 +100,5 @@ Log in as `dhilipsiva` with password `test` to prove userborn received the hash.
 Select **NixOS (protected pre-migration recovery)** in the boot menu for the
 original generation; the legacy generation 1/2 entries are unusable. Earlier
 Lanzaboote generations (13, 14) remain in the menu for five generations. Keep the
-encrypted recovery archive, owner age identity and recovery media. Higher
-refresh/HDR remains a separate future display test; retain the HDMI workaround
-until then.
+encrypted recovery archive, owner age identity and recovery media. HDR
+remains a separate future display test.

@@ -20,7 +20,7 @@ session is [SESSION.md](SESSION.md).
 | CPU | AMD Ryzen 9 9950X3D, 16 cores / 32 threads |
 | Motherboard | MSI MAG X870E TOMAHAWK WIFI, MS-7E59 |
 | GPU | NVIDIA RTX 5090 on the open kernel module; AMD integrated GPU also present |
-| Display | Samsung Odyssey G81SF, 3840×2160 at 60 Hz over HDMI, compositor scale 1.5 |
+| Display | Samsung Odyssey G81SF over DisplayPort, 3840×2160 at 240 Hz, 10-bit, VRR in fullscreen, compositor scale 1.5 |
 | Memory | About 92 GiB visible to Linux |
 | Linux SSD | 4 TB XPG MARS 980 BLADE, serial `2P10291S7BAY` |
 | Windows SSD | Separate 4 TB SSD, serial `2P102LAC7BA1`, mounted read-only on demand |
@@ -29,10 +29,11 @@ session is [SESSION.md](SESSION.md).
 
 The kernel is the latest kernel.org stable release (with a pinned patch-release
 source bridge when Nixpkgs lags) and the GPU runs NVIDIA's current production
-driver, built against that exact kernel. HDMI FRL and deep colour are disabled by
-kernel parameters since generation 10 lost video at the NVIDIA framebuffer
-takeover; the panel runs 4K60 8-bit SDR until higher modes are retested over a
-working link. The 700 mm wide panel uses compositor scale 1.5 (2560×1440 logical
+driver, built against that exact kernel. The panel is connected over DisplayPort
+(DP-1) since 2026-10-04 and runs 3840×2160 at 240 Hz with 10-bit colour and
+adaptive sync in fullscreen; the earlier HDMI FRL workaround (4K60, 8-bit) went
+away with the cable, and HDR remains a future test. The compositor addresses only
+the NVIDIA card by PCI path. The 700 mm wide panel uses compositor scale 1.5 (2560×1440 logical
 pixels), so Wayland applications render at 150 %; X11 clients under Xwayland keep
 native pixels and stay sharp but smaller. The text console and the tuigreet login
 screen use a 32-pixel Terminus font.

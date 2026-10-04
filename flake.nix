@@ -288,7 +288,9 @@
             &&
               thinkpad.environment.sessionVariables.AQ_DRM_DEVICES
               == "/dev/dri/thinkpad-intel:/dev/dri/thinkpad-nvidia"
-            && !(desktop.config.environment.sessionVariables ? AQ_DRM_DEVICES)
+            &&
+              desktop.config.environment.sessionVariables.AQ_DRM_DEVICES
+              == "/dev/dri/by-path/pci-0000:01:00.0-card"
             &&
               thinkpad.home-manager.users.dhilipsiva.wayland.windowManager.hyprland.settings.monitor == [
                 {
@@ -299,7 +301,7 @@
                 }
               ]
             && builtins.any (
-              monitor: monitor.output == "HDMI-A-1" && monitor.scale == 1.5
+              monitor: monitor.output == "DP-1" && monitor.scale == 1.5
             ) desktop.config.home-manager.users.dhilipsiva.wayland.windowManager.hyprland.settings.monitor
             && thinkpad.services.flatpak.enable
             && thinkpad.programs.obs-studio.enable

@@ -1,38 +1,39 @@
 # Current stable kernel, NVIDIA production driver and 4K display policy for the
-# RTX 5090 driving a Samsung Odyssey G81SF over HDMI.
+# RTX 5090 driving a Samsung Odyssey G81SF over DisplayPort.
 { config, pkgs, ... }:
 
 {
   boot.kernelPackages = pkgs.linuxPackagesFor (import ../../pkgs/kernel.nix { inherit pkgs; });
 
-  # Generation 10 lost video at the NVIDIA framebuffer takeover: "HDMI FRL
-  # link training failed." Blind login still started Hyprland. The Samsung
-  # Odyssey G81SF works at 4K60 since generation 11. Keep the conservative
-  # HDMI/TMDS, 8-bit baseline for BOTH the text console and the compositor.
-  # These parameters exist in the selected production driver's modeset module.
-  # Temporary: retest higher refresh/HDR over a working link before removing.
-  # HDMI-A-1 is the NVIDIA connector observed in generation 10, not nouveau's
-  # HDMI-A-2 name in recovery. Do not copy these settings onto another host.
-  boot.kernelParams = [
-    "nvidia-modeset.disable_hdmi_frl=1"
-    "nvidia-modeset.hdmi_deepcolor=0"
-    "video=HDMI-A-1:3840x2160@60"
-  ];
-
+  # The panel moved from HDMI to DisplayPort (DP-1) on 2026-10-04. Over HDMI the
+  # NVIDIA driver failed FRL link training in generation 10 and the display was
+  # pinned to 4K60 8-bit by kernel parameters; DisplayPort 1.4 with DSC reaches
+  # the panel's full 3840x2160 at 240 Hz with 10-bit colour, so that workaround
+  # is gone. HDR (the panel advertises HDR10/HLG) stays a separate future test.
+  #
   # The 700 mm wide 4K panel needs 150 % scaling for legible UI: 2560x1440
   # logical pixels. Wayland clients scale themselves; Xwayland clients render at
   # native pixels (sharp but smaller) because of xwayland.force_zero_scaling.
-  home-manager.users.dhilipsiva.wayland.windowManager.hyprland.settings.monitor = [
-    {
-      output = "HDMI-A-1";
-      mode = "3840x2160@60";
-      position = "auto";
-      scale = 1.5;
-      bitdepth = 8;
-      cm = "srgb";
-      vrr = 0;
-    }
-  ];
+  # VRR 2 = adaptive sync only while a fullscreen window is shown.
+  home-manager.users.dhilipsiva.wayland.windowManager.hyprland.settings = {
+    monitor = [
+      {
+        output = "DP-1";
+        mode = "3840x2160@240";
+        position = "auto";
+        scale = 1.5;
+        bitdepth = 10;
+        cm = "srgb";
+        vrr = 2;
+      }
+    ];
+    # Fullscreen games may scan out directly, skipping the compositor pass.
+    config.render.direct_scanout = 2;
+  };
+  # The compositor uses only the GPU wired to the panel. Addressing it by PCI
+  # path keeps the choice stable across card numbering, and a single DRM device
+  # lets Hyprland use hardware cursors instead of software ones.
+  environment.sessionVariables.AQ_DRM_DEVICES = "/dev/dri/by-path/pci-0000:01:00.0-card";
   # Legible text console and tuigreet login screen at 3840x2160.
   console = {
     font = "${pkgs.terminus_font}/share/consolefonts/ter-132n.psf.gz";

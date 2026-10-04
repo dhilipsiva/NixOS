@@ -22,9 +22,9 @@ session needs.
   32 threads online since the owner disabled X3D Gaming Mode), RTX 5090 on the
   NVIDIA open module, Samsung Odyssey G81SF 4K over HDMI-A-1, Qualcomm WCN7850
   Wi-Fi (`wlp8s0`, recovered after a motherboard power drain), CyberPower UPS.
-- Display: HDMI FRL and deep colour are disabled by kernel parameters after
-  generation 10 lost video; the panel runs 3840x2160@60, 8-bit SDR. Higher
-  refresh/HDR is an untested future change. The compositor scale is 1.5.
+- Display: DisplayPort (DP-1) since 2026-10-04 at 3840x2160@240, 10-bit, VRR
+  in fullscreen, compositor scale 1.5, NVIDIA-only DRM device. The HDMI FRL
+  workaround is gone; HDR is an untested future change.
 - Boot: Lanzaboote-signed UKIs with the owner's local certificate appended to
   the firmware db; all factory PK/KEK/db/dbx entries are preserved and the
   staging helper verifies that before every deployment. Recovery entry
@@ -48,8 +48,9 @@ session needs.
 
 ## Current state (2026-10-04)
 
-Generation 14 (published `2652a41`) is running with the redesigned Waybar. The
-checkout now contains the modernisation described in DEPLOYMENT.md; it builds as
+Generation 15 (published `44d446b`, the modernisation) is running and the owner
+confirmed the 1.5 scale. The checkout adds the DisplayPort display policy
+described in DEPLOYMENT.md; the previous modernisation built as
 `/nix/store/vwbdamgnanaghnwwafwg27mbd8p9q6ng-nixos-system-dhilipsiva-desktop-26.05.20261002.774debe`,
 passes every flake check, the `nixosctl check --stable` gate (both hosts build)
 and a headless VM rehearsal of the boot path. It was rebased onto the laptop

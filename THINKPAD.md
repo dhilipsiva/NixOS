@@ -158,7 +158,7 @@ Bluetooth with Blueman, fwupd, Nix 2.35 with XDG base directories and
 profile (`home/dhilipsiva/packages.nix`), Zellij through its module with fish and
 upstream keybindings, hyprpolkitagent, a Bibata cursor and the dark colour-scheme
 preference. The desktop-only parts (systemd initrd, compositor scale 1.5, Terminus
-console font, systemd-oomd user slices, no-sleep policy, HDMI workaround) live in
+console font, systemd-oomd user slices, no-sleep policy, display rule) live in
 `hosts/desktop/`. The ThinkPad's compositor scale is explicitly 1 in
 `hosts/thinkpad/graphics.nix`; its console font is not enlarged. Shared Alacritty
 and Waybar sizes remain logical sizes. Run `nix fmt`
