@@ -1,8 +1,19 @@
 # Official stable CPU/CUDA distribution while Nixpkgs trails upstream. Keep the
 # release and checksum together; do not substitute an unpinned 'latest' URL.
-{ lib, stdenv, fetchurl, autoPatchelfHook, makeWrapper, zstd, zlib, vulkan-loader, ... }:
+{
+  lib,
+  stdenv,
+  fetchurl,
+  autoPatchelfHook,
+  makeWrapper,
+  zstd,
+  zlib,
+  vulkan-loader,
+  ...
+}:
 
-let release = (builtins.fromJSON (builtins.readFile ./releases.json)).ollama;
+let
+  release = (builtins.fromJSON (builtins.readFile ./releases.json)).ollama;
 in
 stdenv.mkDerivation (finalAttrs: {
   pname = "ollama";
@@ -11,8 +22,16 @@ stdenv.mkDerivation (finalAttrs: {
     url = "https://github.com/ollama/ollama/releases/download/v${finalAttrs.version}/ollama-linux-amd64.tar.zst";
     inherit (release) hash;
   };
-  nativeBuildInputs = [ autoPatchelfHook makeWrapper zstd ];
-  buildInputs = [ stdenv.cc.cc.lib zlib vulkan-loader ];
+  nativeBuildInputs = [
+    autoPatchelfHook
+    makeWrapper
+    zstd
+  ];
+  buildInputs = [
+    stdenv.cc.cc.lib
+    zlib
+    vulkan-loader
+  ];
   sourceRoot = ".";
   dontBuild = true;
   dontStrip = true;
@@ -36,7 +55,10 @@ stdenv.mkDerivation (finalAttrs: {
   meta = {
     description = "Local model inference with upstream CPU and CUDA runners";
     homepage = "https://ollama.com";
-    license = [ lib.licenses.mit lib.licenses.unfree ]; # bundled NVIDIA runtimes
+    license = [
+      lib.licenses.mit
+      lib.licenses.unfree
+    ]; # bundled NVIDIA runtimes
     platforms = [ "x86_64-linux" ];
     mainProgram = "ollama";
   };

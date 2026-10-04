@@ -1,26 +1,52 @@
-# Git — ported from .config/git/config + .config/git/excludesfile.
+# Git configuration; difftastic renders diffs.
 { ... }:
 
 {
   programs.git = {
     enable = true;
 
-    # excludesfile -> home-manager writes these and sets core.excludesFile.
     ignores = [
       # Compiled source
-      "*.com" "*.class" "*.dll" "*.exe" "*.o" "*.so"
+      "*.com"
+      "*.class"
+      "*.dll"
+      "*.exe"
+      "*.o"
+      "*.so"
       # Packages
-      "*.7z" "*.dmg" "*.gz" "*.iso" "*.jar" "*.rar" "*.tar" "*.zip"
+      "*.7z"
+      "*.dmg"
+      "*.gz"
+      "*.iso"
+      "*.jar"
+      "*.rar"
+      "*.tar"
+      "*.zip"
       # Logs and databases
-      "*.log" "*.sql" "*.sqlite"
+      "*.log"
+      "*.sql"
+      "*.sqlite"
       # OS generated files
-      ".DS_Store" ".DS_Store?" "._*" ".Spotlight-V100" ".Trashes" "ehthumbs.db" "Thumbs.db"
-      ".sass-cache/" "*.swp" "*.swo" "*.pyc"
+      ".DS_Store"
+      ".DS_Store?"
+      "._*"
+      ".Spotlight-V100"
+      ".Trashes"
+      "ehthumbs.db"
+      "Thumbs.db"
+      ".sass-cache/"
+      "*.swp"
+      "*.swo"
+      "*.pyc"
       # Custom files
-      "db.sqlite3" ".vagrant/" "node_modules/" "no-git-conf/" ".ropeproject/" "dump.rdb"
+      "db.sqlite3"
+      ".vagrant/"
+      "node_modules/"
+      "no-git-conf/"
+      ".ropeproject/"
+      "dump.rdb"
     ];
 
-    # Everything else -> the freeform git config (settings; toGitINI).
     settings = {
       user = {
         name = "dhilipsiva";
@@ -28,7 +54,7 @@
       };
       branch.autosetuprebase = "always";
       github.user = "dhilipsiva";
-      diff.external = "difft"; # difftastic (in packages.nix)
+      diff.external = "difft"; # difftastic (home/dhilipsiva/packages.nix)
 
       alias = {
         l = "log --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %C(bold blue)<%an>%Creset' -n 40 --graph --abbrev-commit";
@@ -56,8 +82,7 @@
         fm = "!f() { git log --pretty=format:'%C(yellow)%h  %Cblue%ad  %Creset%s%Cgreen  [%cn] %Cred%d' --decorate --date=short --grep=$1; }; f";
         dm = "!git branch --merged | grep -v '\\*' | xargs -n 1 git branch -d";
         b = "branch";
-        # Smart quotes preserved verbatim from the original.
-        it = "!git init && git commit -m “Initial Commit” --allow-empty";
+        it = "!git init && git commit -m \"Initial Commit\" --allow-empty";
         st = "stash";
         stsh = "stash --keep-index";
         staash = "stash --include-untracked";
@@ -73,18 +98,28 @@
         trustctime = false;
       };
       color = {
-        ui = "auto";
-        branch = { current = "yellow reverse"; local = "yellow"; remote = "green"; };
-        diff = { meta = "yellow bold"; frag = "magenta bold"; old = "red bold"; new = "green bold"; };
-        status = { added = "yellow"; changed = "green"; untracked = "cyan"; };
+        branch = {
+          current = "yellow reverse";
+          local = "yellow";
+          remote = "green";
+        };
+        diff = {
+          meta = "yellow bold";
+          frag = "magenta bold";
+          old = "red bold";
+          new = "green bold";
+        };
+        status = {
+          added = "yellow";
+          changed = "green";
+          untracked = "cyan";
+        };
       };
-      merge = { log = true; tool = "vimdiff"; };
-      push.default = "simple";
+      merge.log = true;
       pull.ff = "only";
       rebase.autosquash = true;
       # Reset inherited helpers; repository automation uses a scoped SSH key.
       credential.helper = "";
-      http.sslVerify = true;
       init.defaultBranch = "main";
     };
   };

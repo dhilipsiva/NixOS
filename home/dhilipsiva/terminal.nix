@@ -1,30 +1,36 @@
-# Terminal emulator + multiplexer.
+# Terminal emulator and multiplexer.
 { pkgs, ... }:
 
 {
-  # zellij: the ~294-line hand-tuned KDL keybind block is kept as a source bridge
-  # (attrset->KDL translation of ordered action sequences is fragile). Native
-  # `programs.zellij.settings` translation is deferred. See CLEANUP.md.
-  xdg.configFile."zellij/config.kdl".source = ../../.config/zellij/config.kdl;
-
-  programs.alacritty.enable = true;
-  programs.alacritty.settings = {
-    terminal.shell.program = "${pkgs.fish}/bin/fish";
-    font = {
-      normal.family = "Fira Code";
-      bold.family = "Fira Code";
-      italic.family = "Fira Code";
-      bold_italic.family = "Fira Code";
-      size = 16;
+  programs.alacritty = {
+    enable = true;
+    settings = {
+      terminal.shell.program = "${pkgs.fish}/bin/fish";
+      # Bold/italic faces derive from the normal family. The point size is a
+      # logical size; the compositor scales it (1.5x on the desktop).
+      font = {
+        normal.family = "Fira Code";
+        size = 12;
+      };
+      # Shift+Return sends ESC then CR. fromJSON turns the JSON escapes into the
+      # real control bytes.
+      keyboard.bindings = [
+        {
+          key = "Return";
+          mods = "Shift";
+          chars = builtins.fromJSON ''"\u001b\r"'';
+        }
+      ];
     };
-    # Shift+Return sends ESC then CR (the original alacritty binding). fromJSON
-    # turns the JSON unicode/CR escapes into the real control bytes.
-    keyboard.bindings = [
-      {
-        key = "Return";
-        mods = "Shift";
-        chars = builtins.fromJSON ''"\u001b\r"'';
-      }
-    ];
+  };
+
+  # Upstream keybindings (the former KDL file restated the old defaults) with
+  # fish in new panes. No shell hook: zellij starts only when asked.
+  programs.zellij = {
+    enable = true;
+    settings.default_shell = "fish";
+    enableBashIntegration = false;
+    enableFishIntegration = false;
+    enableZshIntegration = false;
   };
 }

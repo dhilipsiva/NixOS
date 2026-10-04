@@ -1,5 +1,10 @@
 # Shared, quiet status bar. Host modules opt into laptop-only indicators.
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   launch = command: "${pkgs.uwsm}/bin/uwsm app -- ${command}";
@@ -37,19 +42,34 @@ in
 
   config.programs.waybar = {
     enable = true;
-    systemd = { enable = true; targets = [ "graphical-session.target" ]; };
+    systemd.enable = true; # bound to the default graphical-session.target
     settings.mainBar = {
       layer = "top";
       position = "bottom";
-      height = 36;
+      height = 30; # logical pixels; the compositor scale enlarges the bar
       spacing = 4;
       # Let the center yield space to controls on narrower laptop screens.
       fixed-center = false;
-      modules-left = [ "custom/launcher" "hyprland/workspaces" "hyprland/submap" "hyprland/window" ];
+      modules-left = [
+        "custom/launcher"
+        "hyprland/workspaces"
+        "hyprland/submap"
+        "hyprland/window"
+      ];
       modules-center = [ "clock" ];
-      modules-right = [ "custom/services" "cpu" "memory" "disk" "network" "pulseaudio" ]
-        ++ lib.optional config.repo.waybar.battery.enable "battery"
-        ++ [ "tray" "custom/lock" ];
+      modules-right = [
+        "custom/services"
+        "cpu"
+        "memory"
+        "disk"
+        "network"
+        "pulseaudio"
+      ]
+      ++ lib.optional config.repo.waybar.battery.enable "battery"
+      ++ [
+        "tray"
+        "custom/lock"
+      ];
 
       "custom/launcher" = {
         format = "󰀻  Apps";
@@ -76,19 +96,28 @@ in
           on-scroll = 1;
           format.today = "<span color='#89b4fa'><b><u>{}</u></b></span>";
         };
-        actions = { on-scroll-up = "shift_up"; on-scroll-down = "shift_down"; };
+        actions = {
+          on-scroll-up = "shift_up";
+          on-scroll-down = "shift_down";
+        };
       };
       cpu = {
         interval = 5;
         format = "CPU {usage:2}%";
-        states = { warning = 80; critical = 95; };
+        states = {
+          warning = 80;
+          critical = 95;
+        };
         on-click = monitor;
       };
       memory = {
         interval = 5;
         format = "RAM {percentage:2}%";
         tooltip-format = "{used:.1f} / {total:.1f} GiB used\n{avail:.1f} GiB available\nClick to open system monitor";
-        states = { warning = 80; critical = 95; };
+        states = {
+          warning = 80;
+          critical = 95;
+        };
         on-click = monitor;
       };
       disk = {
@@ -96,7 +125,10 @@ in
         interval = 60;
         format = "SSD {percentage_used:2}%";
         tooltip-format = "Root filesystem\n{free} available / {total} total\nClick to open files";
-        states = { warning = 85; critical = 95; };
+        states = {
+          warning = 85;
+          critical = 95;
+        };
         on-click = launch "${pkgs.kdePackages.dolphin}/bin/dolphin";
       };
       network = {
@@ -113,7 +145,11 @@ in
       pulseaudio = {
         format = "{icon} {volume}%";
         format-muted = "󰝟  Mute";
-        format-icons.default = [ "󰕿" "󰖀" "󰕾" ];
+        format-icons.default = [
+          "󰕿"
+          "󰖀"
+          "󰕾"
+        ];
         tooltip-format = "{desc}\nClick: audio settings · Right-click: mute\nScroll: volume";
         scroll-step = 2;
         max-volume = 100;
@@ -125,8 +161,17 @@ in
         format = "{icon} {capacity}%";
         format-charging = "󰂄 {capacity}%";
         format-plugged = "󰚥 {capacity}%";
-        format-icons = [ "󰁺" "󰁼" "󰁾" "󰂀" "󰁹" ];
-        states = { warning = 25; critical = 10; };
+        format-icons = [
+          "󰁺"
+          "󰁼"
+          "󰁾"
+          "󰂀"
+          "󰁹"
+        ];
+        states = {
+          warning = 25;
+          critical = 10;
+        };
         tooltip-format = "{capacity}% · {time}\nBattery health: {health}%";
       };
       "custom/services" = {
@@ -136,7 +181,10 @@ in
         hide-empty-text = true;
         on-click = launch "${pkgs.alacritty}/bin/alacritty --hold -e ${failedUnits}";
       };
-      tray = { spacing = 10; icon-size = 18; };
+      tray = {
+        spacing = 10;
+        icon-size = 18;
+      };
       "custom/lock" = {
         format = "󰌾";
         tooltip-format = "Lock screen · Super+Ctrl+L";
@@ -146,7 +194,7 @@ in
     style = ''
       * {
         font-family: "FiraCode Nerd Font", "Fira Code", sans-serif;
-        font-size: 14px;
+        font-size: 12px;
         min-height: 0;
         border: none;
         border-radius: 0;

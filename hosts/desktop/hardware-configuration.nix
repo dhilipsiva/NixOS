@@ -3,14 +3,22 @@
 # MSI MAG X870E TOMAHAWK WIFI (MS-7E59), AMD Ryzen 9 9950X3D, RTX 5090.
 # Linux SSD: XPG MARS 980 BLADE, serial 2P10291S7BAY (4 TB).
 # Windows SSD: serial 2P102LAC7BA1; windows.nix mounts its data partition read-only.
-{ config, lib, pkgs, modulesPath, ... }:
+# Microcode updates come from nixos-hardware's common-cpu-amd module.
+{ lib, modulesPath, ... }:
 
 {
-  imports =
-    [ (modulesPath + "/installer/scan/not-detected.nix")
-    ];
+  imports = [ (modulesPath + "/installer/scan/not-detected.nix") ];
 
-  boot.initrd.availableKernelModules = [ "nvme" "xhci_pci" "ahci" "thunderbolt" "usbhid" "usb_storage" "sd_mod" "sr_mod" ];
+  boot.initrd.availableKernelModules = [
+    "nvme"
+    "xhci_pci"
+    "ahci"
+    "thunderbolt"
+    "usbhid"
+    "usb_storage"
+    "sd_mod"
+    "sr_mod"
+  ];
   boot.initrd.kernelModules = [ ];
   boot.kernelModules = [ "kvm-amd" ];
   boot.extraModulePackages = [ ];
@@ -25,11 +33,13 @@
   fileSystems."/boot" = {
     device = "/dev/disk/by-uuid/85B9-1188";
     fsType = "vfat";
-    options = [ "fmask=0077" "dmask=0077" ];
+    options = [
+      "fmask=0077"
+      "dmask=0077"
+    ];
   };
 
   swapDevices = [ ];
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
-  hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 }

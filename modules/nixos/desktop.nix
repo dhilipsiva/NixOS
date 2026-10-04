@@ -28,11 +28,19 @@
     SDL_VIDEODRIVER = "wayland,x11";
   };
 
-  xdg.portal.enable = true;
-  xdg.portal.extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
-  xdg.portal.config.Hyprland = {
-    default = [ "hyprland" "gtk" ];
-    "org.freedesktop.impl.portal.FileChooser" = [ "gtk" ];
+  xdg.portal = {
+    enable = true;
+    extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
+    # xdg-open hands URLs and files to the portal, so the chooser follows the
+    # session's own associations.
+    xdgOpenUsePortal = true;
+    config.Hyprland = {
+      default = [
+        "hyprland"
+        "gtk"
+      ];
+      "org.freedesktop.impl.portal.FileChooser" = [ "gtk" ];
+    };
   };
   security.polkit.enable = true;
   security.pam.services.greetd.enableGnomeKeyring = true;

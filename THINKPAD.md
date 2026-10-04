@@ -140,3 +140,22 @@ scripts/nixosctl accept --host thinkpad --physical-checks-passed
 Acceptance enables persistent subscriber updates at 21:30 Asia/Colombo and
 guarded 30-day cleanup. Build success does not establish gameplay, recording,
 suspend or recovery success. These physical checks remain pending until reboot.
+
+## Shared defaults inherited since the desktop modernisation (2026-10-04)
+
+The shared modules now provide: userborn-managed accounts with sops-nix systemd
+activation (the login hash is installed before `userborn.service`; staging must
+verify decryption with this laptop's own host key), `sudo-rs` for the wheel group,
+NetworkManager with systemd-resolved and an nftables firewall with no open ports,
+rootless Docker in dhilipsiva's session only (no docker, input or plugdev groups),
+Bluetooth with Blueman, fwupd, Nix 2.35 with XDG base directories and
+`nix-channel` disabled, tmpfs `/tmp`, the application set in the Home Manager
+profile (`home/dhilipsiva/packages.nix`), Zellij through its module with fish and
+upstream keybindings, hyprpolkitagent, a Bibata cursor and the dark colour-scheme
+preference. The desktop-only parts (systemd initrd, compositor scale 1.5, Terminus
+console font, systemd-oomd user slices, no-sleep policy, HDMI workaround) live in
+`hosts/desktop/`. Set this laptop's own compositor `scale` and `console.font` in
+`hosts/thinkpad/` if its 1920x1080 panel needs them; the shared Alacritty and
+Waybar sizes are logical sizes meant to be scaled by the compositor. Run `nix fmt`
+before publishing: the `formatting` flake check rejects unformatted Nix files,
+unused bindings and ruff findings.

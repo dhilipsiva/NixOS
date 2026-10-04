@@ -10,7 +10,8 @@ let
   patch = builtins.elemAt parts 2;
   # Select the matching interpreter recipe when a new stable minor is released.
   interpreter = pkgs.${"python${major}${minor}"};
-in interpreter.override {
+in
+interpreter.override {
   sourceVersion = {
     inherit major minor patch;
     suffix = "";

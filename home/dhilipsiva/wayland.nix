@@ -1,17 +1,34 @@
-# Shared Hyprland session. Host modules own GPU and idle/power policy.
+# Shared Hyprland session. Host modules own GPU, display scale and idle/power policy.
 { lib, pkgs, ... }:
 
 let
   lua = lib.generators.mkLuaInline;
-  bind = key: action: { _args = [ key (lua action) ]; };
+  bind = key: action: {
+    _args = [
+      key
+      (lua action)
+    ];
+  };
   exec = command: "hl.dsp.exec_cmd(${builtins.toJSON command})";
   app = command: exec "${pkgs.uwsm}/bin/uwsm app -- ${command}";
   lock = "${pkgs.procps}/bin/pidof hyprlock || ${pkgs.hyprlock}/bin/hyprlock";
   directions = [
-    { key = "H"; direction = "left"; }
-    { key = "J"; direction = "down"; }
-    { key = "K"; direction = "up"; }
-    { key = "L"; direction = "right"; }
+    {
+      key = "H";
+      direction = "left";
+    }
+    {
+      key = "J";
+      direction = "down";
+    }
+    {
+      key = "K";
+      direction = "up";
+    }
+    {
+      key = "L";
+      direction = "right";
+    }
   ];
 in
 {
@@ -24,7 +41,14 @@ in
     systemd.enable = false;
     configType = "lua";
     settings = {
-      monitor = [ { output = ""; mode = "preferred"; position = "auto"; scale = "auto"; } ];
+      monitor = [
+        {
+          output = "";
+          mode = "preferred";
+          position = "auto";
+          scale = "auto";
+        }
+      ];
       config = {
         general = {
           layout = "dwindle";
@@ -32,7 +56,10 @@ in
           gaps_out = 4;
           border_size = 2;
           col = {
-            active_border = { colors = [ "rgb(61afef)" ]; angle = 0; };
+            active_border = {
+              colors = [ "rgb(61afef)" ];
+              angle = 0;
+            };
             inactive_border = "rgb(3b4048)";
           };
         };
@@ -53,6 +80,13 @@ in
         # Hyprland 0.56 keeps VFR under debug, not the old misc namespace.
         # Render on damage instead of continuously redrawing an idle desktop.
         debug.vfr = true;
+        # X11 clients render at native pixels on scaled outputs (sharp, smaller)
+        # instead of being upscaled blurrily by the compositor.
+        xwayland.force_zero_scaling = true;
+        ecosystem = {
+          no_update_news = true;
+          no_donation_nag = true;
+        };
         input = {
           kb_layout = "us";
           follow_mouse = 1;
@@ -77,18 +111,41 @@ in
         (bind "SUPER + SHIFT + SPACE" ''hl.dsp.window.float({ action = "toggle" })'')
         (bind "SUPER + V" ''hl.dsp.layout("togglesplit")'')
         (bind "SUPER + SHIFT + E" (exec "${pkgs.uwsm}/bin/uwsm stop"))
-        (bind "Print" (exec "${pkgs.grim}/bin/grim -g \"$(${pkgs.slurp}/bin/slurp)\" - | ${pkgs.wl-clipboard}/bin/wl-copy"))
-        (bind "XF86AudioRaiseVolume" (exec "${pkgs.wireplumber}/bin/wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 5%+"))
-        (bind "XF86AudioLowerVolume" (exec "${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"))
+        (bind "Print" (
+          exec "${pkgs.grim}/bin/grim -g \"$(${pkgs.slurp}/bin/slurp)\" - | ${pkgs.wl-clipboard}/bin/wl-copy"
+        ))
+        (bind "XF86AudioRaiseVolume" (
+          exec "${pkgs.wireplumber}/bin/wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 5%+"
+        ))
+        (bind "XF86AudioLowerVolume" (
+          exec "${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"
+        ))
         (bind "XF86AudioMute" (exec "${pkgs.wireplumber}/bin/wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"))
-        { _args = [ "SUPER + mouse:272" (lua "hl.dsp.window.drag()") { mouse = true; } ]; }
-        { _args = [ "SUPER + mouse:273" (lua "hl.dsp.window.resize()") { mouse = true; } ]; }
-      ] ++ lib.concatMap (d: [
+        {
+          _args = [
+            "SUPER + mouse:272"
+            (lua "hl.dsp.window.drag()")
+            { mouse = true; }
+          ];
+        }
+        {
+          _args = [
+            "SUPER + mouse:273"
+            (lua "hl.dsp.window.resize()")
+            { mouse = true; }
+          ];
+        }
+      ]
+      ++ lib.concatMap (d: [
         (bind "SUPER + ${d.key}" ''hl.dsp.focus({ direction = "${d.direction}" })'')
         (bind "SUPER + SHIFT + ${d.key}" ''hl.dsp.window.move({ direction = "${d.direction}" })'')
-      ]) directions ++ lib.concatMap (workspace:
-        let key = if workspace == 10 then "0" else toString workspace;
-        in [
+      ]) directions
+      ++ lib.concatMap (
+        workspace:
+        let
+          key = if workspace == 10 then "0" else toString workspace;
+        in
+        [
           (bind "SUPER + ${key}" "hl.dsp.focus({ workspace = ${toString workspace} })")
           (bind "SUPER + SHIFT + ${key}" "hl.dsp.window.move({ workspace = ${toString workspace}, follow = false })")
         ]
@@ -108,32 +165,45 @@ in
 
   services.mako = {
     enable = true;
-    settings = { default-timeout = 5000; font = "Fira Code 11"; };
+    settings = {
+      default-timeout = 5000;
+      font = "Fira Code 11";
+    };
   };
 
   programs.hyprlock = {
     enable = true;
     settings = {
-      general = { hide_cursor = true; ignore_empty_input = true; };
+      general = {
+        hide_cursor = true;
+        ignore_empty_input = true;
+      };
       animations.enabled = false;
-      background = [ { monitor = ""; color = "rgba(1e222aff)"; blur_passes = 0; } ];
-      input-field = [ {
-        monitor = "";
-        size = "300, 50";
-        position = "0, -80";
-        font_family = "Fira Code";
-        rounding = 0;
-        shadow_passes = 0;
-        fade_on_empty = false;
-        inner_color = "rgba(282c34ff)";
-        outer_color = "rgba(61afefff)";
-        font_color = "rgba(abb2bfff)";
-      } ];
+      background = [
+        {
+          monitor = "";
+          color = "rgba(1e222aff)";
+          blur_passes = 0;
+        }
+      ];
+      input-field = [
+        {
+          monitor = "";
+          size = "300, 50";
+          position = "0, -80";
+          font_family = "Fira Code";
+          rounding = 0;
+          shadow_passes = 0;
+          fade_on_empty = false;
+          inner_color = "rgba(282c34ff)";
+          outer_color = "rgba(61afefff)";
+          font_color = "rgba(abb2bfff)";
+        }
+      ];
     };
   };
   services.hypridle = {
     enable = true;
-    systemdTarget = "graphical-session.target";
     settings.general = {
       lock_cmd = lock;
       before_sleep_cmd = "${pkgs.systemd}/bin/loginctl lock-session";
@@ -142,16 +212,7 @@ in
     # hosts/<host>/power.nix supplies idle listeners for its workload/battery policy.
   };
 
-  systemd.user.services.polkit-agent = {
-    Unit = {
-      Description = "Graphical authentication agent";
-      PartOf = [ "graphical-session.target" ];
-      After = [ "graphical-session.target" ];
-    };
-    Service = {
-      ExecStart = "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1";
-      Restart = "on-failure";
-    };
-    Install.WantedBy = [ "graphical-session.target" ];
-  };
+  # Hyprland's own polkit authentication agent, managed by the Home Manager
+  # module and bound to the graphical session that UWSM starts.
+  services.hyprpolkitagent.enable = true;
 }

@@ -1,32 +1,24 @@
-# System-wide package set.
+# System-wide essentials shared by root, recovery shells and services.
+# Applications and developer tools live in the user's Home Manager profile
+# (home/dhilipsiva/packages.nix); packages that enabled modules already install
+# (curl, openssh, docker, the login shell) are not listed again.
 { pkgs, ... }:
 
 {
   environment.systemPackages = with pkgs; [
-    # Core
-    git curl wget tree unzip coreutils gnumake gcc cmake pkg-config rsync
-    libnotify libxml2 libinput openssl gnupg seahorse
-
-    # Terminals & Shells
-    alacritty fish starship atuin zoxide zellij bottom ncdu ripgrep
-
-    # Editors
-    helix zed-editor vscode vscode-langservers-extracted
-
-    # Dev Tools
-    python-latest nodejs_latest rust-toolchain uv lazygit
-    docker bruno discord openconnect openssh android-tools
-    # copilot-cli removed upstream (EOL) — dropped on 26.05; re-add a replacement
-    # (e.g. the `gh` copilot extension) if wanted.
-    arduino-ide code-cursor codex claude-code herdr
-    ssm-session-manager-plugin wasm-pack watchman
-    typescript-language-server biome difftastic
-
-    # Desktop / GUI
-    grim slurp wl-clipboard
-    firefox kdePackages.dolphin slack google-chrome
-
-    # Wine / Gaming
-    lutris wineWow64Packages.stable winetricks vulkan-tools
+    git
+    wget
+    tree
+    unzip
+    rsync
+    openssl
+    openconnect # VPN client; runs privileged
+    libinput # input-device diagnostics
+    helix # root and recovery shells use the same editor as the user
   ];
+
+  environment.variables = {
+    EDITOR = "hx";
+    VISUAL = "hx";
+  };
 }

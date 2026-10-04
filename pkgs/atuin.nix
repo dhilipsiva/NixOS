@@ -1,8 +1,15 @@
 # Upstream stable release bridge until Nixpkgs catches up. The musl build is
 # self-contained; the checksum is the upstream GitHub release asset digest.
-{ lib, stdenvNoCC, fetchurl, installShellFiles, ... }:
+{
+  lib,
+  stdenvNoCC,
+  fetchurl,
+  installShellFiles,
+  ...
+}:
 
-let release = (builtins.fromJSON (builtins.readFile ./releases.json)).atuin;
+let
+  release = (builtins.fromJSON (builtins.readFile ./releases.json)).atuin;
 in
 stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "atuin";

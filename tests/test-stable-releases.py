@@ -12,7 +12,10 @@ spec.loader.exec_module(updater)
 class StableReleaseTests(unittest.TestCase):
     def test_nvidia_requires_recommended_production_release(self):
         info = {"IsBeta": "0", "IsFeaturePreview": "0", "IsRecommended": "1", "DisplayVersion": "595.104.02"}
-        response = lambda data: {"Success": "1", "IDS": [{"downloadInfo": data}]}
+
+        def response(data):
+            return {"Success": "1", "IDS": [{"downloadInfo": data}]}
+
         self.assertEqual(updater.production_driver(response(info)), "595.104.02")
         for field, value in [("IsBeta", "1"), ("IsFeaturePreview", "1"), ("IsRecommended", "0")]:
             with self.assertRaises(ValueError):

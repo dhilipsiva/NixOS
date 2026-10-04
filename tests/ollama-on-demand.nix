@@ -25,8 +25,8 @@ pkgs.testers.runNixOSTest {
 
       http.server.HTTPServer(("127.0.0.1", 11435), Handler).serve_forever()
     '';
-    systemd.services.ollama-proxy.serviceConfig.ExecStart = lib.mkForce
-      "${pkgs.systemd}/lib/systemd/systemd-socket-proxyd --exit-idle-time=2s 127.0.0.1:11435";
+    systemd.services.ollama-proxy.serviceConfig.ExecStart =
+      lib.mkForce "${pkgs.systemd}/lib/systemd/systemd-socket-proxyd --exit-idle-time=2s 127.0.0.1:11435";
     environment.systemPackages = [ pkgs.curl ];
     virtualisation.memorySize = 1024;
     system.stateVersion = "26.05";

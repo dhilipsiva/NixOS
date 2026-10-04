@@ -1,6 +1,13 @@
-{ lib, stdenvNoCC, fetchurl, installShellFiles }:
-let release = (builtins.fromJSON (builtins.readFile ./releases.json)).uv;
-in stdenvNoCC.mkDerivation (finalAttrs: {
+{
+  lib,
+  stdenvNoCC,
+  fetchurl,
+  installShellFiles,
+}:
+let
+  release = (builtins.fromJSON (builtins.readFile ./releases.json)).uv;
+in
+stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "uv";
   inherit (release) version;
   src = fetchurl {
@@ -21,11 +28,14 @@ in stdenvNoCC.mkDerivation (finalAttrs: {
     runHook postInstall
   '';
   doInstallCheck = true;
-  installCheckPhase = ''$out/bin/uv --version | grep -F '${finalAttrs.version}' '';
+  installCheckPhase = "$out/bin/uv --version | grep -F '${finalAttrs.version}' ";
   meta = {
     description = "Python package and project manager";
     homepage = "https://docs.astral.sh/uv/";
-    license = with lib.licenses; [ asl20 mit ];
+    license = with lib.licenses; [
+      asl20
+      mit
+    ];
     platforms = [ "x86_64-linux" ];
     mainProgram = "uv";
   };

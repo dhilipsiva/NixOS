@@ -15,11 +15,13 @@
     priority = 100;
   };
 
-  # Periodic SSD TRIM; preserve the existing ext4 filesystem.
-  services.fstrim.enable = true;
+  # systemd-oomd protects the interactive session: a runaway user process is
+  # killed on sustained memory pressure before the whole desktop stalls.
+  systemd.oomd.enableUserSlices = true;
 
   # Let one large compilation scale over all OS-visible CPUs. Limit concurrent
   # derivations and lower the daemon's scheduling weight to keep editors usable.
+  # Periodic SSD TRIM comes from nixos-hardware's common-pc-ssd module.
   nix.settings = {
     max-jobs = 2;
     cores = 0;
@@ -37,11 +39,9 @@
     enable32Bit = true;
   };
 
+  # Backend selection for this GPU; modules/nixos/ollama.nix owns the socket wiring.
   services.ollama = {
-    enable = true;
     package = pkgs.ollama-cuda;
-    host = "127.0.0.1";
-    openFirewall = false;
     environmentVariables = {
       # One active model/request prioritizes interactive coding and VRAM capacity.
       OLLAMA_NUM_PARALLEL = "1";
@@ -53,6 +53,10 @@
   };
 
   environment.systemPackages = with pkgs; [
-    btop nvtopPackages.nvidia lm_sensors pciutils usbutils
+    btop
+    nvtopPackages.nvidia
+    lm_sensors
+    pciutils
+    usbutils
   ];
 }

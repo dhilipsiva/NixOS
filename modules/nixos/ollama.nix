@@ -1,6 +1,11 @@
 # Ollama does not consume systemd's listening socket itself. A socket proxy starts
 # the backend on the first connection and stops it after connections go idle.
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 {
   services.ollama = {

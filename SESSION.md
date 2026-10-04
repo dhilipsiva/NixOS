@@ -1,395 +1,56 @@
 # Session handoff
 
-Current Codex session ID: `01a100bf-09ff-7cd0-83ce-11e37fd90d03`
-
-Repository: `/home/dhilipsiva/projects/dhilipsiva/NixOS`
+Repository: `/home/dhilipsiva/projects/dhilipsiva/NixOS` on both machines, owned
+by dhilipsiva, tracking `origin/master`. Start any session by comparing the
+running system with the published build before trusting state notes:
 
 ```bash
 cd /home/dhilipsiva/projects/dhilipsiva/NixOS
-codex resume 01a100bf-09ff-7cd0-83ce-11e37fd90d03
+git status --short --branch
+readlink -f /run/current-system
+nix build --no-link --print-out-paths .#nixosConfigurations.desktop.config.system.build.toplevel
 ```
 
-Keep the session history in `~/.codex/sessions`; the ID is not a copy of the
-conversation. See the [resume documentation](https://learn.chatgpt.com/docs/developer-commands?surface=cli#codex-resume).
+The detailed migration record (firmware enrollment, dbx restoration, HDMI
+failure analysis, CPU and Wi-Fi recovery, generation-by-generation evidence) is
+in Git history up to commit `2652a41`; this file keeps only the facts a new
+session needs.
 
-Recorded 2026-10-03. The approved repository implementation includes Hyprland/UWSM,
-tuigreet, Alacritty/fish/Atuin/zoxide, ripgrep, the requested development/AI tools,
-Slack, Chrome with the official Teams web-app launcher, Lanzaboote, host-checked
-Git publication/staging, acceptance-gated timers/GC, unique Home Manager backups,
-and removal of obsolete reinstall material. Existing filesystems are preserved.
+## Desktop facts
 
-The GitHub write deploy key at `~/.ssh/nixos-update` has been authorized, and the
-implementation was published as `82024bb`. Private keys remain outside Git. Use `git status --short
---branch` and `git log -1` to inspect the current publication state.
+- Hardware: MSI MAG X870E TOMAHAWK WIFI (MS-7E59), Ryzen 9 9950X3D (16 cores /
+  32 threads online since the owner disabled X3D Gaming Mode), RTX 5090 on the
+  NVIDIA open module, Samsung Odyssey G81SF 4K over HDMI-A-1, Qualcomm WCN7850
+  Wi-Fi (`wlp8s0`, recovered after a motherboard power drain), CyberPower UPS.
+- Display: HDMI FRL and deep colour are disabled by kernel parameters after
+  generation 10 lost video; the panel runs 3840x2160@60, 8-bit SDR. Higher
+  refresh/HDR is an untested future change. The compositor scale is 1.5.
+- Boot: Lanzaboote-signed UKIs with the owner's local certificate appended to
+  the firmware db; all factory PK/KEK/db/dbx entries are preserved and the
+  staging helper verifies that before every deployment. Recovery entry
+  **NixOS (protected pre-migration recovery)** boots the original generation 2
+  (Plasma/nouveau) from `/EFI/nixos-recovery/pre-migration.efi`. Legacy
+  generation 1/2 loader entries are unusable. The encrypted recovery archive is
+  `~/nixos-boot-recovery.*.tar.age`; the owner age identity lives in
+  `~/.config/sops/age/keys.txt` and is backed up off-machine.
+- Secrets: `secrets/desktop.yaml` is encrypted to the owner identity and the
+  desktop's SSH host identity; staging verifies decryption and that the
+  preserved login hash matches `/etc/shadow`. The VM fixture
+  `secrets/vm-test.yaml` is encrypted to a throwaway identity that is no longer
+  available locally; regenerate it (see DEPLOYMENT.md) before using the VM
+  rehearsal's positive sops path.
+- Publication: the desktop pushes with the repository-scoped deploy key in
+  `~/.ssh/nixos-update` through `core.sshCommand`; the nightly timer runs at
+  21:00 Asia/Colombo and stages verified updates for the next manual reboot.
+  Acceptance and the first cleanup (36.4 GiB freed) are complete.
+- Pending: Wi-Fi password still agent-owned (psk-flags 1), so autoconnect before
+  login is unverified. DEPLOYMENT.md tracks this and the staged modernisation.
 
-Current boot, checked 2026-10-04 during the status bar work: **generation 13**,
-boot ID `6da9ef49-5d0d-486c-b82f-41e6481e929e`, system path
-`/nix/store/1xs9pw9qyzcq5ym0vasmgxg0j9b7raqf-nixos-system-dhilipsiva-desktop-26.05.20261002.774debe`.
-This matches the published `7c8c77d` build; the selected EFI entry is generation 13
-and `nm-applet.service` is active. CPU online remains `0-31`, SMT `on`, Secure Boot
-enabled and system/user failed-unit lists empty. The Wi-Fi profile still has
-autoconnect=yes, empty permissions and psk-flags=1; saving a system password and
-checking autoconnect before login remain pending.
+## Current state (2026-10-04)
 
-The status bar redesign is in `home/dhilipsiva/waybar.nix`, imported by Home
-Manager. It adds five persistent workspaces, a clock/calendar, native resource
-and connectivity modules, useful click actions and an optional host-enabled
-battery indicator. Service failure counts use a 30-second check because the
-pinned native failed-units module can retain stale state after recovery. Its
-helper returns empty text on the healthy running system. GTK accepts the CSS;
-Waybar rendered at 1366, 1920 and 3840 pixel widths in an isolated headless Sway
-preview, querying the running Hyprland only for workspace/title data. The preview
-omitted a second tray host. It did not replace the live bar or activate a system.
-The redesigned bar still requires staging and a manual reboot. Use Git status
-and origin/master to verify the current publication state.
-
-The update timer is enabled for 21:00 Asia/Colombo plus up to five minutes of
-jitter; at this check its next run is 2026-10-04 21:03:53. Updates build, verify,
-publish and stage for a manual reboot, without live switch or automatic reboot.
-Daily GC is 22:00; Sunday optimisation is 22:30 with timer jitter.
-
-Previous CPU recovery boot, checked 2026-10-04: **generation 12**, boot ID
-`38a4c9bd-e126-43bc-8058-29fc878d2f19` (started 13:28:49 Asia/Colombo), with system path
-`/nix/store/r5ycb7kq8nhd7hgzh2h9k9g3yzzb15gc-nixos-system-dhilipsiva-desktop-26.05.20261002.774debe`.
-Both the selected EFI entry and system profile identify generation 12. Hyprland
-reports animations=false, shadows=false, rounding=0 and debug.vfr=true. HDMI-A-1
-remains at 3840x2160/60 Hz, XRGB8888; Secure Boot is enabled and both system/user
-failed-unit lists are empty. The owner's supplied `staged.json` records revision
-`d4b1b8a3b66183d27dc767d80f0c60e6618bf96d` and exactly matches the running system
-and system profile. Their `bootctl status` also confirms generation 12 is the
-default boot entry. Documentation-only commits through `de0f07e` build that same
-configuration; the new applet change requires another staged generation.
-The owner's 13:35:18 GPU snapshot reports NVIDIA 595.104.02, P8, 40 W, 1% total
-GPU utilization and 418 MiB allocated, with Hyprland using 116 MiB (about 0.36%
-of total VRAM). This is an idle snapshot, not a compute benchmark. Sudo worked
-in the owner's terminal; it does not grant the agent reusable authentication.
-
-The owner reports Wi-Fi recovered after draining motherboard power for about one
-minute. Current enumeration confirms `17cb:1107` at `0000:08:00.0`, bound to
-`ath12k_wifi7_pci`, and NetworkManager reports `wlp8s0` connected. USB tethering
-is no longer listed. No Wi-Fi driver change was applied. The cold power cycle
-restored detection; the underlying reason for the stuck state remains unproven.
-
-The owner subsequently reported having to enter the Wi-Fi password and connect
-manually on every boot. The sole saved Wi-Fi profile
-`9fe1ee6e-79f3-4b1c-b14c-70a2837dcba4` initially had autoconnect=yes,
-permissions=user:dhilipsiva and psk-flags=1 (agent-owned). NetworkManager logs
-`no secrets: No agents were available for this request`. GNOME Keyring is running
-through greetd's PAM integration, but no NetworkManager secret agent is configured
-in generation 12. A read-only in-memory check found no PSK retrievable from
-NetworkManager; no password was printed or written to a temporary file.
-
-The repository now enables the shared NixOS `programs.nm-applet` service with
-its Waybar-compatible indicator and adds a network-click editor shortcut. The
-agent opened `nm-connection-editor` for the existing desktop profile; the owner
-must enter the password locally and choose system storage/all users for connection
-before login. No network name or password is declared in Nix. The applet is now
-active in generation 13; saving a system password and verifying automatic
-connection before login remain pending. After the owner's first edit, permissions are empty (all users) and
-autoconnect remains enabled, but psk-flags is still 1 and no system PSK is
-retrievable. The owner was asked to select **Store the password for all users**
-inside the password field and save again. The current Wi-Fi connection was not
-intentionally interrupted.
-
-CPU availability is now restored. On boot `38a4c9bd-e126-43bc-8058-29fc878d2f19`,
-lscpu reports **16 cores, two threads per core and 32 logical CPUs**. The
-possible/present/online lists are all `0-31`, SMT active=1 and control=on. The
-kernel log confirms 32 processors activated; this process also has affinity to
-all 32. L2 is 16 MiB across 16 instances and L3 is 128 MiB across two instances.
-All 32 frequency policies use `amd-pstate-epp`, governor/EPP `performance`, and
-boost remains enabled. The system path, Linux 7.2.9 and microcode `0xb404035`
-are unchanged from the preceding eight-CPU boot. No Nix or driver change was
-needed. Wi-Fi, Secure Boot and the working display survived the reboot.
-
-Previously, boot `68ba0861-11a6-4d43-b0b0-68bb2855f52f` exposed eight cores and
-one thread per core, possible/present/online `0-7`, SMT active=0 and
-control=notsupported. The owner's independent terminal reproduced this, ruling
-out a Codex process-affinity restriction. The owner reported X3D Gaming Mode was
-enabled, and was advised to disable that preset and reboot the same generation.
-The subsequent boot restored full topology. The agent has not read back the
-exact firmware settings and did not modify firmware or reboot automatically.
-
-Cross-check: generation 2 boot `2d659db92e814782b151ab2e622623b7` with Linux
-6.18.1 also reports eight CPUs/eight processors activated, predating the new
-configuration. The current `/proc/config.gz` has CONFIG_NR_CPUS=384,
-CONFIG_SMP=y, CONFIG_HOTPLUG_CPU=y, CONFIG_SCHED_SMT=y and CONFIG_SCHED_MC=y.
-These kernel options already supported more than the eight logical CPUs exposed
-before recovery.
-
-The owner shared advice about CPPC, X3D scheduling tools and `processor.max_cstate`.
-Read-only checks already find `amd_pstate` active, preferred-core support enabled,
-and `amd_3d_vcache` loaded/bound to `AMDI0101:00`, with its `amd_x3d_mode` reporting
-`frequency`. The module name differs from the platform driver's `amd_x3d_vcache`.
-These are scheduling/performance controls; their presence does not prove both
-CCDs are exposed. No C-state cap, affinity restriction or extra scheduler was
-added; full CPU availability subsequently returned with the same NixOS generation.
-
-The owner previously booted **generation 11**, revision
-`0258f5db7c92b37f933841c4700a16f7b7ccb3e5`,
-with system path
-`/nix/store/z4bsvhjn75dcn1dyr3q4cq7cxjvqdrqy-nixos-system-dhilipsiva-desktop-26.05.20261002.774debe`.
-Read-only inspection at that time confirmed that system path. The
-owner reports a working session and supplied successful `nvidia-smi` and
-`hyprctl monitors` output. The earlier boot-menu output selected protected recovery;
-that output predates the successful generation 11 boot. The reduced-effects
-profile requested afterward is now active in generation 12.
-
-Wi-Fi was an outstanding deployment issue on 2026-10-03. The owner confirmed the
-antenna connects to the motherboard sockets and used USB tethering. Historical boot
-`2d659db92e814782b151ab2e622623b7` detects Qualcomm WCN7850 hw2.0, PCI
-`17cb:1107` at `0000:08:00.0`, and creates `wlp8s0` with `ath12k_pci`. The next
-recorded boot, `47303a5180c046a59446b4731d6c618a` at 18:52 on 2026-10-03,
-has no Wi-Fi PCI endpoint. Both use the identical original generation 2 system
-path and Linux 6.18.1. The disappearance predates generation 10/11.
-
-Generation 11 had no Wi-Fi PCI endpoint or wireless PHY. `nmcli radio`
-reported `WIFI-HW missing` with software Wi-Fi enabled. The USB Bluetooth function
-(`0489:e10a`) remained present and unblocked. The 7.2.9 module alias for
-`17cb:1107` resolves to `ath12k_wifi7`; a dry-run dependency check finds all modules,
-and the configured firmware directory contains WCN7850 hw2.0 board/firmware files.
-No missing-firmware Wi-Fi probe appeared in that boot log because the PCI device
-never enumerated. Firmware disabling or a retained controller power state were
-possibilities, not confirmed causes. No driver/configuration change or live
-network/PCI reset was applied. Tethering through `enp19s0u4` was left connected.
-The subsequent power-drain recovery is recorded above.
-
-The owner previously staged
-**generation 10**, revision
-`3a9fa98970d18e2198a8d2ff334d4479d8479b01`, with system path
-`/nix/store/s5mcwfgiihwlya0rjjf03yvg86a5947m-nixos-system-dhilipsiva-desktop-26.05.20261002.774debe`.
-At that time, read-only inspection confirmed the system profile pointed through
-`system-10-link`. No live switch, automatic reboot or Nix store GC has run. The owner
-manually enrolled the local certificate and restored dbx; the agent has not written
-firmware variables.
-
-Before staging, the system profile already pointed to generation 9 (its link
-was dated 2026-01-31), while the owner's earlier `sudo bootctl list` showed
-generation 2 as default/selected and generation 1 available. That older boot-menu
-listing predates both new staged generations. The owner-supplied boot-menu
-output then confirmed generation 11 as the default; this agent cannot directly read
-the root-only ESP.
-The owner successfully ran `prepare-credentials --host desktop` locally. The
-helper verified real host decryption and preservation of the installed login
-password; a fresh UPS secret is encrypted for the separate owner and host
-identities. The owner age identity is mode 0600 outside Git at
-`~/.config/sops/age/keys.txt`. The owner confirmed that this file is backed up.
-Sudo requires the owner's password in their terminal; this agent's session cannot
-reuse that terminal's authentication.
-
-The owner successfully ran a fresh read-only probe of the raw Windows system
-partition on 2026-10-03:
-
-```bash
-sudo blkid --probe --output export /dev/disk/by-partuuid/fb38feee-5c40-4b28-ae3f-68faac3342e5
-```
-
-It returned `TYPE=ntfs`, `USAGE=filesystem`, UUID `263CE1813CE14BFD`, and the
-expected partition UUID. No BitLocker container was detected on this partition;
-this is the evidence for the `unencrypted` assessment used in signing preparation.
-The probe did not query Windows policy or verify a recovery-key backup. The owner
-age-key backup is separate from any Windows recovery key. No Windows filesystem
-was mounted or modified.
-
-The owner successfully ran `prepare-boot --host desktop --windows-status unencrypted`.
-The boot/trust/signature backup is
-`/var/lib/nixos-deployment/boot-backup-20261003T190354`; new signing keys are in
-`/var/lib/sbctl` (owner UUID `7c29ce15-60f3-4f72-bcb4-7fe735961261`). The helper
-exported the public certificate to `/boot/nixos-db.cer`. The recovery GC root
-now resolves to the original running generation 2; the existing Fish configuration
-also has a protected GC root. That preparation did not enroll firmware keys or
-stage a generation.
-
-The owner created and successfully decrypted the local encrypted recovery archive
-`/home/dhilipsiva/nixos-boot-recovery.INuBPo.tar.age` (mode 0600, 131360248 bytes).
-Archive creation is complete. The attempted copy verification used the literal
-placeholder `/path/to/copied.tar.age` and failed because that file did not exist;
-it did not indicate a problem with the local archive. The owner now reports that
-the archive copy is done. The external destination and verification output were
-not supplied; record this as the owner's confirmation, not an independently
-verified off-machine copy. The owner age-key backup is already confirmed.
-
-The owner rebooted into MSI firmware and supplied local photos in `images/`.
-They show User mode, Secure Boot Enabled, Custom mode, and Key Management with
-six factory db certificates. `PXL_20261003_140507657.jpg` shows the action menu
-with Append Key highlighted; `PXL_20261003_140520312.jpg` shows the existing
-certificate list. The subsequent `PXL_20261003_142445764.jpg` shows the Local File
-filesystem selector. Its first/top entry, `PCI(1|2)\PCI(0|0)`, matches the Linux
-SSD at `/sys/devices/pci0000:00/0000:00:01.2/0000:02:00.0/nvme/nvme0/nvme0n1`.
-The other entries start with `PCI(2|1)` and lead to the Windows SSD. These
-troubleshooting photos remain local and are ignored by Git.
-
-The owner then reported successful local certificate enrollment and ran
-`stage --host desktop`. Credential verification passed, but the firmware trust
-guard stopped at `Existing dbx trust entries were removed`. It stopped before
-building/staging or changing the system profile/ESP.
-
-Read-only diagnosis compared the currently readable EFI variables with the
-authenticated encrypted recovery archive. The archive was decrypted as a stream;
-only its public trust data was retained in memory, and no plaintext archive or
-private key was written out. SecureBoot is 1 and SetupMode is 0. The saved public
-certificate matches its preparation receipt and is now present in firmware db.
-PK (1 entry), KEK (3 entries), and all original db certificates (6 entries) are
-preserved exactly. The local certificate brings db to 7 entries.
-
-The saved dbx has 445 entries/21500 bytes. At that point dbx had 416 entries/19996
-bytes and exactly equaled firmware dbxDefault. All 29 missing entries were SHA-256
-revocations with their original Microsoft owner GUID; there are no new dbx
-entries. Ignoring owner GUIDs gives the same missing set, so this is not a
-comparison-format issue. The cause of the reset to factory content is unknown.
-The guard remains correct and must not be bypassed or given a new baseline.
-
-The owner attempted the dbx recovery import and supplied
-`PXL_20261003_151808889.MP.jpg`. Its **Input File Format** menu has **Public Key
-Certificate**, **Authenticated Variable**, and **EFI PE/COFF Image**. Use the
-first option for `nixos-dbx-restore.esl`: the
-[AMI BIOS documentation](https://www.supermicro.com/manuals/motherboard/H270/MNL-1914.pdf#page=105),
-printed page 4-37, groups EFI Signature Lists under Public Key Certificate. The
-backup file is raw ESL data without an authenticated-update wrapper.
-
-The owner completed **Forbidden Signatures (dbx) → Append Key → Local File**
-using that file and format, then successfully ran `stage --host desktop`.
-Independent read-only comparison with the authenticated recovery archive now
-confirms that **all 445 original dbx entries are restored exactly**. PK and KEK
-are unchanged, all six original db entries are retained, and the original local
-signing certificate remains enrolled as the seventh entry. SecureBoot is 1 and
-SetupMode is 0. Firmware restoration is complete.
-
-The first successful stage output records revision `3a9fa98` and the generation 10
-system path above.
-The helper checked/built the published snapshot, verified the host credentials
-and trust before and after the build, installed signed boot files, assembled the
-protected recovery image at `/boot/EFI/nixos-recovery/pre-migration.efi`, and
-verified their signatures before recording success. The recovery GC root still
-resolves to the original generation 2. The unsigned-image messages occurred
-while inspecting the old bootloader and recovery kernel before signing; final
-signature verification passed. Lanzaboote's `Collecting garbage...` message is
-its EFI-file housekeeping under its own ESP directories. The separate Nix store
-GC command remains gated by first-boot acceptance.
-
-The first generation 10 attempt was on 2026-10-03 at 21:15:45–21:17:04 Asia/Colombo,
-boot ID `a1c3c950831d4237857194185ea71d3b`. NVIDIA's **open** 595.104.02 module loaded
-on Linux 7.2.9. At 21:15:57, immediately after the NVIDIA framebuffer takeover,
-the kernel logged `HDMI FRL link training failed`. The owner saw no login screen,
-typed the password anyway, and authenticated successfully at 21:16:36. UWSM then
-started Hyprland, its Lua configuration, Waybar and Hypridle. Waybar identified the
-connected output as HDMI-A-1. The system stayed alive until shutdown. These logs
-point to the HDMI link as the display failure; they do not prove a working desktop.
-
-Do not confuse this with boot `9f079c1040f04cd8a63a9d5b17aacc35`, the subsequent
-attempt at the preexisting generation 9, Linux 6.18.1 / NVIDIA proprietary 590.44.01.
-That older configuration fails because Blackwell requires open kernel modules;
-generation 10 already uses them. The owner then returned to the working original
-generation 2 (Plasma/nouveau). The protected recovery entry contains that original
-system, not generation 9.
-
-Recovery-session EDID identifies the Samsung Odyssey G81SF. Its current working
-mode is 3840×2160 at 60 Hz; its EDID supports 600 MHz TMDS and HDMI FRL. The NVIDIA
-595.104.02 source and built module both expose `disable_hdmi_frl` and
-`hdmi_deepcolor`. The desktop-only retry disables FRL and deep colour, requests
-4K60 for the console, and adds a matching 8-bit SDR/VRR-off Hyprland rule. The
-observed NVIDIA connector is HDMI-A-1; nouveau currently calls it HDMI-A-2.
-This is a temporary refresh/HDR limitation, not a proven physical fix. No kernel
-or driver downgrade, firmware change or live graphics change was performed.
-
-The same boot exposed a separate Home Manager warning: its collision-check
-message executes `backupCommand` without arguments because of unescaped shell
-backticks. The backup helper now treats that invocation as a read-only description;
-the one-file invocation still retains each original in a unique directory. A
-regression test checks that the no-argument invocation cannot move files. During
-generation 10, the two real Atuin/Zellij collisions were nevertheless backed up
-successfully after the warning.
-
-The owner successfully staged the HDMI compatibility revision `0258f5d`. The
-helper again verified credential decryption and completed Lanzaboote installation.
-The following `bootctl list` confirms generation 11 is the default, its UKI points
-to the expected `z4bsvhjn...` system, and its embedded command line includes:
-
-```text
-nvidia-modeset.disable_hdmi_frl=1 nvidia-modeset.hdmi_deepcolor=0 video=HDMI-A-1:3840x2160@60
-```
-
-The protected entry `nixos-protected-recovery.conf` is present and selected, with
-`efi /EFI/nixos-recovery/pre-migration.efi`. The separate legacy generation 1/2
-`.conf` entries refer to missing kernel/initrd files in `/EFI/nixos`; those entries
-are not usable recovery choices. The self-contained protected recovery UKI is the
-fallback. Older generation 6 is reported/absent, and older generations 7–9 are
-still listed. No boot-menu files were removed by the agent.
-
-The subsequent generation 11 boot succeeded: boot ID
-`826c45a3-4f09-49dc-8fc2-64b144d6f2c5`. The owner reports everything working so far.
-At 21:49:53 Asia/Colombo, their GPU snapshot showed NVIDIA 595.104.02, RTX 5090,
-P8, 28 W, 1% utilization and 421 MiB allocated, including Hyprland and Alacritty.
-Hyprland itself used 119 MiB (about 0.36% of VRAM); the utilization percentage is
-GPU-wide, not a per-process measurement. This is one observation, not a benchmark.
-HDMI-A-1 reports 3840×2160 at 60 Hz,
-XRGB8888, sRGB and VRR off. Both system and user failed-unit lists are empty.
-Read-only EFI checks confirm SecureBoot=1 and SetupMode=0; this boot's journal
-contains no NVIDIA FRL link-training failure or Xid report. Ollama's backend and
-proxy service are inactive while its proxy socket is active. Real inference and
-the five-minute screen/lock behavior still need the owner's physical checks.
-
-The owner then requested disabling animations and cosmetic effects for performance
-(their "display animations" was interpreted as "disable animations" from context).
-The shared profile now disables compositor and lock-screen animations, rounded
-window/input corners, shadows/glow and Waybar CSS transitions. Blur remains off;
-window opacity is 1 and the useful focus border remains. `debug.vfr = true` is
-the installed Hyprland 0.56 option that avoids continuous idle redraws. The former
-`misc.vfr` option does not exist in this version. Working display mode/driver,
-five-minute screen-off and no-sleep policy were retained. These changes were
-subsequently activated in generation 12 as recorded above.
-
-The software cursor report is explained by the installed compositor's automatic
-cursor policy: NVIDIA plus multiple GPU backends selects software cursors. Its
-startup log registers NVIDIA as the primary DRM device and AMD as secondary;
-`cursor:no_hardware_cursors` and `cursor:use_cpu_buffer` both use the default 2.
-The compositor renders on NVIDIA. No cursor override or GPU-routing change was
-introduced during cosmetic tuning.
-
-The owner reports completing the final DEPLOYMENT.md acceptance/cleanup step and
-supplied its successful output: 4,077 store paths deleted, 36.4 GiB freed,
-30-day generation retention and recovery roots retained. The cleanup helper calls
-`require_acceptance()` first, so this success establishes that the acceptance gate
-and recovery-root check passed at cleanup time. The root-only accepted receipt
-was not read independently. Earlier observations of inactive timers' service
-conditions predate cleanup and do not establish the current gate state.
-
-Next: finish Wi-Fi password persistence and the improved status bar rollout in
-[DEPLOYMENT.md](DEPLOYMENT.md). CPU recovery, running/staged comparison and initial
-cleanup are complete. The owner has accepted the deployment; individual physical
-checks such as real Ollama inference, screen-off timing, UPS and conferencing
-were not independently observed by the agent. Never clear firmware keys, format
-a disk, switch the live system, or reboot automatically.
-
-The reported `bash: atuin: command not found` came from the preexisting shell
-history integration. The local Home Manager Bash configuration initializes old
-Atuin 18.10.0 while the user's profile lacks its executable. It did not prevent
-credential preparation. The new configuration includes Atuin and its shell
-integration; it activated during the failed display attempt and is present in
-generation 11. The new terminal transcript no longer contains the old warning.
-Do not treat warnings in the earlier recovery shell as failures of the credential
-or staging helpers.
-
-Validation so far: four flake checks pass, covering the Hyprland parser, Ollama VM,
-release/channel decisions, real SOPS/age recipient isolation, repeated home-file
-backups and two-clone Git failure cases. A temporary ESP rehearsal assembled and
-verified a signed UKI from the actual installed kernel/initrd. The actual desktop
-board/root/ESP identity checks also pass. The Linux 7.2.9 full desktop build,
-including NVIDIA 595.104.02, passed. The full nightly rehearsal fetched official
-stable releases, checked/built every configured host, committed only allowed pin
-files, published to a temporary remote and synced a second checkout successfully.
-Logs: `/tmp/nixos-kernel729-build.log` and `/tmp/nixos-nightly-rehearsal.log`.
-
-After acceptance, desktop updates publish checked revisions around 21:00
-Asia/Colombo and stage them for the next manual reboot; the future laptop consumes
-them around 21:30. GC runs at 22:00 with 30-day generation retention, retaining the
-original recovery closure/boot image/home roots. Store optimisation runs Sundays
-at 22:30. Models, project caches, personal files and Windows data are preserved.
-
-Only the desktop host is configured. Capture the ThinkPad's real hardware,
-filesystems, boot/encryption details and power needs before adding its host.
-The owner confirmed that the ThinkPad already runs NixOS and requested a handoff
-for continuing from that machine at this same repository path. Read
-[THINKPAD.md](THINKPAD.md) in the laptop session; preserve its existing installation
-and create its own host before staging.
-The desktop now exposes all 16 cores/32 threads. RAM speed/channel configuration
-and sustained workload performance have not been established by these checks.
+Generation 14 (published `2652a41`) is running with the redesigned Waybar. The
+checkout now contains the modernisation described in DEPLOYMENT.md; it builds as
+`/nix/store/31fc551hn6bfmb1p5b4gps3b9ww81v43-nixos-system-dhilipsiva-desktop-26.05.20261002.774debe`,
+passes every flake check, the `nixosctl check --stable` gate and a headless VM
+rehearsal of the boot path. Staging and the reboot follow the normal `nixosctl`
+workflow; nothing switches live.

@@ -9,10 +9,17 @@
     device = "/dev/disk/by-uuid/263CE1813CE14BFD";
     fsType = "ntfs3";
     options = [
-      "ro" "nosuid" "nodev" "noexec"
-      "nofail" "x-systemd.automount" "x-systemd.idle-timeout=5min"
+      "ro"
+      "nosuid"
+      "nodev"
+      "noexec"
+      "nofail"
+      "x-systemd.automount"
+      "x-systemd.idle-timeout=5min"
       "x-systemd.device-timeout=5s"
-      "uid=${toString config.users.users.dhilipsiva.uid}" "gid=100" "umask=0077"
+      "uid=${toString config.users.users.dhilipsiva.uid}"
+      "gid=100"
+      "umask=0077"
     ];
   };
 
@@ -23,6 +30,9 @@
     exec = "${pkgs.kdePackages.dolphin}/bin/dolphin /mnt/windows";
     icon = "drive-harddisk";
     terminal = false;
-    categories = [ "System" "FileTools" ];
+    categories = [
+      "System"
+      "FileTools"
+    ];
   };
 }

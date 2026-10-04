@@ -1,7 +1,14 @@
 # Official stable release, pinned by the digest published with the GitHub asset.
-{ lib, stdenv, fetchurl, autoPatchelfHook, installShellFiles }:
+{
+  lib,
+  stdenv,
+  fetchurl,
+  autoPatchelfHook,
+  installShellFiles,
+}:
 
-let release = (builtins.fromJSON (builtins.readFile ./releases.json)).herdr;
+let
+  release = (builtins.fromJSON (builtins.readFile ./releases.json)).herdr;
 in
 stdenv.mkDerivation (finalAttrs: {
   pname = "herdr";
@@ -10,7 +17,10 @@ stdenv.mkDerivation (finalAttrs: {
     url = "https://github.com/herdrdev/herdr/releases/download/v${finalAttrs.version}/herdr-linux-x86_64";
     inherit (release) hash;
   };
-  nativeBuildInputs = [ autoPatchelfHook installShellFiles ];
+  nativeBuildInputs = [
+    autoPatchelfHook
+    installShellFiles
+  ];
   buildInputs = [ stdenv.cc.cc.lib ];
   dontUnpack = true;
   dontBuild = true;

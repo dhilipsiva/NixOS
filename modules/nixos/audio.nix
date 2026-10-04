@@ -1,4 +1,4 @@
-# Audio via PipeWire (PulseAudio disabled).
+# Audio via PipeWire, which also serves PulseAudio and ALSA clients.
 { ... }:
 
 {
@@ -9,5 +9,4 @@
     pulse.enable = true;
     jack.enable = false;
   };
-  services.pulseaudio.enable = false;
 }

@@ -1,7 +1,5 @@
 """Two-machine Git failure tests: no unpublished or unverified deployment source."""
-import importlib.util
 from pathlib import Path
-import os
 import subprocess
 import sys
 import tempfile

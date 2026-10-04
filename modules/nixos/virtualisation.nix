@@ -1,19 +1,21 @@
-# Containers, non-Nix dynamic binaries, and Android device access.
-{ ... }:
+# Rootless containers and non-Nix dynamic binaries.
+{ config, lib, ... }:
 
 {
-  virtualisation.docker = {
+  # Docker runs as the user inside user namespaces; DOCKER_HOST points clients
+  # at the per-user socket. No docker group and no root-equivalent daemon.
+  virtualisation.docker.rootless = {
     enable = true;
-    enableOnBoot = false;
+    setSocketVariable = true;
   };
+  # The module starts the daemon in every non-root user session, including the
+  # greeter's, which has no subordinate ID range and fails. Limit it to the owner.
+  systemd.user.services.docker.unitConfig.ConditionUser =
+    lib.mkForce config.users.users.dhilipsiva.name;
 
-  # Run pre-built dynamically-linked binaries (VSCode server, etc.).
+  # Run pre-built dynamically-linked binaries (VS Code server and similar).
   programs.nix-ld.enable = true;
 
-  # Android device access for the plugdev group. (`programs.adb.enable` was
-  # removed on 26.05 — systemd 258 handles the uaccess rule automatically; the
-  # `adb` command itself comes from android-tools in packages.nix.)
-  services.udev.extraRules = ''
-    SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", ATTR{idProduct}=="4ee7", MODE="0660", GROUP="plugdev"
-  '';
+  # Android debugging needs no custom udev rule: systemd's built-in uaccess
+  # rules grant the logged-in user access; adb comes from the user's packages.
 }

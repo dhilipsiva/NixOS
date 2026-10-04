@@ -2,28 +2,38 @@
 
 This repository is the single source of truth at
 `/home/dhilipsiva/projects/dhilipsiva/NixOS` on both machines. The installed desktop
-has its own host module. The ThinkPad's actual hardware is captured separately.
-It preserves its existing encrypted installation; [THINKPAD.md](THINKPAD.md)
-records its migration, the child's Roblox/OBS requirements and pending acceptance.
+has its own host module. The ThinkPad's actual hardware is captured in
+`hosts/thinkpad/`; it preserves its existing encrypted installation, and
+[THINKPAD.md](THINKPAD.md) records its migration, the child's Roblox/OBS
+requirements and pending acceptance.
 
 - Latest released stable NixOS and matching Home Manager, with stable application
   channels recorded in `pkgs/stable-channels.json`. Applications from nixpkgs-apps
-  are packages only; never import its NixOS modules. No beta/RC/nightly versions.
+  are packages only (exposed as `pkgs.nixpkgs-apps`); never import its NixOS
+  modules. No beta/RC/nightly versions.
 - `stateVersion` records installation compatibility, not the software release.
   Keep each host's anchors unless a documented data migration requires a change.
 - Official proprietary firmware/userspace are acceptable. RTX 5090 uses NVIDIA's
   open kernel modules and the production driver built for the selected kernel.
-- Preserve the existing ext4 root and 1 GiB Linux ESP. No disko, reinstall or
-  changes to the Windows disk. Windows data is mounted read-only for copying.
+- Preserve the existing ext4 root and 1 GiB Linux ESP. No partitioning tool,
+  reinstall or changes to the Windows disk. Windows data is mounted read-only.
 - Hyprland with UWSM, greetd/tuigreet, Fuzzel, Alacritty, fish, Atuin and zoxide.
-  Keep native Hyprland Lua, matching portals and Xwayland compatibility.
+  Keep native Hyprland Lua, matching portals and Xwayland compatibility. Monitor
+  scale and console font are host settings (the desktop uses 1.5 and Terminus).
   NetworkManager's applet supplies the desktop password agent. Keep Wi-Fi
   credentials in the host's local credential store, outside Git and Nix sources.
 - Desktop displays lock/off after 300 seconds; no suspend/hibernate. Laptop
   power policy must be separate. Ollama is socket-started and unloads models
   after requests; physical GPU behavior still requires a runtime check.
 - Share software/dotfiles under modules/ and home/. Keep hardware, boot, secrets,
-  power policy and stateVersion under each host. Only Zellij retains a raw KDL file.
+  power policy and stateVersion under each host. Applications belong in
+  `home/dhilipsiva/packages.nix`; the system profile holds shared essentials.
+- Prefer existing NixOS/Home Manager modules and structured options over raw
+  strings or hand-written units. Current choices: systemd initrd, userborn with
+  sops-nix systemd activation, sudo-rs, nftables + systemd-resolved, rootless
+  Docker (no docker group), `nix.channel` disabled, `nixVersions.latest`,
+  hyprpolkitagent, Zellij via its module. `system.etc.overlay` is deferred: it
+  needs an attended `/etc` migration (host key, machine id, connections).
 - Use `scripts/nixosctl sync`, `check`, `publish`, `stage --host desktop`, `status`.
   Sync is fast-forward-only. Never stash, discard, merge or force-push automatically.
 - Desktop publishes checked stable updates at about 21:00 Asia/Colombo. The
@@ -38,16 +48,14 @@ records its migration, the child's Roblox/OBS requirements and pending acceptanc
 - Codex/cloud-agent credentials are independent of Ollama. Do not introduce a
   global OPENAI_BASE_URL/API_KEY override or point XDG_CONFIG_HOME at this repo.
 
-Run `nix flake check .`, `nix build --no-link
+Run `nix fmt`, `nix flake check .`, `nix build --no-link
 .#nixosConfigurations.desktop.config.system.build.toplevel`, and
-`scripts/nixosctl check --stable`. Track every referenced source file and repeat
-verification in a clean checkout before publishing. `path:$PWD` may be used during
-editing to include new files; final Git-flake validation must also pass.
+`scripts/nixosctl check --stable`. The `formatting` check enforces nixfmt,
+deadnix and ruff. Track every referenced source file and repeat verification in
+a clean checkout before publishing. `path:$PWD` may be used during editing to
+include new files; final Git-flake validation must also pass.
 
-The desktop's 9950X3D now exposes all 16 cores/32 threads with SMT enabled,
-verified after the owner's reboot on 2026-10-04 using the same generation 12.
-No Nix change was needed to restore CPU availability. Build success cannot
-establish physical GPU, display, login, Windows recovery or firmware behavior.
-Initial acceptance/cleanup is complete. See DEPLOYMENT.md for the remaining
-Wi-Fi persistence and status bar rollout checks. Shared bar configuration is in
-home/dhilipsiva/waybar.nix; laptop battery display is explicitly host-enabled.
+Build success cannot establish physical GPU, display, login, Windows recovery or
+firmware behavior. Compare `/run/current-system` with the HEAD build before
+trusting any state note. See DEPLOYMENT.md for the staged modernisation's
+post-boot checks, the Wi-Fi persistence step and the VM fixture restoration.

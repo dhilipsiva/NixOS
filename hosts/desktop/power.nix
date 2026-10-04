@@ -3,18 +3,12 @@
 { lib, pkgs, ... }:
 
 {
+  # systemd refuses every sleep state; logind ignores the keys and idle hints.
   systemd.sleep.settings.Sleep = {
     AllowSuspend = false;
     AllowHibernation = false;
     AllowHybridSleep = false;
     AllowSuspendThenHibernate = false;
-  };
-  systemd.targets = {
-    sleep.enable = false;
-    suspend.enable = false;
-    hibernate.enable = false;
-    hybrid-sleep.enable = false;
-    suspend-then-hibernate.enable = false;
   };
   services.logind.settings.Login = {
     IdleAction = "ignore";
