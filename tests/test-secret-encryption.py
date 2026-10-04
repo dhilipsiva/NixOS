@@ -1,7 +1,11 @@
 """Exercise the real SOPS/age path with independent temporary identities."""
 from pathlib import Path
+import os
+import pwd
 import sys
 import tempfile
+from types import SimpleNamespace
+from unittest.mock import patch
 
 sys.path.insert(0, sys.argv[1])
 import deployment
@@ -30,4 +34,25 @@ with tempfile.TemporaryDirectory() as directory:
         pass
     else:
         raise AssertionError('An unrelated identity decrypted the host secret')
+    repository = root / 'repository'
+    (repository / 'secrets').mkdir(parents=True)
+    (repository / '.sops.yaml').write_text('creation_rules:\n# BEGIN thinkpad\n# END thinkpad\n')
+    home = root / 'home'
+    home.mkdir()
+    actual = pwd.getpwuid(os.getuid())
+    account = SimpleNamespace(pw_dir=str(home), pw_uid=os.getuid(), pw_gid=os.getgid())
+    repo = SimpleNamespace(path=repository, owner=actual.pw_name)
+    cfg = {'requiredSecrets': ['dhilipsiva/hashedPassword']}
+    with patch.object(deployment, 'STATE', root / 'state'), \
+         patch.object(deployment, 'HOST_KEY', host), \
+         patch.object(deployment.pwd, 'getpwnam', return_value=account), \
+         patch.object(deployment, 'shadow_hash', return_value='test fixture, not a password hash'):
+        deployment.prepare_credentials(repo, 'thinkpad', cfg)
+        first = (repository / 'secrets/thinkpad.yaml').read_text()
+        deployment.prepare_credentials(repo, 'thinkpad', cfg)
+        assert first == (repository / 'secrets/thinkpad.yaml').read_text()
+        assert 'test fixture' not in first
+        assert 'ups:' not in first
+        assert host_recipient in first
+        assert deployment.decrypt_identity(first, host_identity) == {'dhilipsiva': payload['dhilipsiva']}
 print('Owner/host decryption passed; unrelated identity rejected; values stayed encrypted.')

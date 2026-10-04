@@ -5,5 +5,9 @@ creation_rules:
   - path_regex: secrets/desktop\.yaml$
     age: age1usxzsnee5tz5ns3qlzzpaff8hmtv8pydcfgq32kpu439gh4qjukqa0x202,age1mwgtkh3ty9d2s96hy2lpguuxc5sfkyda9s3j7uvjv2s04qha79dskd6a6s
 # END desktop
+# BEGIN thinkpad
+  - path_regex: secrets/thinkpad\.yaml$
+    age: age182xup9xqwq450sz4ekgqml4hf65m79f427aj64glmmn5tzylpvfsrp78ws,age1l87vvu5en505fk7vhh24u9kzzcv9c8208efaly3j5pcz72t8syaqxpjq5n
+# END thinkpad
   - path_regex: secrets/vm-test\.yaml$
     age: age10hwn77a4vpj33s9u9j8u698lwmgv0g8trd2x5hk24zt5a0fnvsss6dj8mg

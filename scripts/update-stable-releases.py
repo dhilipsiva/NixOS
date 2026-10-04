@@ -26,6 +26,7 @@ NVIDIA_URL = ("https://gfwsl.geforce.com/services_toolkit/services/com/nvidia/se
               "?func=DriverManualLookup&psid=133&pfid=1075&osID=12&languageCode=1033"
               "&beta=0&isWHQL=0&dltype=-1&dch=0&upCRD=null&qnf=0&ctk=null&sort1=&numberOfResults=1")
 GITHUB_CHANNELS = {
+    "obs-studio": ("obsproject/obs-studio", ""),
     "codex": ("openai/codex", "rust-v"),
     "zed-editor": ("zed-industries/zed", "v"),
     "helix": ("helix-editor/helix", "v"),

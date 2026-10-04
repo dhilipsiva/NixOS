@@ -22,7 +22,10 @@ for path in (args.repo / 'secrets').glob('*.yaml'):
             raise SystemExit(f'{path.name}: owner and real host enrollment is required')
         if PLACEHOLDER in recipients:
             print(f'{path.name}: enrollment pending; staging remains blocked')
-    for field in ['hashedPassword', 'monitorPassword']:
+    fields = ['hashedPassword']
+    if path.name in ('desktop.yaml', 'vm-test.yaml') or re.search(r'^ups:', text, re.M):
+        fields.append('monitorPassword')
+    for field in fields:
         if not re.search(r'^\s+' + field + r': ENC\[AES256_GCM,', text, re.M):
             raise SystemExit(f'{path.name}: {field} is not encrypted')
 for path in args.repo.rglob('*.nix'):

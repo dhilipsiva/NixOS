@@ -1,14 +1,15 @@
 # NixOS desktop and shared dotfiles
 
 This flake configures the existing desktop installation and shares software and
-Home Manager configuration with a future ThinkPad host. It preserves the desktop's
+Home Manager configuration with the ThinkPad host. It preserves the desktop's
 unencrypted ext4 root, 1 GiB EFI partition, and systemd-boot with Lanzaboote signing. There is no active
 partitioning or reinstall configuration.
 
 `hosts/desktop/` contains hardware, filesystems, NVIDIA, performance, power, and
 Windows access settings. `modules/nixos/` contains shared system configuration;
-`home/dhilipsiva/` contains shared dotfiles. Only `nixosConfigurations.desktop`
-exists today. Operational procedures are in [DEPLOYMENT.md](DEPLOYMENT.md).
+`home/dhilipsiva/` contains shared dotfiles. The flake exposes both
+`nixosConfigurations.desktop` and `nixosConfigurations.thinkpad`. Desktop operations
+are in [DEPLOYMENT.md](DEPLOYMENT.md); laptop rollout is in [THINKPAD.md](THINKPAD.md).
 
 ## Desktop hardware and tuning
 
@@ -103,6 +104,7 @@ Verified versions in this lock on 2026-10-03:
 | Ollama | 0.35.1 |
 | Zed | 1.22.0 |
 | Herdr | 0.9.3 |
+| OBS Studio (ThinkPad) | 32.2.2, upstream stable |
 | zoxide / ripgrep | 0.10.0 / 15.2.0 |
 | uv | 0.12.22 |
 | Slack | 4.52.171, official Linux channel |
@@ -123,7 +125,7 @@ Both machines use the same Git checkout path:
 is owned by dhilipsiva. Each machine keeps its own private identities outside Git.
 
 After first-boot acceptance, the desktop publishes updates around **21:00
-Asia/Colombo**, with up to five minutes of jitter. The future ThinkPad subscriber
+Asia/Colombo**, with up to five minutes of jitter. The ThinkPad subscriber
 pulls/stages at about **21:30**. Persistent systemd timers catch missed runs.
 The desktop starts from the published revision in an isolated worktree, refreshes
 stable release metadata and every flake input, checks/builds every configured host,
@@ -152,7 +154,7 @@ scripts/nixosctl publish         # checks before a normal push
 scripts/nixosctl stage --host desktop  # exact published revision, next manual boot
 ```
 
-Use `--host thinkpad` only after its hardware configuration has been added. Sync
+Use `--host thinkpad` on the inventoried laptop and `--host desktop` on the desktop. Sync
 never stashes, discards local changes, merges or resolves divergence automatically.
 The desktop's publisher uses its enrolled repository-scoped SSH deploy key;
 the completed setup is recorded in SESSION.md. Git never runs as root. The stage receipt records
@@ -219,7 +221,7 @@ polling, animations, transparency, or extra compositor effects are added.
 | Service warning | Open failed system/user service details |
 | Lock | Lock the screen |
 
-The optional laptop battery module is enabled by the future host with
+The laptop battery module is enabled by the ThinkPad host with
 `home-manager.users.dhilipsiva.repo.waybar.battery.enable = true`; it does not
 guess a battery device or change power policy. The shared layout was previewed
 at 1366, 1920 and 3840 pixels wide; actual laptop hardware remains unverified.
@@ -337,25 +339,22 @@ password matches the installed account. Each new host needs its own enrollment.
 Cleanup policy is in [CLEANUP.md](CLEANUP.md). Session resumption is in
 [SESSION.md](SESSION.md).
 
-## Adding the ThinkPad
+## ThinkPad migration
 
-The ThinkPad already has NixOS installed. Follow [THINKPAD.md](THINKPAD.md) for
-the laptop-session handoff and migration of that existing installation.
+The ThinkPad T15g Gen 2i already has NixOS installed. Its host configuration now
+preserves the actual LUKS root, ext4 filesystem, 511 MiB ESP and systemd-boot with
+Secure Boot disabled. Follow [THINKPAD.md](THINKPAD.md) for its rollout and recovery.
 
-Clone this repository into exactly the same path and own it as dhilipsiva. Capture
-`nixos-generate-config --show-hardware-config`, DMI board identity, disks/mounts,
-GPU/Wi-Fi, battery and existing boot/Secure Boot/encryption details on the laptop.
-Add `hosts/thinkpad/` and expose it through `mkHost` in `flake.nix`. Import the
-shared modules/home configuration; keep its own hardware UUIDs, boot policy,
-secrets file, stateVersion anchors and laptop suspend/battery behavior.
+It shares software and Home Manager while retaining Intel/NVIDIA PRIME graphics,
+independent credentials, system compatibility 24.11 and the owner's chosen Home
+Manager baseline 26.05. Lid-close suspends when undocked; idle never suspends.
+The child's Sober/Roblox installation, OBS settings and recordings are preserved.
 
-Set `repo.maintenance.enable = true`, `host = "thinkpad"`, `role = "subscriber"`
-and the observed `boardName`. Add a separate `# BEGIN thinkpad`/`# END thinkpad`
-creation-rule block in `.sops.yaml` and its encrypted `secrets/thinkpad.yaml`; enroll
-its own host identity and the owner identity locally. Adapt boot preparation to
-its actual firmware/storage before activation. Never copy desktop UUIDs, signing
-private keys, SSH host keys or the no-sleep policy onto it.
+The laptop subscribes to verified published updates at 21:30 Asia/Colombo after
+physical acceptance. Its host and owner secret identities were enrolled locally;
+generation 291 and the existing home profiles are protected for recovery.
 
-Only desktop is deployable today. There is intentionally no guessed ThinkPad host;
-`stage --host thinkpad` rejects the request until its inventory/configuration exists.
-The shared workflow checks/builds every host automatically once it is added.
+The shared workflow checks/builds both hosts before publication. Laptop staging
+requires its preserved boot policy and matching Flatpak NVIDIA runtime as well as
+the usual published-revision, credentials and hardware checks. Physical gameplay,
+recording and suspend/recovery validation remains pending until a manual reboot.

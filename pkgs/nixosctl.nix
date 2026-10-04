@@ -1,9 +1,10 @@
 { lib, writeShellApplication, python3, git, nix, openssh, util-linux, coreutils
-, rsync, age, sops, ssh-to-age, sbctl, sbsigntool, efitools, openssl, systemd, systemdUkify }:
+, rsync, age, sops, ssh-to-age, sbctl, sbsigntool, efitools, openssl, systemd, systemdUkify
+, cryptsetup, flatpak }:
 writeShellApplication {
   name = "nixosctl";
   runtimeInputs = [ python3 git nix openssh util-linux coreutils rsync age sops
-    ssh-to-age sbctl sbsigntool efitools openssl systemd systemdUkify ];
+    ssh-to-age sbctl sbsigntool efitools openssl systemd systemdUkify cryptsetup flatpak ];
   text = ''
     export NIXOSCTL_LAUNCHER="$0"
     export PYTHONDONTWRITEBYTECODE=1

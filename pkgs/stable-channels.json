@@ -59,6 +59,10 @@
     "source": "https://api.github.com/repos/ollama/ollama/releases/latest",
     "version": "0.35.1"
   },
+  "obs-studio": {
+    "source": "https://api.github.com/repos/obsproject/obs-studio/releases/latest",
+    "version": "32.2.2"
+  },
   "python-latest": {
     "source": "https://www.python.org/api/v2/downloads/release/?is_published=true",
     "version": "3.14.8"

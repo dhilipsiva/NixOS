@@ -1,85 +1,142 @@
-# ThinkPad session handoff
+# ThinkPad migration and rollout
 
-Owner instruction, 2026-10-04: the ThinkPad **already runs NixOS**. Use this
-repository to migrate that existing installation, following the same checked,
-published, next-reboot workflow used on the desktop. This is not a fresh install.
+This upgrades an existing encrypted NixOS installation. Preserve the owner's
+development tools and their child's Roblox and OBS setup. Never repartition,
+reinstall, change LUKS keyslots or import the desktop's hardware configuration.
 
-The repository belongs at the same path on both machines:
-`/home/dhilipsiva/projects/dhilipsiva/NixOS`. Read [AGENTS.md](AGENTS.md),
-[CLAUDE.md](CLAUDE.md) and [README.md](README.md) first. [SESSION.md](SESSION.md)
-records the desktop work; [DEPLOYMENT.md](DEPLOYMENT.md) is desktop-specific.
+## Inventory observed on 2026-10-04
 
-## Start the laptop session here
+| Item | Installed hardware or policy |
+| --- | --- |
+| Machine | ThinkPad T15g Gen 2i; model/board `20YSS01K00` |
+| CPU / RAM | Intel i7-11850H, 8 cores / 16 threads; 16 GiB |
+| Graphics | Intel UHD `PCI:0:2:0`; NVIDIA RTX 3070 Mobile `PCI:1:0:0` |
+| Panel | Intel-connected eDP-1; NVIDIA also has external connectors |
+| Wi-Fi | Intel AX210, iwlwifi |
+| Root encryption | LUKS UUID `4a7c2f90-d44a-479c-82f6-f764d6cab51d`, mapper `root` |
+| Root filesystem | ext4 UUID `84250d8e-f63c-4427-99dd-db945a069258` |
+| EFI partition | 511 MiB FAT, UUID `BE19-6095`, mounted at `/boot` |
+| Boot | systemd-boot; Secure Boot disabled; existing firmware trust retained |
+| Swap / sleep | No disk swap; deep suspend available |
+| Battery | BAT0; about 74 Wh full / 94 Wh design |
+| Original generation | 291; NixOS 26.11 prerelease, Linux 6.18.43 |
+| System compatibility | Preserve `system.stateVersion = "24.11"` |
+| Home compatibility | Owner selected `home.stateVersion = "26.05"` |
 
-Tell the agent: **Read THINKPAD.md and adapt this repository to this ThinkPad's
-existing NixOS installation. Preserve its disks and recovery path.**
+The old standalone Home Manager profile reports release 24.05, but its original
+compatibility setting could not be recovered. The owner's selection of 26.05 is
+a new managed-home baseline. The old profile remains a recovery GC root.
 
-If the checkout already exists, inspect local changes before syncing:
+## Configured behavior
+
+`hosts/thinkpad/` uses the shared stable software and Hyprland/UWSM configuration,
+Intel desktop graphics and NVIDIA PRIME offload. The production NVIDIA driver is
+built against the selected stable kernel. Desktop HDMI, AMD performance and
+no-sleep settings are not imported. Builds use one job / four cores.
+
+Host-specific udev aliases select Intel first in `AQ_DRM_DEVICES`, retaining
+NVIDIA for its external display connectors. This follows the
+[Hyprland multi-GPU configuration](https://wiki.hypr.land/configuring/extra/multi-gpu/)
+without relying on changeable `card0`/`card1` numbering.
+
+The selected laptop policy locks and powers off the display after five idle
+minutes, honoring inhibitors. Lid-close suspends when undocked, including on AC;
+it is ignored while docked. There is no idle suspend or hibernation. Battery and
+brightness controls are enabled. Suspend/resume requires physical validation.
+
+### Roblox and OBS
+
+- Preserve the existing **user** Flatpak `org.vinegarhq.Sober`, its stable
+  installation, account data, overrides, launcher and Roblox URL handling.
+  Native Vinegar is also retained; it is not the installed Roblox Player.
+- Staging requires the installed NVIDIA Flatpak graphics runtime to match the
+  candidate driver. Keep the old runtime for recovery; do not uninstall app data.
+- Native OBS uses the verified stable package. Preserve its original x264
+  settings, profiles/scenes and `/home/dhilipsiva/recordings`. Its existing logs
+  report NVENC unavailable; hardware encoding is not assumed to work.
+- On the first new boot, Home Manager runs `scripts/migrate-home.py` before
+  linking managed files. It privately backs up `~/.files/.config`, imports
+  unmanaged settings into `~/.config` and retains existing destination files on
+  collisions. Active legacy OBS settings take precedence, with any previous
+  destination saved separately. A completion marker prevents repeated imports.
+- Backups and collision reports are under
+  `~/.local/state/nixosctl/home-migration/`. Private application data never enters
+  Git or the Nix store. The original configuration tree remains available for
+  generation 291. No global `XDG_CONFIG_HOME` override is retained.
+
+## Preparation and verification
+
+Work at `/home/dhilipsiva/projects/dhilipsiva/NixOS` as dhilipsiva. The owner
+completed these commands on 2026-10-04:
 
 ```bash
-cd /home/dhilipsiva/projects/dhilipsiva/NixOS
-git status --short --branch
-scripts/nixosctl sync
+scripts/nixosctl prepare-credentials --host thinkpad
+scripts/nixosctl prepare-boot --host thinkpad
 ```
 
-If it is absent, clone `https://github.com/dhilipsiva/NixOS.git` into that exact
-path as dhilipsiva. Never overwrite a different existing checkout. Sync is
-fast-forward-only; preserve local work and resolve divergence deliberately.
+Enrollment generated independent laptop/owner identities and verified the
+encrypted password against the installed account. No laptop UPS secret is needed.
+Back up `~/.config/sops/age/keys.txt` securely outside the laptop; that external
+backup has not been confirmed. Never copy desktop private keys onto this host.
 
-## Required laptop work
+Boot preparation protected generation 291 and the existing home/profile roots,
+backed up the ESP and recorded the firmware trust and encrypted layout. It did
+not stage a generation. Staging installs a protected recovery boot entry outside
+normal rotation, retaining the original kernel, initrd and encrypted-root command
+line. The desktop continues to require its signed recovery UKI.
 
-1. Inventory the actual machine and its existing configuration before editing:
-   model/board, CPU, RAM, GPU, Wi-Fi, storage UUIDs, mounted root/ESP, encryption,
-   swap/resume, bootloader, Secure Boot, battery and current login environment.
-   Read the current `/etc/nixos` configuration and record the installation's
-   existing NixOS/Home Manager `stateVersion` values. Use read-only commands such
-   as `nixos-generate-config --show-hardware-config`, `lsblk -f`, `findmnt`,
-   `lspci -nnk`, `readlink -f /run/current-system`, and `bootctl status` where
-   applicable. Do not run a partitioner or an installation command.
-2. Add `hosts/thinkpad/` with that machine's observed hardware, filesystems,
-   boot/encryption policy, power settings and compatibility anchors. Expose it
-   as `nixosConfigurations.thinkpad` through the existing `mkHost` function.
-   Share the software and Home Manager modules. Choose laptop graphics and
-   Ollama acceleration from its actual GPU; never import `hosts/desktop/`.
-3. Preserve latest stable NixOS and application releases, Hyprland/Wayland,
-   Alacritty/fish/Atuin/zoxide/ripgrep, the existing development tools and
-   on-demand Ollama. Set battery, lid and suspend behavior for a laptop. The
-   desktop's no-sleep policy, NVIDIA HDMI workaround and CPU performance policy
-   must not be inherited as laptop hardware settings.
-   The shared bar lives in `home/dhilipsiva/waybar.nix`. Once a battery is
-   confirmed, set `home-manager.users.dhilipsiva.repo.waybar.battery.enable = true`
-   in the laptop host. It detects battery devices at runtime; display sizing and
-   battery/power behavior still need validation on the actual laptop.
-4. Enroll laptop-specific encrypted credentials using its own host identity and
-   an owner identity available locally. Preserve its working login credential.
-   Never copy the desktop's SSH host keys, firmware signing private keys, secret
-   ciphertext or disk UUIDs. Keep all plaintext secrets outside Git and the
-   Nix store. Configure local Wi-Fi password persistence; the shared desktop
-   module supplies the NetworkManager applet, not a shared Wi-Fi password.
-5. Configure maintenance as a **subscriber**, with `host = "thinkpad"`, the same
-   repository path and the actual board name. The desktop publishes checked
-   updates around 21:00 Asia/Colombo; the laptop pulls/stages around 21:30 with
-   persistent timers. Work authored on either machine must be checked and
-   published normally, with suitable per-machine Git credentials. Never copy
-   the desktop's private deploy key merely to reuse it on the laptop.
-6. Preserve a usable recovery generation and adapt boot preparation to the
-   laptop's real bootloader, encryption and firmware. The existing Secure Boot
-   helper and hardware guards must be reviewed for that layout. Do not blindly
-   repeat the MSI certificate procedure or claim this machine is supported by
-   an unchanged helper. Preserve firmware trust and any existing Windows setup.
-7. Check/build **both configured hosts**, verify from a clean checkout and
-   publish. Only then stage `--host thinkpad` through `nixosctl`. Never stage
-   `--host desktop` on the laptop, live-switch or reboot automatically. After a
-   manual reboot, verify login, display, network autoconnect, sound, battery,
-   lid/suspend/resume and the laptop's recovery/boot behavior before acceptance
-   and cleanup. A successful build is not a successful laptop deployment.
+The existing Wi-Fi profile reports autoconnect enabled, unrestricted users and
+password flags `0`. Its password stays in the local NetworkManager store. A real
+reboot is still required to verify unattended connection.
 
-No ThinkPad hardware configuration exists yet. `stage --host thinkpad` correctly
-rejects the request until that work is complete. Keep the desktop independently
-deployable throughout the laptop migration.
+Before publishing, check/build both hosts and repeat verification in a clean
+tracked checkout:
 
-Desktop reference state: generation 13 works with all 16 CPU cores / 32 threads,
-the recovered Qualcomm Wi-Fi adapter, network applet and 4K60 NVIDIA HDMI workaround.
-Initial acceptance/cleanup completed, freeing 36.4 GiB. Wi-Fi password persistence
-and the improved status bar rollout are tracked in DEPLOYMENT.md; do not assume those pending
-physical checks passed merely because this handoff exists.
+```bash
+nix flake check .
+scripts/nixosctl check --stable
+scripts/nixosctl publish
+```
+
+The checks cover both Hyprland configurations, stable releases, encrypted
+credentials, recovery, staging failures, home migration and Ollama's lifecycle.
+Git publication uses this laptop's own credentials. Missing credentials or failed
+checks block publication and staging.
+
+## Stage, reboot and accept
+
+Only after publication succeeds:
+
+```bash
+scripts/nixosctl stage --host thinkpad
+```
+
+The helper checks the exact published revision, board/filesystems/LUKS mapping,
+boot policy, password decryption, Sober graphics runtime and ESP space. It restores
+the previous system profile and ESP on staging failure. Three regular generations
+plus protected recovery fit the smaller ESP, subject to the actual space check.
+Never stage the desktop here, live-switch or reboot automatically.
+
+After a manual reboot:
+
+1. Confirm the original disk passphrase unlocks the existing root and login works.
+2. Check Wi-Fi autoconnect, display, audio/microphone, brightness, battery and
+   lid suspend/resume; test an external display if used.
+3. Launch Sober from the launcher and play Roblox. Verify NVIDIA offload and
+   account access without deleting its existing application data.
+4. Open OBS and confirm its original profile/scenes and recording destination.
+   Record gameplay with PipeWire capture and play it back, checking video, game
+   audio and microphone where configured. Keep x264 as the baseline.
+5. Boot the protected recovery entry and verify the same encrypted root unlocks,
+   then return to the staged generation. Check Ollama starts on demand and
+   releases models after requests.
+6. Check system/user failed units and compare the running system to the staged
+   receipt. Only after the owner confirms these physical tests, run:
+
+```bash
+scripts/nixosctl accept --host thinkpad --physical-checks-passed
+```
+
+Acceptance enables persistent subscriber updates at 21:30 Asia/Colombo and
+guarded 30-day cleanup. Build success does not establish gameplay, recording,
+suspend or recovery success. These physical checks remain pending until reboot.

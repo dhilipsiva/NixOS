@@ -128,7 +128,7 @@ class GitWorkflowTests(unittest.TestCase):
         cfg = {'owner': self.repo.owner, 'repository': str(self.desktop), 'branch': 'master',
                'remote': str(self.bare), 'boardName': 'wrong board from a newly synced commit', 'secureBoot': True}
         with patch.object(deployment, 'state_dir'), patch.object(deployment, 'verify_credentials'), \
-             patch.object(deployment, 'verify_boot_trust'), \
+             patch.object(deployment, 'verify_boot_policy'), \
              patch.object(self.repo, 'check', return_value=({'desktop': cfg}, {'desktop': '/unused'})), \
              patch.object(deployment, 'verify_hardware', side_effect=ctl.Error('hardware mismatch')) as hardware, \
              patch.object(deployment, 'protect_recovery') as recovery:

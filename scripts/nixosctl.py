@@ -227,7 +227,7 @@ def main():
         if name == 'accept':
             command.add_argument('--physical-checks-passed', action='store_true', required=True)
         if name == 'prepare-boot':
-            command.add_argument('--windows-status', required=True,
+            command.add_argument('--windows-status',
                                  choices=['unencrypted', 'recovery-key-backed-up'])
     args = parser.parse_args()
     root_commands = {'stage', 'maintain', 'cleanup', 'prepare-credentials', 'prepare-boot', 'accept'}

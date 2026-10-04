@@ -71,7 +71,7 @@
                   ollamaRelease = apps.callPackage ./pkgs/ollama.nix { };
                 in {
                   inherit (apps) codex zed-editor fish fuzzel helix alacritty tuigreet
-                    zoxide ripgrep google-chrome
+                    zoxide ripgrep google-chrome obs-studio
                     hyprland hypridle hyprlock uwsm xdg-desktop-portal-hyprland;
                   atuin = newer apps.atuin releases.atuin.version (apps.callPackage ./pkgs/atuin.nix { });
                   uv = newer apps.uv releases.uv.version (apps.callPackage ./pkgs/uv.nix { });
@@ -118,6 +118,12 @@
         bootDevice = host.config.fileSystems."/boot".device;
         rootFsType = host.config.fileSystems."/".fsType;
         secureBoot = host.config.boot.lanzaboote.enable or false;
+        bootMode = if host.config.boot.lanzaboote.enable or false then "lanzaboote"
+          else if host.config.boot.loader.systemd-boot.enable then "systemd-boot" else "unsupported";
+        luksDevices = nixpkgs.lib.mapAttrs (_: device: device.device) host.config.boot.initrd.luks.devices;
+        requiredSecrets = builtins.attrNames host.config.sops.secrets;
+        nvidiaVersion = host.config.hardware.nvidia.package.version;
+        flatpakApps = nixpkgs.lib.optional (name == "thinkpad") "org.vinegarhq.Sober";
         secretsFile = "secrets/${name}.yaml";
       }) inputs.self.nixosConfigurations;
 
@@ -125,7 +131,7 @@
         desktop = inputs.self.nixosConfigurations.desktop;
         names = [ "codex" "claude-code" "zed-editor" "helix" "alacritty" "fish" "fuzzel"
           "tuigreet" "atuin" "herdr" "ollama" "python-latest" "rust-toolchain" "uv"
-          "hyprland" "hypridle" "hyprlock" "uwsm" "zoxide" "ripgrep" "slack" "google-chrome" ];
+          "hyprland" "hypridle" "hyprlock" "uwsm" "zoxide" "ripgrep" "slack" "google-chrome" "obs-studio" ];
       in builtins.listToAttrs (map (name: { inherit name; value = desktop.pkgs.${name}.version; }) names)
         // {
           linux = desktop.config.boot.kernelPackages.kernel.version;
@@ -134,12 +140,45 @@
 
       nixosConfigurations = {
         desktop = mkHost ./hosts/desktop;
-        # Add thinkpad = mkHost ./hosts/thinkpad after capturing its own hardware.
+        thinkpad = mkHost ./hosts/thinkpad;
       };
 
       checks.x86_64-linux.ollama-on-demand = import ./tests/ollama-on-demand.nix {
         pkgs = nixpkgs.legacyPackages.x86_64-linux;
       };
+      checks.x86_64-linux.host-policies =
+        let
+          desktop = inputs.self.nixosConfigurations.desktop.config;
+          thinkpad = inputs.self.nixosConfigurations.thinkpad.config;
+          channels = builtins.fromJSON (builtins.readFile ./pkgs/stable-channels.json);
+          allHostsStable = builtins.all (host:
+            host.config.boot.kernelPackages.kernel.version == channels.linux.version
+            && host.config.hardware.nvidia.package.version == channels.nvidia.version
+          ) (builtins.attrValues inputs.self.nixosConfigurations);
+        in assert nixpkgs.lib.assertMsg (
+          desktop.boot.lanzaboote.enable && !desktop.systemd.targets.suspend.enable
+          && thinkpad.boot.loader.systemd-boot.enable
+          && thinkpad.boot.initrd.luks.devices.root.device == "/dev/disk/by-uuid/4a7c2f90-d44a-479c-82f6-f764d6cab51d"
+          && thinkpad.fileSystems."/".device == "/dev/disk/by-uuid/84250d8e-f63c-4427-99dd-db945a069258"
+          && thinkpad.fileSystems."/boot".device == "/dev/disk/by-uuid/BE19-6095"
+          && thinkpad.system.stateVersion == "24.11"
+          && thinkpad.home-manager.users.dhilipsiva.home.stateVersion == "26.05"
+          && thinkpad.systemd.sleep.settings.Sleep.AllowSuspend
+          && !thinkpad.systemd.sleep.settings.Sleep.AllowHibernation
+          && thinkpad.services.logind.settings.Login.IdleAction == "ignore"
+          && thinkpad.services.logind.settings.Login.HandleLidSwitch == "suspend"
+          && thinkpad.services.logind.settings.Login.HandleLidSwitchDocked == "ignore"
+          && thinkpad.hardware.nvidia.prime.offload.enable
+          && thinkpad.hardware.nvidia.prime.intelBusId == "PCI:0:2:0"
+          && thinkpad.hardware.nvidia.prime.nvidiaBusId == "PCI:1:0:0"
+          && thinkpad.environment.sessionVariables.AQ_DRM_DEVICES == "/dev/dri/thinkpad-intel:/dev/dri/thinkpad-nvidia"
+          && !(desktop.environment.sessionVariables ? AQ_DRM_DEVICES)
+          && thinkpad.services.flatpak.enable && thinkpad.programs.obs-studio.enable
+          && thinkpad.programs.obs-studio.package.version == channels.obs-studio.version
+          && inputs.self.lib.hosts.thinkpad.requiredSecrets == [ "dhilipsiva/hashedPassword" ]
+          && allHostsStable
+        ) "Host storage, power, graphics, stable versions or application preservation policy changed.";
+        nixpkgs.legacyPackages.x86_64-linux.runCommand "host-policies-check" { } "touch $out";
       checks.x86_64-linux.repository-workflow =
         let pkgs = nixpkgs.legacyPackages.x86_64-linux;
         in pkgs.runCommand "repository-workflow-check" {
@@ -149,6 +188,7 @@
           mkdir -p "$HOME"
           export PYTHONDONTWRITEBYTECODE=1
           python3 ${./tests/test-nixosctl.py} ${./scripts}
+          python3 ${./tests/test-deployment.py} ${./scripts}
           python3 ${./tests/test-secret-encryption.py} ${./scripts}
           python3 ${./scripts/check-secrets.py} ${./.}
           touch "$out"
@@ -156,12 +196,14 @@
       checks.x86_64-linux.hyprland-config =
         let
           desktop = inputs.self.nixosConfigurations.desktop;
-          hyprlandConfig = desktop.config.home-manager.users.dhilipsiva.xdg.configFile."hypr/hyprland.lua".source;
+          configurations = nixpkgs.lib.mapAttrsToList (name: host:
+            "${host.pkgs.hyprland}/bin/Hyprland --verify-config -c ${host.config.home-manager.users.dhilipsiva.xdg.configFile."hypr/hyprland.lua".source}"
+          ) inputs.self.nixosConfigurations;
         in desktop.pkgs.runCommand "hyprland-config-check" { } ''
           export XDG_RUNTIME_DIR="$TMPDIR/runtime"
           export XDG_CACHE_HOME="$TMPDIR/cache"
           mkdir -m 700 -p "$XDG_RUNTIME_DIR" "$XDG_CACHE_HOME"
-          ${desktop.pkgs.hyprland}/bin/Hyprland --verify-config -c ${hyprlandConfig}
+          ${nixpkgs.lib.concatStringsSep "\n" configurations}
           touch "$out"
         '';
       checks.x86_64-linux.stable-releases =
@@ -171,7 +213,7 @@
             codex claude-code zed-editor helix alacritty fish fuzzel tuigreet
             atuin herdr ollama python-latest rust-toolchain uv
             hyprland hypridle hyprlock uwsm
-            zoxide ripgrep slack google-chrome
+            zoxide ripgrep slack google-chrome obs-studio
             desktop.config.boot.kernelPackages.kernel
             desktop.config.hardware.nvidia.package
           ];

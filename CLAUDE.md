@@ -2,8 +2,9 @@
 
 This repository is the single source of truth at
 `/home/dhilipsiva/projects/dhilipsiva/NixOS` on both machines. The installed desktop
-has its own host module. Add the ThinkPad only after capturing its actual hardware.
-The ThinkPad already runs NixOS; [THINKPAD.md](THINKPAD.md) is its migration handoff.
+has its own host module. The ThinkPad's actual hardware is captured separately.
+It preserves its existing encrypted installation; [THINKPAD.md](THINKPAD.md)
+records its migration, the child's Roblox/OBS requirements and pending acceptance.
 
 - Latest released stable NixOS and matching Home Manager, with stable application
   channels recorded in `pkgs/stable-channels.json`. Applications from nixpkgs-apps
@@ -25,8 +26,8 @@ The ThinkPad already runs NixOS; [THINKPAD.md](THINKPAD.md) is its migration han
   power policy and stateVersion under each host. Only Zellij retains a raw KDL file.
 - Use `scripts/nixosctl sync`, `check`, `publish`, `stage --host desktop`, `status`.
   Sync is fast-forward-only. Never stash, discard, merge or force-push automatically.
-- Desktop publishes checked stable updates at about 21:00 Asia/Colombo. Future
-  subscribers pull/stage at about 21:30. All Git work runs as the checkout owner.
+- Desktop publishes checked stable updates at about 21:00 Asia/Colombo. The
+  ThinkPad subscribes at about 21:30 after acceptance. Git runs as the checkout owner.
   Never stage an unpublished or failed candidate. Never switch/reboot automatically.
 - Preserve the acceptance gate, common stage/GC lock, 30-day GC policy, explicit
   recovery GC roots, signed recovery image, and unique Home Manager backups.

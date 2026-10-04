@@ -50,6 +50,49 @@ def verify_hardware(cfg):
         actual = run(['findmnt', '--noheadings', '--output', 'UUID,FSTYPE', '--mountpoint', target], capture=True).split()
         if len(actual) != 2 or expected != '/dev/disk/by-uuid/' + actual[0] or fs_type != actual[1]:
             raise Error(f'{target} filesystem/UUID does not match the selected host.')
+    for name, expected in cfg.get('luksDevices', {}).items():
+        mapping = Path('/dev/mapper') / name
+        device = run(['cryptsetup', 'status', mapping], capture=True)
+        backing = next((line.split(':', 1)[1].strip() for line in device.splitlines()
+                        if line.strip().startswith('device:')), None)
+        if not backing or Path(backing).resolve() != Path(expected).resolve():
+            raise Error(f'Encrypted mapping {name} does not match this host.')
+        if name == 'root':
+            root = run(['findmnt', '--noheadings', '--output', 'SOURCE', '--mountpoint', '/'], capture=True)
+            if Path(root).resolve() != mapping.resolve():
+                raise Error('The root filesystem is not using the preserved encrypted mapping.')
+
+
+def boot_mode(cfg):
+    mode = cfg.get('bootMode', 'lanzaboote' if cfg['secureBoot'] else 'unsupported')
+    if mode not in ('lanzaboote', 'systemd-boot') or cfg['secureBoot'] != (mode == 'lanzaboote'):
+        raise Error('Unsupported or inconsistent boot policy.')
+    return mode
+
+
+def hardware_identity(cfg):
+    return {name: cfg.get(name, {}) for name in ('boardName', 'rootDevice', 'rootFsType', 'bootDevice', 'luksDevices')}
+
+
+def verify_boot_policy(cfg):
+    mode = boot_mode(cfg)
+    record_path = STATE / 'boot-prepared.json'
+    if not record_path.exists():
+        raise Error('Run prepare-boot for this host before staging.')
+    record = json.loads(record_path.read_text())
+    if record.get('bootMode', 'lanzaboote') != mode:
+        raise Error('Boot mode differs from the locally prepared recovery policy.')
+    if 'hardware' in record and record['hardware'] != hardware_identity(cfg):
+        raise Error('Hardware/encryption policy changed since boot preparation.')
+    if mode == 'lanzaboote':
+        verify_boot_trust()
+    else:
+        if var('SecureBoot') != b'\x00':
+            raise Error('The prepared unsigned systemd-boot installation requires Secure Boot to remain disabled.')
+        for name in record['firmwareVariables']:
+            expected = (Path(record['backup']) / (name + '.esl')).read_bytes()
+            if var(name) != expected:
+                raise Error(f'Firmware variable {name} changed since boot preparation.')
 
 
 def var(name):
@@ -150,17 +193,31 @@ def shadow_hash(owner):
     raise Error('Installed user was not found in shadow.')
 
 
-def verify_credentials(repo, host, source=None):
+def required_secrets(cfg):
+    return cfg.get('requiredSecrets', ['dhilipsiva/hashedPassword', 'ups/monitorPassword'])
+
+
+def validate_credentials(plain, password_hash, cfg):
+    if plain.get('dhilipsiva', {}).get('hashedPassword') != password_hash:
+        raise Error('Decrypted password does not match the installed password; resolve locally before staging.')
+    for name in required_secrets(cfg):
+        value = plain
+        for component in name.split('/'):
+            value = value.get(component) if isinstance(value, dict) else None
+        if not isinstance(value, str) or not value:
+            raise Error(f'Required encrypted credential is missing: {name}.')
+        if name == 'ups/monitorPassword' and len(value) < 32:
+            raise Error('UPS secret has not been prepared.')
+
+
+def verify_credentials(repo, host, source=None, cfg=None):
     source = (source or repo.path) / 'secrets' / (host + '.yaml')
     ciphertext = source.read_text()
     if PLACEHOLDER in ciphertext or VM_RECIPIENT in ciphertext:
         raise Error('Host secrets still contain a placeholder/disposable recipient. Run prepare-credentials.')
     plain = decrypt_host(source)
-    if plain['dhilipsiva']['hashedPassword'] != shadow_hash(repo.owner):
-        raise Error('Decrypted password does not match the installed password; resolve locally before staging.')
-    if len(plain['ups']['monitorPassword']) < 32:
-        raise Error('UPS secret has not been prepared.')
-    print('Host identity decrypts the preserved login credential and UPS secret.')
+    validate_credentials(plain, shadow_hash(repo.owner), cfg or {})
+    print('Host identity decrypts the preserved login and all required credentials.')
 
 
 def prepare_credentials(repo, host, cfg):
@@ -185,15 +242,18 @@ def prepare_credentials(repo, host, cfg):
     source = repo.path / 'secrets' / (host + '.yaml')
     marker = STATE / (host + '-credentials.json')
     if marker.exists():
-        verify_credentials(repo, host)
-        print('Credentials already prepared; identities and UPS password were retained.')
+        verify_credentials(repo, host, cfg=cfg)
+        print('Credentials already prepared; identities and passwords were retained.')
         return
-    payload = {'dhilipsiva': {'hashedPassword': shadow_hash(repo.owner)},
-               'ups': {'monitorPassword': secrets.token_urlsafe(48)}}
+    payload = {'dhilipsiva': {'hashedPassword': shadow_hash(repo.owner)}}
+    if 'ups/monitorPassword' in required_secrets(cfg):
+        payload['ups'] = {'monitorPassword': secrets.token_urlsafe(48)}
+    validate_credentials(payload, shadow_hash(repo.owner), cfg)
     ciphertext = encrypt_recipients(payload, [owner_recipient, host_recipient])
     backup = STATE / ('credentials-' + datetime.now().strftime('%Y%m%dT%H%M%S'))
     backup.mkdir(mode=0o700)
-    shutil.copy2(source, backup / source.name)
+    if source.exists():
+        shutil.copy2(source, backup / source.name)
     shutil.copy2(repo.path / '.sops.yaml', backup / 'sops-config.yaml')
     # Verify both recipients from memory before writing any new ciphertext.
     host_identity = run(['ssh-to-age', '-private-key', '-i', HOST_KEY], capture=True)
@@ -216,22 +276,45 @@ def prepare_credentials(repo, host, cfg):
         os.chown(temporary, account.pw_uid, account.pw_gid)
         os.chmod(temporary, 0o644)
         temporary.replace(path)
-    verify_credentials(repo, host)
+    verify_credentials(repo, host, cfg=cfg)
     save_json(marker, {'host': host, 'ownerRecipient': owner_recipient,
                        'hostRecipient': host_recipient, 'preparedAt': now()})
     print('Encrypted credentials are ready. Commit and publish .sops.yaml and the host ciphertext.')
     print(f'Back up the owner identity securely outside this machine: {owner_key}')
 
 
-def prepare_boot(cfg, windows_status):
+def prepare_boot(cfg, windows_status=None):
     state_dir()
-    if not cfg['secureBoot']:
-        raise Error('This helper requires the host\'s Lanzaboote configuration.')
+    mode = boot_mode(cfg)
+    if (STATE / 'boot-prepared.json').exists():
+        verify_boot_policy(cfg)
+        print('Boot preparation already exists; existing keys/backups were retained.')
+        return
+    if mode == 'systemd-boot':
+        if var('SecureBoot') != b'\x00':
+            raise Error('Preserve the existing disabled Secure Boot state for this unsigned installation.')
+        status = run(['bootctl', 'status', '--no-pager'], capture=True)
+        if 'Product: systemd-boot' not in status:
+            raise Error('The running bootloader is not systemd-boot.')
+        recovery = protect_recovery(cfg['owner'])
+        backup = STATE / ('boot-backup-' + datetime.now().strftime('%Y%m%dT%H%M%S'))
+        backup.mkdir(mode=0o700)
+        shutil.copytree('/boot', backup / 'esp')
+        (backup / 'bootctl.txt').write_text(status)
+        variables = ['SecureBoot', 'SetupMode']
+        variables += [name for name in ['PK', 'KEK', 'db', 'dbx'] if list(EFI.glob(name + '-*'))]
+        for name in variables:
+            (backup / (name + '.esl')).write_bytes(var(name))
+        save_json(STATE / 'boot-prepared.json', {
+            'bootMode': mode, 'hardware': hardware_identity(cfg), 'backup': str(backup),
+            'recoverySystem': recovery, 'firmwareVariables': variables, 'preparedAt': now(),
+        })
+        print('Systemd-boot recovery is protected and the ESP is backed up. Firmware trust is unchanged.')
+        return
+    if windows_status not in ('unencrypted', 'recovery-key-backed-up'):
+        raise Error('Signed boot preparation requires --windows-status after checking Windows recovery.')
     if var('SecureBoot') != b'\x01' or var('SetupMode') != b'\x00':
         raise Error('Keep Secure Boot enabled and existing firmware keys installed.')
-    if (STATE / 'boot-prepared.json').exists():
-        print('Boot preparation already exists; existing signing keys/backups were retained.')
-        return
     backup = STATE / ('boot-backup-' + datetime.now().strftime('%Y%m%dT%H%M%S'))
     backup.mkdir(mode=0o700)
     shutil.copytree('/boot', backup / 'esp')
@@ -256,6 +339,7 @@ def prepare_boot(cfg, windows_status):
         'backup': str(backup), 'certificateSHA256': hashlib.sha256(cert_der()).hexdigest(),
         'recoverySystem': recovery, 'preparedAt': now(),
         'windowsStatus': windows_status,
+        'bootMode': mode, 'hardware': hardware_identity(cfg),
     })
     print(f'ESP, trust variables and signature inventory saved in {backup}')
     print(f'Windows readiness recorded: {windows_status}.')
@@ -295,11 +379,93 @@ def verify_signed_entries():
         run(['sbverify', '--cert', DB_CERT, path], capture=True)
 
 
+def file_digest(path):
+    with open(path, 'rb') as source:
+        return hashlib.file_digest(source, 'sha256').hexdigest()
+
+
+def unsigned_recovery(recovery, esp=Path('/boot'), create=False):
+    boot = json.loads((Path(recovery) / 'boot.json').read_text())['org.nixos.bootspec.v1']
+    directory = esp / 'EFI/nixos-recovery'
+    for name, source in [('kernel.efi', boot['kernel']), ('initrd', boot['initrd'])]:
+        target = directory / name
+        if create and not target.exists():
+            directory.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(source, target)
+        if not target.is_file() or file_digest(target) != file_digest(source):
+            raise Error('Protected recovery boot files are missing or changed.')
+    entry = esp / 'loader/entries/nixos-protected-recovery.conf'
+    contents = ('title NixOS (protected pre-migration recovery)\n'
+                'sort-key nixos-recovery\nlinux /EFI/nixos-recovery/kernel.efi\n'
+                'initrd /EFI/nixos-recovery/initrd\noptions '
+                + ' '.join(['init=' + boot['init'], *boot['kernelParams']]) + '\n')
+    if create and not entry.exists():
+        entry.parent.mkdir(parents=True, exist_ok=True)
+        entry.write_text(contents)
+    if not entry.exists() or entry.read_text() != contents:
+        raise Error('Protected recovery boot entry is missing or changed.')
+
+
+def verify_systemd_entries(system, recovery, esp=Path('/boot')):
+    boot = json.loads((Path(system) / 'boot.json').read_text())['org.nixos.bootspec.v1']
+    expected_init = 'init=' + boot['init']
+    for entry in (esp / 'loader/entries').glob('nixos*.conf'):
+        fields = {}
+        for line in entry.read_text().splitlines():
+            parts = line.split(None, 1)
+            if len(parts) == 2:
+                fields.setdefault(parts[0], []).append(parts[1])
+        if expected_init not in fields.get('options', [''])[0].split():
+            continue
+        for field, source in [('linux', boot['kernel']), ('initrd', boot['initrd'])]:
+            targets = [(esp / value.lstrip('/')).resolve() for value in fields.get(field, [])]
+            if not any(target.is_relative_to(esp.resolve()) and target.is_file()
+                       and file_digest(target) == file_digest(source) for target in targets):
+                raise Error('The staged boot entry does not reference the verified kernel/initrd.')
+        break
+    else:
+        raise Error('No boot entry references the verified system.')
+    for name in ['EFI/systemd/systemd-bootx64.efi', 'EFI/BOOT/BOOTX64.EFI']:
+        if not (esp / name).is_file():
+            raise Error('A systemd-boot loader is missing from the ESP.')
+    unsigned_recovery(recovery, esp)
+
+
+def verify_boot_entries(cfg, system, recovery):
+    if boot_mode(cfg) == 'lanzaboote':
+        verify_signed_entries()
+    else:
+        verify_systemd_entries(system, recovery)
+
+
+def verify_esp_space(system, recovery, esp=Path('/boot')):
+    required = 32 * 1024 * 1024
+    systems = [system]
+    if not (esp / 'loader/entries/nixos-protected-recovery.conf').exists():
+        systems.append(recovery)
+    for candidate in systems:
+        boot = json.loads((Path(candidate) / 'boot.json').read_text())['org.nixos.bootspec.v1']
+        required += sum(Path(boot[name]).stat().st_size for name in ['kernel', 'initrd'])
+    if shutil.disk_usage(esp).free < required:
+        raise Error('Insufficient ESP space for the new generation and protected recovery; nothing was staged.')
+
+
+def verify_flatpak(cfg):
+    apps = cfg.get('flatpakApps', [])
+    if not apps:
+        return
+    for app in apps:
+        run(['flatpak', 'info', '--user', '--show-ref', app], owner=cfg['owner'], capture=True)
+    driver = 'org.freedesktop.Platform.GL.nvidia-' + cfg['nvidiaVersion'].replace('.', '-')
+    run(['flatpak', 'info', '--user', '--show-ref', driver], owner=cfg['owner'], capture=True)
+    print('Preserved user Flatpak applications and matching NVIDIA graphics runtime are installed.')
+
+
 def stage(repo, host, cfg):
     state_dir()
     revision = repo.require_published()
-    verify_credentials(repo, host)
-    verify_boot_trust()
+    verify_credentials(repo, host, cfg=cfg)
+    verify_boot_policy(cfg)
     with repo.snapshot(revision) as candidate:
         hosts, builds = repo.check(candidate)
         system = builds[host]
@@ -310,16 +476,16 @@ def stage(repo, host, cfg):
         # A preceding sync can change host configuration. Validate the evaluated
         # snapshot we actually built, never facts cached before that sync.
         cfg = hosts[host]
-        if not cfg['secureBoot']:
-            raise Error('The built host must retain its configured Secure Boot signing chain.')
         if (cfg['owner'] != repo.owner or Path(cfg['repository']) != repo.path
                 or cfg['branch'] != repo.branch or repo.git('remote', 'get-url', 'origin') != cfg['remote']):
             raise Error('Built host changed its repository/owner/branch; resolve the migration explicitly.')
         verify_hardware(cfg)
-        verify_credentials(repo, host, source=candidate)
-        verify_boot_trust()
+        verify_credentials(repo, host, source=candidate, cfg=cfg)
+        verify_boot_policy(cfg)
+        verify_flatpak(cfg)
         old = str(Path('/nix/var/nix/profiles/system').resolve())
         recovery = protect_recovery(repo.owner)
+        verify_esp_space(system, recovery)
         backup = STATE / ('stage-' + datetime.now().strftime('%Y%m%dT%H%M%S'))
         backup.mkdir(mode=0o700)
         shutil.copytree('/boot', backup / 'esp')
@@ -328,8 +494,11 @@ def stage(repo, host, cfg):
             # This is the boot-only activation used by nixos-rebuild boot, using
             # the exact already verified store output, with no live activation.
             run([Path(system) / 'bin/switch-to-configuration', 'boot'])
-            recovery_entry(recovery)
-            verify_signed_entries()
+            if boot_mode(cfg) == 'lanzaboote':
+                recovery_entry(recovery)
+            else:
+                unsigned_recovery(recovery, create=True)
+            verify_boot_entries(cfg, system, recovery)
         except BaseException:
             run(['nix-env', '--profile', '/nix/var/nix/profiles/system', '--set', old])
             verify_hardware(cfg)
@@ -338,19 +507,22 @@ def stage(repo, host, cfg):
             print('Staging failed; the previous system profile and Linux ESP were restored.')
             raise
         save_json(STATE / 'staged.json', {'revision': revision, 'system': system,
-                                        'host': host, 'recoverySystem': recovery, 'stagedAt': now()})
+                                        'host': host, 'bootMode': boot_mode(cfg),
+                                        'recoverySystem': recovery, 'stagedAt': now()})
         print(f'Staged {revision}: {system}. Reboot manually when ready.')
 
 
 def require_acceptance():
     marker = STATE / 'accepted.json'
     if not marker.exists():
-        raise Error('Updates/GC are gated until the first signed boot and physical acceptance.')
+        raise Error('Updates/GC are gated until the first verified boot and physical acceptance.')
     receipt = json.loads(marker.read_text())
     recovery = Path(receipt['recoverySystem'])
     root = Path('/nix/var/nix/gcroots/nixos-recovery-before-migration')
     if not recovery.exists() or root.resolve() != recovery:
         raise Error('The protected recovery generation is missing. Cleanup/updates remain gated.')
+    if receipt.get('bootMode', 'lanzaboote') == 'systemd-boot':
+        unsigned_recovery(str(recovery))
     return receipt
 
 
@@ -358,9 +530,10 @@ def accept(repo, host, cfg):
     staged = json.loads((STATE / 'staged.json').read_text())
     if staged['host'] != host or Path('/run/current-system').resolve() != Path(staged['system']):
         raise Error('Reboot into the staged generation and complete the physical checks first.')
-    verify_credentials(repo, host)
-    verify_boot_trust()
-    verify_signed_entries()
+    verify_credentials(repo, host, cfg=cfg)
+    verify_boot_policy(cfg)
+    verify_boot_entries(cfg, staged['system'], staged['recoverySystem'])
+    verify_flatpak(cfg)
     save_json(STATE / 'accepted.json', dict(staged, acceptedAt=now()))
     print('Accepted this deployment. The configured update/GC timers may now run.')
 
