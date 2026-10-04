@@ -101,6 +101,23 @@ printed one, run `nix flake check .`, and boot the VM with
 `QEMU_OPTS="-m 4096 -fw_cfg name=opt/vmhostkey,file=$HOME/.local/state/nixosctl/vm-test-host-key"`.
 Log in as `dhilipsiva` with password `test` to prove userborn received the hash.
 
+## Tuning follow-ups
+
+The revision after `91c81ea` raises `vm.swappiness` to 180 for the zram-only
+desktop; after staging and rebooting, `cat /proc/sys/vm/swappiness` reads 180.
+Spectre-class mitigations deliberately stay enabled. Two checks need the owner's
+terminal; paste the output into the session for interpretation:
+
+```bash
+sudo dmidecode -t memory | grep -E 'Size|Speed|Configured|Locator|Rank|Part Number' | grep -v 'No Module'
+fwupdmgr refresh && fwupdmgr get-updates
+```
+
+Expected: the configured memory speed equals the EXPO profile rather than the
+4800 MT/s JEDEC default (a firmware setting, not a Nix one), and fwupd lists any
+LVFS firmware for the board or SSD. Applying firmware is always a manual
+`fwupdmgr update` after reviewing the Secure Boot implications.
+
 ## Recovery
 
 Select **NixOS (protected pre-migration recovery)** in the boot menu for the

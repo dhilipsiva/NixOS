@@ -56,8 +56,9 @@ screen use a 32-pixel Terminus font.
   automatically; there is no docker group (`modules/nixos/virtualisation.nix`).
 - **Peripherals:** PipeWire audio, Bluetooth with Blueman, OpenTabletDriver and
   LVFS firmware updates through fwupd (listing is automatic, applying is manual).
-- **Memory and temp files:** 25 % zstd zram swap, systemd-oomd guarding user
-  slices, in-memory `/tmp`, 30-day `/var/tmp` retention, bounded journals.
+- **Memory and temp files:** 25 % zstd zram swap with swappiness 180 (zram is
+  the only swap), systemd-oomd guarding user slices, in-memory `/tmp`, 30-day
+  `/var/tmp` retention, bounded journals. CPU side-channel mitigations stay on.
 - **Local AI:** socket-activated Ollama with CUDA that unloads models after each
   request (`modules/nixos/ollama.nix`, host backend in `performance.nix`).
 - **ThinkPad differences:** the laptop keeps its LUKS root with the scripted

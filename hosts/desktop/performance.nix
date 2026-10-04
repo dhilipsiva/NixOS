@@ -31,8 +31,13 @@
     IOWeight = 50;
   };
 
-  # File watchers for large workspaces (Zed, language servers, Node tooling).
-  boot.kernel.sysctl."fs.inotify.max_user_watches" = 1048576;
+  boot.kernel.sysctl = {
+    # File watchers for large workspaces (Zed, language servers, Node tooling).
+    "fs.inotify.max_user_watches" = 1048576;
+    # zram is the only swap: prefer compressing idle anonymous pages over
+    # dropping file cache (zram guidance is 150 to 180, kernel maximum 200).
+    "vm.swappiness" = 180;
+  };
 
   hardware.graphics = {
     enable = true;
