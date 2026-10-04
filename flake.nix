@@ -275,6 +275,16 @@
               == "/dev/disk/by-uuid/4a7c2f90-d44a-479c-82f6-f764d6cab51d"
             && thinkpad.fileSystems."/".device == "/dev/disk/by-uuid/84250d8e-f63c-4427-99dd-db945a069258"
             && thinkpad.fileSystems."/boot".device == "/dev/disk/by-uuid/BE19-6095"
+            && !thinkpad.boot.initrd.luks.devices.root.allowDiscards
+            && !thinkpad.boot.initrd.luks.devices.root.bypassWorkqueues
+            && thinkpad.swapDevices == [ ]
+            && thinkpad.zramSwap.enable
+            && thinkpad.zramSwap.swapDevices == 1
+            && thinkpad.zramSwap.algorithm == "zstd"
+            && thinkpad.zramSwap.memoryPercent == 25
+            && thinkpad.zramSwap.priority == 100
+            && thinkpad.zramSwap.writebackDevice == null
+            && !thinkpad.systemd.oomd.enableUserSlices
             && thinkpad.system.stateVersion == "24.11"
             && thinkpad.home-manager.users.dhilipsiva.home.stateVersion == "26.05"
             && thinkpad.systemd.sleep.settings.Sleep.AllowSuspend
@@ -283,6 +293,8 @@
             && thinkpad.services.logind.settings.Login.HandleLidSwitch == "suspend"
             && thinkpad.services.logind.settings.Login.HandleLidSwitchDocked == "ignore"
             && thinkpad.hardware.nvidia.prime.offload.enable
+            && thinkpad.hardware.nvidia.dynamicBoost.enable
+            && !desktop.config.hardware.nvidia.dynamicBoost.enable
             && thinkpad.hardware.nvidia.prime.intelBusId == "PCI:0:2:0"
             && thinkpad.hardware.nvidia.prime.nvidiaBusId == "PCI:1:0:0"
             &&
@@ -308,6 +320,18 @@
             && allHostsStable
           ) "Host storage, power, graphics, stable versions or application preservation policy changed.";
           pkgs.runCommand "host-policies-check" { } "touch $out";
+
+        obs-nvenc-runpath =
+          let
+            obs = self.nixosConfigurations.thinkpad.config.programs.obs-studio.finalPackage;
+          in
+          pkgs.runCommand "obs-nvenc-runpath-check" { nativeBuildInputs = [ pkgs.patchelf ]; } ''
+            set -euo pipefail
+            test -x ${obs}/bin/.obs-nvenc-test-wrapped
+            patchelf --print-rpath ${obs}/bin/.obs-nvenc-test-wrapped \
+              | tr ':' '\n' | grep -Fx /run/opengl-driver/lib > /dev/null
+            touch "$out"
+          '';
 
         repository-workflow =
           pkgs.runCommand "repository-workflow-check"

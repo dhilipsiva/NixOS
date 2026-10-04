@@ -57,8 +57,11 @@ brightness controls are enabled. Suspend/resume requires physical validation.
 - Staging requires the installed NVIDIA Flatpak graphics runtime to match the
   candidate driver. Keep the old runtime for recovery; do not uninstall app data.
 - Native OBS uses the verified stable package. Preserve its original x264
-  settings, profiles/scenes and `/home/dhilipsiva/recordings`. Its existing logs
-  report NVENC unavailable; hardware encoding is not assumed to work.
+  settings, profiles/scenes and `/home/dhilipsiva/recordings`. The ThinkPad-only
+  `cudaSupport` package override adds the driver search path to OBS executables,
+  including the NVENC capability helper. This fixes the missing
+  `libnvidia-encode.so.1` lookup observed during the hardware audit; no global
+  `LD_LIBRARY_PATH` override is used. Recording still requires a physical test.
 - On the first new boot, Home Manager runs `scripts/migrate-home.py` before
   linking managed files. It privately backs up `~/.files/.config`, imports
   unmanaged settings into `~/.config` and retains existing destination files on
@@ -68,6 +71,63 @@ brightness controls are enabled. Suspend/resume requires physical validation.
   `~/.local/state/nixosctl/home-migration/`. Private application data never enters
   Git or the Nix store. The original configuration tree remains available for
   generation 291. No global `XDG_CONFIG_HOME` override is retained.
+
+### Hardware acceleration and compressed swap
+
+The ThinkPad enables NVIDIA Dynamic Boost through `nvidia-powerd`; the laptop
+reports firmware support for it. Intel-first graphics, NVIDIA PRIME offload,
+idle GPU power management and the balanced CPU power profile remain unchanged.
+Performance improvements must be measured under actual load, not assumed from
+the service being enabled.
+
+One RAM-only zram swap device uses zstd compression, priority 100 and a logical
+capacity of 25% of RAM (about 4 GiB). This is not a reservation of 4 GiB of
+physical RAM; usage grows with compressed pages. There is no disk swap or
+writeback device. LUKS, discard policy, filesystems, hibernation, thermald and
+OOM-killer policy are unchanged. These settings do not affect the desktop.
+
+After publishing, staging and manually booting this hardware-tuning generation:
+
+1. Confirm the running system matches the staged receipt. Check
+   `systemctl status nvidia-powerd.service`, `swapon --show` and `zramctl`.
+   Expect an active power daemon and one zstd zram swap device at priority 100,
+   approximately one quarter of RAM, with no disk swap.
+2. Run `env -u LD_LIBRARY_PATH /run/current-system/sw/bin/obs-nvenc-test`.
+   Expect `nvenc_supported=true` and H.264/HEVC support. The RTX 3070 does not
+   provide AV1 encoding. This capability test does not record or stream.
+3. Close OBS, then back up its configuration privately before creating a profile:
+
+   ```bash
+   umask 077
+   backup=$(mktemp -d "$HOME/.local/state/nixosctl/obs-before-nvenc.XXXXXXXX")
+   cp -a -- "$HOME/.config/obs-studio" "$backup/"
+   ```
+
+   Keep this backup local and outside Git/the Nix store; it may contain stream
+   credentials. No Home Manager activation changes OBS profiles or encoders.
+4. Open OBS and use **Profile → Duplicate** on the original **Untitled** profile,
+   naming the copy **ThinkPad NVENC**. If that copy already exists, use it rather
+   than overwriting it. Retain the current scene collection. In **Settings →
+   Output**, keep Simple mode and set both recording and streaming encoders to
+   **Hardware (NVENC, H.264)**. Keep P5, 1080p60, the recording destination,
+   hybrid MP4 container, quality, audio settings and bitrates unchanged. Do not
+   start a live stream.
+5. Record a short Roblox gameplay session to `/home/dhilipsiva/recordings`, play
+   it back, and verify video, game audio and microphone where configured. Check
+   OBS's log/statistics for encoder errors and rendering/encoding lag. Keep the
+   NVENC profile selected for normal use only after this succeeds; otherwise
+   return to **Untitled**, leaving the original profile and scenes intact.
+6. After closing GPU applications and allowing idle time, check
+   `/sys/bus/pci/devices/0000:01:00.0/power/runtime_status` for `suspended`.
+   Avoid polling `nvidia-smi` during this check because it wakes the GPU. Retest
+   lid suspend/resume and inspect failed system/user services. Retain the
+   protected recovery generation; no live switch or automatic reboot is used.
+
+The flake's `obs-nvenc-runpath` check verifies the actual capability helper's ELF
+driver search path without requiring GPU access in the build sandbox. Host-policy
+checks guard Dynamic Boost, zram, encrypted-storage and suspend settings. Physical
+recording, GPU power and suspend validation for these changes remains separate
+from the already accepted migration.
 
 ## Preparation and verification
 
@@ -81,8 +141,8 @@ scripts/nixosctl prepare-boot --host thinkpad
 
 Enrollment generated independent laptop/owner identities and verified the
 encrypted password against the installed account. No laptop UPS secret is needed.
-Back up `~/.config/sops/age/keys.txt` securely outside the laptop; that external
-backup has not been confirmed. Never copy desktop private keys onto this host.
+The owner confirmed an external backup of `~/.config/sops/age/keys.txt` after
+accepting the migration. Never copy desktop private keys onto this host.
 
 Boot preparation protected generation 291 and the existing home/profile roots,
 backed up the ESP and recorded the firmware trust and encrypted layout. It did
@@ -91,8 +151,8 @@ normal rotation, retaining the original kernel, initrd and encrypted-root comman
 line. The desktop continues to require its signed recovery UKI.
 
 The existing Wi-Fi profile reports autoconnect enabled, unrestricted users and
-password flags `0`. Its password stays in the local NetworkManager store. A real
-reboot is still required to verify unattended connection.
+password flags `0`. Its password stays in the local NetworkManager store; Wi-Fi
+was connected after the accepted migration's reboots.
 
 Before publishing, check/build both hosts and repeat verification in a clean
 tracked checkout:
@@ -144,7 +204,9 @@ scripts/nixosctl accept --host thinkpad --physical-checks-passed
 
 Acceptance enables persistent subscriber updates at 21:30 Asia/Colombo and
 guarded 30-day cleanup. Build success does not establish gameplay, recording,
-suspend or recovery success. These physical checks remain pending until reboot.
+suspend or recovery success. The owner accepted the migration and 100% scaling
+generation on 2026-10-04. Later hardware-tuning changes require the applicable
+post-boot checks above; their build does not establish physical success.
 
 ## Shared defaults inherited since the desktop modernisation (2026-10-04)
 

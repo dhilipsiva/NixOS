@@ -36,6 +36,13 @@
     max-jobs = 1;
     cores = 4;
   };
+  zramSwap = {
+    enable = true;
+    swapDevices = 1;
+    algorithm = "zstd";
+    memoryPercent = 25;
+    priority = 100;
+  };
   systemd.services.nix-daemon.serviceConfig = {
     CPUWeight = 50;
     IOWeight = 50;

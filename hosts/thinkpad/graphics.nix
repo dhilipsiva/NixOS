@@ -30,6 +30,7 @@
     open = true;
     modesetting.enable = true;
     powerManagement.enable = true;
+    dynamicBoost.enable = true;
     nvidiaSettings = true;
     # Production driver from the once-evaluated application tree (flake.nix),
     # built against this host's kernel.
