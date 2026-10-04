@@ -1,79 +1,70 @@
 # Remaining desktop deployment
 
 Run commands from `/home/dhilipsiva/projects/dhilipsiva/NixOS` as dhilipsiva.
-Generation **11**, revision `0258f5db7c92b37f933841c4700a16f7b7ccb3e5`, is running.
-The owner reports a working session. NVIDIA 595.104.02 drives the RTX 5090 and
-HDMI-A-1 at 3840×2160/60 Hz, 8-bit SDR. Secure Boot is enabled; system/user failed
-unit lists are empty and no NVIDIA HDMI link failure appears in this boot's log.
-Full deployment acceptance still awaits the remaining physical checks below.
-Completed preparation and boot evidence are in [SESSION.md](SESSION.md).
+Generation **12** is running, confirmed on 2026-10-04. Its system path is
+`/nix/store/r5ycb7kq8nhd7hgzh2h9k9g3yzzb15gc-nixos-system-dhilipsiva-desktop-26.05.20261002.774debe`.
+The reduced-effects profile is active: animations and shadows are disabled,
+rounding is zero and `debug.vfr` is enabled. HDMI-A-1 retains 3840×2160/60 Hz,
+8-bit SDR. Secure Boot is enabled and system/user failed-unit lists are empty.
 
-## 0. Recover onboard Wi-Fi
+The owner restored Wi-Fi by draining motherboard power for about one minute.
+The Qualcomm WCN7850 is detected again and `wlp8s0` is connected using
+`ath12k_wifi7_pci`. Wi-Fi recovery and staging the reduced-effects profile are
+complete. Evidence and earlier recovery history are in [SESSION.md](SESSION.md).
 
-Wi-Fi is currently unavailable; USB tethering supplies the network connection.
-Older generation 2 logs identify Qualcomm WCN7850 hw2.0 (`17cb:1107`) at
-`0000:08:00.0`, creating `wlp8s0`. The adapter first disappears in the 18:52 boot
-on 2026-10-03, which still used the same generation 2 system and Linux 6.18.1.
-It remains absent from PCI enumeration in generation 11. The current kernel has
-the matching `ath12k_wifi7` module and WCN7850 firmware, but there is no device
-for the driver to bind to. Bluetooth remains visible over USB. The owner confirms
-the external antenna connects to the motherboard antenna sockets.
+## 1. Restore full CPU availability
 
-The cause is not yet proven. Check the onboard controller setting and its power
-state before changing Nix drivers:
+The CPU issue remains unresolved. Both the agent and the owner's separate
+terminal report eight cores and eight logical CPUs, with SMT `notsupported`.
+The boot log activated only eight processors and the system-wide `possible`
+CPU list is `0-7`. This is not a per-process CPU-affinity limit. AMD specifies
+[16 cores and 32 threads for the 9950X3D](https://shop-us-en.amd.com/amd-ryzen-9-9950x3d-processor/).
+Those are the expected capabilities, not the currently enabled configuration.
 
-1. Save work and enter MSI firmware manually with **Delete** during boot. Use
-   **F7** for Advanced mode, then **Advanced → Integrated Peripherals → Onboard
-   Wi-Fi/BT Module Control**. Some versions put Advanced under Settings; **Ctrl+F**
-   can search for `Wi-Fi`. Select a mode enabling Wi-Fi and Bluetooth. If it was
-   disabled or Bluetooth-only, save that change and retry generation 11.
-   [MSI's AMD 800 BIOS guide](https://download-2.msi.com/archive/mnu_exe/mb/AMDAM5800BIOS_English.pdf)
-   documents this control; wording can vary by BIOS version.
-2. If Wi-Fi is already enabled and still absent, shut Linux down normally. After
-   shutdown, switch off/unplug the desktop's PSU power, wait about one minute,
-   then restore power and boot generation 11 again. This tests a controller
-   state that survives a warm reboot. Power removal is a troubleshooting step,
-   not a confirmed fix. Leave the CMOS reset button and Secure Boot keys alone.
-3. Keep tethering available and check:
+The owner reports **X3D Gaming Mode was enabled before this boot**.
+[MSI documents that this mode changes core and SMT settings](https://us.msi.com/blog/how-to-boost-amd-ryzen-9-9950x3d-gaming-performance),
+making it the leading explanation. Recovery still needs an actual boot with the
+mode disabled. AMD P-State, the performance governor/EPP and frequency boost are
+already active; the Nix configuration and running kernel command line contain no
+core-count limit or SMT-disabling setting.
 
-   ```bash
-   lspci -nnk -d 17cb:1107
-   nmcli radio
-   nmcli -f DEVICE,TYPE,STATE device status
-   journalctl -b -k --no-pager | rg -i 'ath12k|wcn7850|firmware.*(failed|error)'
-   ```
+Generation 2's Linux 6.18.1 boot log also activated only eight CPUs. The current
+kernel has `CONFIG_NR_CPUS=384` and `CONFIG_SCHED_SMT=y`, so it is not built with
+an eight-CPU ceiling or without SMT support.
 
-   The Qualcomm PCI device and a Wi-Fi interface should appear. Use `nmtui` to
-   connect interactively once the interface exists; do not put a Wi-Fi password
-   in this repository or a shell command. Verify actual Wi-Fi connectivity before
-   counting networking as accepted. If the PCI device is still absent, retain
-   tethering and report the BIOS setting and command output for further diagnosis.
+The X3D optimizer is also already loaded: module `amd_3d_vcache` is bound to
+`AMDI0101:00`, its `amd_x3d_mode` reports `frequency`, and AMD P-State `prefcore`
+reports `enabled`. CPPC/core-affinity tools tune work placement on available cores;
+they cannot expose cores disabled by firmware. Do not add
+`processor.max_cstate=1` for this issue: it limits CPU idle states and does not
+restore cores or SMT. These controls are separate from system suspend.
 
-The pending reduced-effects profile below does not change Wi-Fi support. No live
-network restart, firmware change, PCI reset or automatic reboot was performed.
+Save work and enter MSI BIOS manually with **Delete** during boot. Disable
+**X3D Gaming Mode**, save that change with **F10**, and boot generation 12 again.
+Use **F7** for Advanced mode and **Ctrl+F** to search if needed. Preserve Secure
+Boot keys and existing boot/storage settings; do not reset CMOS or load firmware
+defaults. No Nix rebuild is needed for this BIOS test.
 
-## 1. Stage the reduced-effects profile
-
-The published configuration disables Hyprland/Hyprlock animations, window shadows,
-glow and rounded corners, and Waybar transitions. Blur remains off, window opacity
-is 1, and Hyprland renders on damage with `debug.vfr = true`. The working HDMI
-settings, five-minute display policy and NVIDIA driver are retained.
-
-From your local terminal:
+After login, verify:
 
 ```bash
-scripts/nixosctl stage --host desktop
-sudo bootctl list
+LC_ALL=C lscpu | rg 'CPU\(s\)|Core\(s\)|Thread\(s\)|Socket\(s\)'
+cat /sys/devices/system/cpu/possible
+cat /sys/devices/system/cpu/online
+cat /sys/devices/system/cpu/smt/active
+cat /sys/devices/system/cpu/smt/control
 ```
 
-Confirm the newly staged generation is the default and the protected recovery
-entry remains present. Save your work and reboot manually into the new generation.
-If needed, **NixOS (protected pre-migration recovery)** contains the original
-generation 2 in `/EFI/nixos-recovery/pre-migration.efi`. The separate legacy
-generation 1/2 entries have missing files and are not usable fallbacks. Keep the
-recovery archive, owner age identity and recovery media available.
+Expected after recovery: **32 CPUs, 16 cores per socket, 2 threads per core**,
+CPU lists `0-31`, SMT active `1` and control `on`. If the counts remain limited,
+record the BIOS settings for **CCD0 Core Control / CCD1 Core Control** (Auto/all
+cores on both CCDs) and **SMT Control** (Enabled, or Auto where that enables it).
+The [MSI AMD 800 BIOS guide](https://download.msi.com/archive/mnu_exe/mb/AMDAM5800BIOS_English.pdf)
+lists these controls on page 38; exact menus/options vary by BIOS version. Their
+current values have not been inspected. A Nix build alone cannot confirm that
+firmware has exposed the missing cores.
 
-## 2. Verify the new profile and remaining hardware behavior
+## 2. Finish the remaining physical checks
 
 After login, open Alacritty with **Super+Enter**:
 
@@ -88,24 +79,11 @@ systemctl --failed
 systemctl --user --failed
 ```
 
-The running system must match the `system` path in the new staged receipt.
-Check that window/workspace changes are immediate and shadows/rounded corners are
-gone. Verify the active options:
+The running system must match the `system` path in the staged receipt. Recheck
+Secure Boot, display and Wi-Fi after any CPU firmware changes. Higher refresh/HDR
+is a separate future test; the working HDMI FRL workaround stays enabled.
 
-```bash
-hyprctl getoption animations:enabled
-hyprctl getoption decoration:shadow:enabled
-hyprctl getoption decoration:rounding
-hyprctl getoption debug:vfr
-```
-
-Expect `false`, `false`, `0`, and `true`, respectively. Secure Boot must remain
-enabled and HDMI-A-1 must retain the working 4K60/8-bit mode. Inspect failed units
-or new display errors before acceptance. Higher refresh/HDR is a separate future
-test; the FRL workaround stays enabled for this rollout.
-
-- Finish checking sudo, Atuin history, zoxide/ripgrep, Wi-Fi connectivity, audio and
-  the UPS. USB tethering alone does not complete the onboard Wi-Fi check.
+- Finish checking sudo, Atuin history, zoxide/ripgrep, audio and the UPS.
 - Confirm the screen locks/powers off after five minutes while the machine keeps
   running without suspend or hibernation.
 - Check read-only Windows file copying and Secure Boot status/signatures.
@@ -113,6 +91,11 @@ test; the FRL workaround stays enabled for this rollout.
   verify request startup, model unloading after a default request and stopping
   after idle connections close.
 - Check Slack and Teams sign-in, microphone, camera and screen sharing.
+
+If recovery is needed, select **NixOS (protected pre-migration recovery)**, which
+contains the original generation 2 in `/EFI/nixos-recovery/pre-migration.efi`.
+The separate legacy generation 1/2 entries have missing files and are not usable
+fallbacks. Keep the recovery archive, owner age identity and recovery media.
 
 ## 3. Accept the deployment and run cleanup
 
@@ -128,6 +111,3 @@ that credential/signature checks still pass. It enables the configured update,
 GC and store-optimisation jobs. Cleanup retains the protected recovery roots and
 uses the 30-day generation policy; personal files, models and Windows data remain
 outside its scope.
-
-After establishing this working baseline, inspect BIOS CCD/core/SMT and MSI
-gaming-mode settings: Linux currently exposes only eight cores/eight threads.

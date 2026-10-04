@@ -23,7 +23,7 @@ Detected on 2026-10-03:
 | Memory | About 92 GiB visible to Linux |
 | Linux SSD | 4 TB XPG MARS 980 BLADE, serial `2P10291S7BAY` |
 | Windows SSD | Separate 4 TB SSD, serial `2P102LAC7BA1` |
-| Onboard Wi-Fi | Qualcomm WCN7850 hw2.0, identified in generation 2 logs; currently undetected |
+| Onboard Wi-Fi | Qualcomm WCN7850 hw2.0; connected after power-drain recovery on 2026-10-04 |
 
 The desktop uses the latest kernel.org stable kernel (with a pinned patch-release
 source bridge when Nixpkgs lags)
@@ -47,19 +47,19 @@ NVIDIA 595.104.02 and 8-bit SDR. This deliberately limits refresh/HDR; retest hi
 over a working HDMI or DisplayPort link before removing the workaround. It is
 desktop-only and does not change the GPU's compute configuration.
 
-**Firmware needs attention:** Linux currently sees only 8 cores / 8 threads on this
-9950X3D, with SMT reported unavailable. Check BIOS settings for enabled CCDs/cores
-and SMT; disable MSI X3D Gaming Mode if it is enabled. That is a likely explanation,
-not a confirmed BIOS diagnosis. [MSI documents that mode's core/SMT changes](https://us.msi.com/blog/how-to-boost-amd-ryzen-9-9950x3d-gaming-performance).
+**Firmware needs attention:** generation 12 still sees only 8 cores / 8 threads on
+this 9950X3D, confirmed in the owner's separate terminal on 2026-10-04, with SMT
+reported unavailable. The system-wide CPU topology and boot log also show eight;
+this is not a Codex process limit. The owner reports X3D Gaming Mode is enabled.
+Disable it and check the core/thread counts after reboot; recovery has not yet
+been verified. [MSI documents that mode's core/SMT changes](https://us.msi.com/blog/how-to-boost-amd-ryzen-9-9950x3d-gaming-performance).
 No firmware settings or overclocking were changed by this configuration.
 
-**Wi-Fi recovery pending:** the onboard Qualcomm adapter disappeared from PCI
-enumeration during generation 2, before the first boot of this configuration.
-Generation 11 includes its driver and firmware; NetworkManager currently reports
-the Wi-Fi hardware missing and the desktop uses USB tethering. Check MSI's onboard
-Wi-Fi control and perform a cold power cycle if needed, following
-[DEPLOYMENT.md](DEPLOYMENT.md). The cause and recovery still require physical
-validation.
+**Wi-Fi recovered:** on 2026-10-04 the owner drained motherboard power for about a
+minute and the adapter returned. Generation 12 detects it with `ath12k_wifi7_pci`
+and NetworkManager reports `wlp8s0` connected. No Wi-Fi driver change was needed.
+The earlier disappearance and recovery evidence are recorded in
+[SESSION.md](SESSION.md).
 
 The desktop never suspends or hibernates. After five minutes of inactivity, Hypridle
 locks the session and powers off the displays; keyboard/mouse activity powers them
@@ -188,7 +188,7 @@ the old `misc.vfr`. These are supported
 [Hyprland configuration options](https://wiki.hypr.land/configuring/core/config-options/),
 not measured performance gains. Display mode and NVIDIA tuning stay in the desktop
 host; cursor handling uses Hyprland's defaults.
-The reduced-effects profile needs staging and the next manual boot to take effect.
+The reduced-effects profile is active in generation 12, verified on 2026-10-04.
 
 Login uses the text-based **greetd + tuigreet** screen, which starts Hyprland through
 UWSM for session/service lifecycle management. **Fuzzel** provides a native Wayland
@@ -285,10 +285,11 @@ selected kernel. These checks do not establish physical GPU, login or firmware
 behavior. During editing, `path:$PWD` includes untracked files; final validation
 must use a clean Git checkout with every required file tracked.
 
-**Generation 11 is running successfully** with the HDMI compatibility change.
-The owner confirmed a working session; NVIDIA/monitor output, Secure Boot and
-system/user service checks pass. Follow [DEPLOYMENT.md](DEPLOYMENT.md) to stage the
-reduced-effects profile and finish the remaining physical checks before acceptance.
+**Generation 12 is running** with the HDMI compatibility change and reduced-effects
+profile. Wi-Fi has recovered; the display remains at 4K60/8-bit, Secure Boot is
+enabled and system/user failed-unit lists are empty. Follow
+[DEPLOYMENT.md](DEPLOYMENT.md) for the unresolved CPU core/SMT issue and the remaining
+physical checks before acceptance.
 The protected recovery entry retains the original generation 2. Firmware preparation
 and boot evidence are recorded in [SESSION.md](SESSION.md).
 The desktop's encrypted credentials are enrolled with the owner and

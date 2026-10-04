@@ -22,35 +22,78 @@ The GitHub write deploy key at `~/.ssh/nixos-update` has been authorized, and th
 implementation was published as `82024bb`. Private keys remain outside Git. Use `git status --short
 --branch` and `git log -1` to inspect the current publication state.
 
-The owner has successfully booted **generation 11**, revision
+Current boot, checked 2026-10-04: **generation 12**, boot ID
+`68ba0861-11a6-4d43-b0b0-68bb2855f52f`, with system path
+`/nix/store/r5ycb7kq8nhd7hgzh2h9k9g3yzzb15gc-nixos-system-dhilipsiva-desktop-26.05.20261002.774debe`.
+Both the selected EFI entry and system profile identify generation 12. Hyprland
+reports animations=false, shadows=false, rounding=0 and debug.vfr=true. HDMI-A-1
+remains at 3840x2160/60 Hz, XRGB8888; Secure Boot is enabled and both system/user
+failed-unit lists are empty. The exact staged Git revision still comes from the
+root-only staged receipt; the system path alone does not distinguish documentation
+commits that build the same configuration.
+
+The owner reports Wi-Fi recovered after draining motherboard power for about one
+minute. Current enumeration confirms `17cb:1107` at `0000:08:00.0`, bound to
+`ath12k_wifi7_pci`, and NetworkManager reports `wlp8s0` connected. USB tethering
+is no longer listed. No Wi-Fi driver change was applied. The cold power cycle
+restored detection; the underlying reason for the stuck state remains unproven.
+
+CPU availability is still unresolved: lscpu reports eight cores and one thread
+per core; possible/present/online CPU lists are all `0-7`, SMT active=0 and
+control=notsupported. The boot log activates only eight processors. The owner's
+independent terminal reproduces those values, confirming this is not a Codex
+process-affinity restriction. AMD specifies 16 cores and 32 threads for this model;
+that describes its capability, not the currently enabled configuration. The owner
+subsequently confirmed X3D Gaming Mode was enabled before boot. Its documented
+core/SMT changes make it the leading explanation; the next test is to disable it
+and recheck after boot. Individual CCD/core/SMT settings have not been inspected.
+P-State is active, governor/EPP are performance, boost=1, and the Nix configuration
+and kernel command line have no core-count/SMT limit. See DEPLOYMENT.md for the
+physical BIOS test. No firmware changes or automatic reboot were performed.
+
+Cross-check: generation 2 boot `2d659db92e814782b151ab2e622623b7` with Linux
+6.18.1 also reports eight CPUs/eight processors activated, predating the new
+configuration. The current `/proc/config.gz` has CONFIG_NR_CPUS=384,
+CONFIG_SMP=y, CONFIG_HOTPLUG_CPU=y, CONFIG_SCHED_SMT=y and CONFIG_SCHED_MC=y.
+The kernel build therefore has CPU capacity and SMT support beyond the observed
+eight logical CPUs.
+
+The owner shared advice about CPPC, X3D scheduling tools and `processor.max_cstate`.
+Read-only checks already find `amd_pstate` active, preferred-core support enabled,
+and `amd_3d_vcache` loaded/bound to `AMDI0101:00`, with its `amd_x3d_mode` reporting
+`frequency`. The module name differs from the platform driver's `amd_x3d_vcache`.
+These are scheduling/performance controls; their presence does not prove both
+CCDs are exposed. No C-state cap, affinity restriction or extra scheduler was
+added. First test X3D Gaming Mode disabled with the same NixOS generation.
+
+The owner previously booted **generation 11**, revision
 `0258f5db7c92b37f933841c4700a16f7b7ccb3e5`,
 with system path
 `/nix/store/z4bsvhjn75dcn1dyr3q4cq7cxjvqdrqy-nixos-system-dhilipsiva-desktop-26.05.20261002.774debe`.
-Read-only inspection confirms `/run/current-system` resolves to that path. The
+Read-only inspection at that time confirmed that system path. The
 owner reports a working session and supplied successful `nvidia-smi` and
 `hyprctl monitors` output. The earlier boot-menu output selected protected recovery;
-that output predates this successful generation 11 boot. The reduced-effects
-profile requested afterward still needs staging and a manual reboot.
+that output predates the successful generation 11 boot. The reduced-effects
+profile requested afterward is now active in generation 12.
 
-Wi-Fi is an outstanding deployment issue. The owner confirms the external antenna
-connects to the motherboard sockets and is using USB tethering. Historical boot
+Wi-Fi was an outstanding deployment issue on 2026-10-03. The owner confirmed the
+antenna connects to the motherboard sockets and used USB tethering. Historical boot
 `2d659db92e814782b151ab2e622623b7` detects Qualcomm WCN7850 hw2.0, PCI
 `17cb:1107` at `0000:08:00.0`, and creates `wlp8s0` with `ath12k_pci`. The next
 recorded boot, `47303a5180c046a59446b4731d6c618a` at 18:52 on 2026-10-03,
 has no Wi-Fi PCI endpoint. Both use the identical original generation 2 system
 path and Linux 6.18.1. The disappearance predates generation 10/11.
 
-Generation 11 still has no Wi-Fi PCI endpoint or wireless PHY. `nmcli radio`
-reports `WIFI-HW missing` with software Wi-Fi enabled. The USB Bluetooth function
-(`0489:e10a`) remains present and unblocked. The running 7.2.9 module alias for
+Generation 11 had no Wi-Fi PCI endpoint or wireless PHY. `nmcli radio`
+reported `WIFI-HW missing` with software Wi-Fi enabled. The USB Bluetooth function
+(`0489:e10a`) remained present and unblocked. The 7.2.9 module alias for
 `17cb:1107` resolves to `ath12k_wifi7`; a dry-run dependency check finds all modules,
 and the configured firmware directory contains WCN7850 hw2.0 board/firmware files.
-No missing-firmware Wi-Fi probe appears in the current boot log because the PCI
-device never enumerates. Firmware disabling or a retained controller power state
-are possibilities, not confirmed causes. No driver/configuration change or live
-network/PCI reset was applied. The next physical steps are the MSI Wi-Fi control
-check and, if needed, a cold power cycle documented in DEPLOYMENT.md. Tethering
-through `enp19s0u4` was left connected; networking acceptance remains pending.
+No missing-firmware Wi-Fi probe appeared in that boot log because the PCI device
+never enumerated. Firmware disabling or a retained controller power state were
+possibilities, not confirmed causes. No driver/configuration change or live
+network/PCI reset was applied. Tethering through `enp19s0u4` was left connected.
+The subsequent power-drain recovery is recorded above.
 
 The owner previously staged
 **generation 10**, revision
@@ -64,8 +107,8 @@ firmware variables.
 Before staging, the system profile already pointed to generation 9 (its link
 was dated 2026-01-31), while the owner's earlier `sudo bootctl list` showed
 generation 2 as default/selected and generation 1 available. That older boot-menu
-listing predates both new staged generations. The latest owner-supplied boot-menu
-output now confirms generation 11 as the default; this agent cannot directly read
+listing predates both new staged generations. The owner-supplied boot-menu
+output then confirmed generation 11 as the default; this agent cannot directly read
 the root-only ESP.
 The owner successfully ran `prepare-credentials --host desktop` locally. The
 helper verified real host decryption and preservation of the installed login
@@ -234,8 +277,8 @@ window/input corners, shadows/glow and Waybar CSS transitions. Blur remains off;
 window opacity is 1 and the useful focus border remains. `debug.vfr = true` is
 the installed Hyprland 0.56 option that avoids continuous idle redraws. The former
 `misc.vfr` option does not exist in this version. Working display mode/driver,
-five-minute screen-off and no-sleep policy were retained. These changes have not
-been activated in the running session; they need the next staged boot.
+five-minute screen-off and no-sleep policy were retained. These changes were
+subsequently activated in generation 12 as recorded above.
 
 The software cursor report is explained by the installed compositor's automatic
 cursor policy: NVIDIA plus multiple GPU backends selects software cursors. Its
@@ -244,8 +287,8 @@ startup log registers NVIDIA as the primary DRM device and AMD as secondary;
 The compositor renders on NVIDIA. No cursor override or GPU-routing change was
 introduced during cosmetic tuning.
 
-Next: recover onboard Wi-Fi, then stage the published reduced-effects profile
-and reboot manually following [DEPLOYMENT.md](DEPLOYMENT.md). Acceptance and cleanup remain pending until all
+Next: disable X3D Gaming Mode, recheck CPU core/SMT availability and complete the
+remaining physical checks in [DEPLOYMENT.md](DEPLOYMENT.md). Acceptance and cleanup remain pending until all
 remaining physical checks pass. Never clear firmware keys, format a disk, switch
 the live system, or reboot automatically.
 
