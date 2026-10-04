@@ -270,7 +270,8 @@
             desktop.config.boot.lanzaboote.enable
             && !desktop.config.systemd.sleep.settings.Sleep.AllowSuspend
             && thinkpad.boot.loader.systemd-boot.enable
-            && thinkpad.boot.initrd.luks.devices.root.device
+            &&
+              thinkpad.boot.initrd.luks.devices.root.device
               == "/dev/disk/by-uuid/4a7c2f90-d44a-479c-82f6-f764d6cab51d"
             && thinkpad.fileSystems."/".device == "/dev/disk/by-uuid/84250d8e-f63c-4427-99dd-db945a069258"
             && thinkpad.fileSystems."/boot".device == "/dev/disk/by-uuid/BE19-6095"
@@ -284,7 +285,8 @@
             && thinkpad.hardware.nvidia.prime.offload.enable
             && thinkpad.hardware.nvidia.prime.intelBusId == "PCI:0:2:0"
             && thinkpad.hardware.nvidia.prime.nvidiaBusId == "PCI:1:0:0"
-            && thinkpad.environment.sessionVariables.AQ_DRM_DEVICES
+            &&
+              thinkpad.environment.sessionVariables.AQ_DRM_DEVICES
               == "/dev/dri/thinkpad-intel:/dev/dri/thinkpad-nvidia"
             && !(desktop.config.environment.sessionVariables ? AQ_DRM_DEVICES)
             && thinkpad.services.flatpak.enable

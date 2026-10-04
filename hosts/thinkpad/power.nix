@@ -32,12 +32,23 @@
         on-resume = "${pkgs.hyprland}/bin/hyprctl dispatch 'hl.dsp.dpms({ action = \"enable\" })'";
       }
     ];
-    wayland.windowManager.hyprland.settings.bind = map (binding: {
-      _args = [ binding.key (lib.generators.mkLuaInline
-        "hl.dsp.exec_cmd(${builtins.toJSON "${pkgs.brightnessctl}/bin/brightnessctl -d intel_backlight set ${binding.amount}"})") ];
-    }) [
-      { key = "XF86MonBrightnessUp"; amount = "+5%"; }
-      { key = "XF86MonBrightnessDown"; amount = "5%-"; }
-    ];
+    wayland.windowManager.hyprland.settings.bind =
+      map
+        (binding: {
+          _args = [
+            binding.key
+            (lib.generators.mkLuaInline "hl.dsp.exec_cmd(${builtins.toJSON "${pkgs.brightnessctl}/bin/brightnessctl -d intel_backlight set ${binding.amount}"})")
+          ];
+        })
+        [
+          {
+            key = "XF86MonBrightnessUp";
+            amount = "+5%";
+          }
+          {
+            key = "XF86MonBrightnessDown";
+            amount = "5%-";
+          }
+        ];
   };
 }

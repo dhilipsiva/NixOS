@@ -28,7 +28,7 @@ keeping hardware, filesystems, secrets and the no-sleep policy unchanged:
 - nixfmt formatting, deadnix and ruff enforced by the `formatting` check
 
 It builds as
-`/nix/store/31fc551hn6bfmb1p5b4gps3b9ww81v43-nixos-system-dhilipsiva-desktop-26.05.20261002.774debe`
+`/nix/store/vwbdamgnanaghnwwafwg27mbd8p9q6ng-nixos-system-dhilipsiva-desktop-26.05.20261002.774debe`
 and passes `nix flake check` and `scripts/nixosctl check --stable`. A headless
 QEMU rehearsal of this configuration (without the VM secrets key) booted through
 the systemd initrd in 3.5 s, ran userborn successfully, kept start-up going while

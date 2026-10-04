@@ -50,7 +50,8 @@ session needs.
 
 Generation 14 (published `2652a41`) is running with the redesigned Waybar. The
 checkout now contains the modernisation described in DEPLOYMENT.md; it builds as
-`/nix/store/31fc551hn6bfmb1p5b4gps3b9ww81v43-nixos-system-dhilipsiva-desktop-26.05.20261002.774debe`,
-passes every flake check, the `nixosctl check --stable` gate and a headless VM
-rehearsal of the boot path. Staging and the reboot follow the normal `nixosctl`
+`/nix/store/vwbdamgnanaghnwwafwg27mbd8p9q6ng-nixos-system-dhilipsiva-desktop-26.05.20261002.774debe`,
+passes every flake check, the `nixosctl check --stable` gate (both hosts build)
+and a headless VM rehearsal of the boot path. It was rebased onto the laptop
+session's ThinkPad host commit `0a3b61b`, whose checks and host policies it keeps. Staging and the reboot follow the normal `nixosctl`
 workflow; nothing switches live.

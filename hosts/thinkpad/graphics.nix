@@ -1,11 +1,6 @@
-{ config, inputs, pkgs, ... }:
+{ config, pkgs, ... }:
 
-let
-  driverPackages = import inputs.nixpkgs-apps {
-    inherit (pkgs.stdenv.hostPlatform) system;
-    config.allowUnfree = true;
-  };
-in {
+{
   boot.kernelPackages = pkgs.linuxPackagesFor (import ../../pkgs/kernel.nix { inherit pkgs; });
   services.xserver.videoDrivers = [ "nvidia" ];
   services.udev.extraRules = ''
@@ -23,11 +18,17 @@ in {
     modesetting.enable = true;
     powerManagement.enable = true;
     nvidiaSettings = true;
-    package = (driverPackages.linuxPackagesFor config.boot.kernelPackages.kernel).nvidiaPackages.production;
+    # Production driver from the once-evaluated application tree (flake.nix),
+    # built against this host's kernel.
+    package =
+      (pkgs.nixpkgs-apps.linuxPackagesFor config.boot.kernelPackages.kernel).nvidiaPackages.production;
     prime = {
       intelBusId = "PCI:0:2:0";
       nvidiaBusId = "PCI:1:0:0";
-      offload = { enable = true; enableOffloadCmd = true; };
+      offload = {
+        enable = true;
+        enableOffloadCmd = true;
+      };
     };
   };
 }
