@@ -17,6 +17,11 @@
     };
   };
 
+  # Unknown commands name the Nix package that provides them, and `, <cmd>`
+  # runs a package once, both from the weekly nix-index-database input.
+  programs.nix-index.enable = true;
+  programs.nix-index-database.comma.enable = true;
+
   programs.fish = {
     enable = true;
     # Fish 4.9 removed the Python manpage generator used by HM 26.05. Packaged

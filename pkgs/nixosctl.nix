@@ -18,6 +18,7 @@
   systemdUkify,
   cryptsetup,
   flatpak,
+  nvd,
 }:
 writeShellApplication {
   name = "nixosctl";
@@ -40,6 +41,7 @@ writeShellApplication {
     systemdUkify
     cryptsetup
     flatpak
+    nvd
   ];
   text = ''
     export NIXOSCTL_LAUNCHER="$0"

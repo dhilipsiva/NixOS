@@ -208,6 +208,30 @@ suspend or recovery success. The owner accepted the migration and 100% scaling
 generation on 2026-10-04. Later hardware-tuning changes require the applicable
 post-boot checks above; their build does not establish physical success.
 
+## Attended task for the laptop VM session: `system.etc.overlay`
+
+Immutable `/etc` is the last deferred modernisation. It hides the on-disk `/etc`
+that holds state, so it must be rehearsed and migrated with someone at the
+machine. Do it on the ThinkPad first, then the desktop. Steps:
+
+1. Move the laptop to `boot.initrd.systemd.enable = true` (a prerequisite of the
+   overlay; systemd-cryptsetup unlocks the LUKS root). Rehearse in the VM, stage,
+   reboot, confirm the passphrase prompt and login.
+2. Inventory unmanaged `/etc` state on the real machine as root:
+   `find /etc -xtype f ! -lname '/etc/static/*'`, plus `/etc/machine-id`,
+   `/etc/ssh/ssh_host_*` (the sops identity), `/etc/NetworkManager/system-connections`
+   and `/etc/nixos`. Everything else is regenerated from the store.
+3. Rehearse `system.etc.overlay.enable = true` with `mutable = true` in the VM:
+   sops must still decrypt, userborn must still create the user, saved
+   NetworkManager profiles must persist across a reboot.
+4. Before staging on hardware, pre-seed `/.rw-etc/upper/` with the inventoried
+   files at their original relative paths, preserving owner and mode (the
+   overlay's upper layer becomes the writable `/etc`).
+5. Stage, reboot, verify login, Wi-Fi, and that `ssh-keygen -lf
+   /etc/ssh/ssh_host_ed25519_key.pub` prints the same fingerprint as before.
+   Only then repeat on the desktop, where the host key also decrypts
+   `secrets/desktop.yaml`, so step 4 is mandatory there.
+
 ## Shared defaults inherited since the desktop modernisation (2026-10-04)
 
 The shared modules now provide: userborn-managed accounts with sops-nix systemd

@@ -19,8 +19,9 @@ Generation 16, the first build of this policy, looped back to the greeter after
 login: its `AQ_DRM_DEVICES` used the by-path device name, whose colons aquamarine
 treats as list separators, so Hyprland found no GPU and aborted (crash reports in
 `~/.cache/hyprland/`). The owner booted generation 15 from the menu. The udev
-alias replaces the by-path name; staging the fixed revision needs the owner's
-sudo password in their own terminal:
+alias replaces the by-path name. Staging prints an nvd closure diff against the
+running system before installing boot entries and needs the owner's sudo password
+in their own terminal:
 
 ```bash
 scripts/nixosctl stage --host desktop && systemctl reboot
@@ -61,12 +62,14 @@ The owner accepted this on 2026-10-04. The only consequence is that Wi-Fi is not
 up before anyone logs in, so a nightly update that runs while the machine sits at
 the greeter is skipped and retried the next evening. No further action.
 
-## 4. Restore the VM rehearsal fixture (owner task)
+## 4. Restore the manual VM rehearsal fixture (owner task, optional)
 
-`secrets/vm-test.yaml` is encrypted to a throwaway identity whose private key is
-no longer available, so the VM can only exercise the break-glass path. To restore
-the positive sops path, generate a new throwaway key outside Git and re-encrypt
-the fixture; the agent session cannot write secret material itself:
+The `desktop-login` flake check boots the desktop configuration with its own
+build-time fixture secrets, so the sops/userborn login path is covered without
+any owner key. The manual `build.vm` rehearsal still uses `secrets/vm-test.yaml`,
+whose throwaway private key is no longer available, so that VM only exercises the
+break-glass path. To restore it, generate a new throwaway key outside Git and
+re-encrypt the fixture; the agent session cannot write secret material itself:
 
 ```bash
 mkdir -p ~/.local/state/nixosctl && chmod 700 ~/.local/state/nixosctl

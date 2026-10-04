@@ -50,6 +50,10 @@ session needs.
 
 ## Current state (2026-10-04)
 
+The owner reports the ThinkPad boots and works on its staged configuration and
+accepted it; `system.etc.overlay` is an attended task for the laptop's VM session
+(THINKPAD.md).
+
 Generation 15 (published `44d446b`, the modernisation) is running and the owner
 confirmed the 1.5 scale. The checkout adds the DisplayPort display policy
 described in DEPLOYMENT.md; the previous modernisation built as

@@ -88,8 +88,9 @@ in
         separate-outputs = true;
       };
       clock = {
-        interval = 60;
-        format = "{:%a %d %b  %H:%M}";
+        # Full date and time in the bar centre; the tooltip adds the calendar.
+        interval = 1;
+        format = "{:%a %d %b %Y   %H:%M:%S}";
         tooltip-format = "<b>{:%A, %d %B %Y}</b>\n<tt>{calendar}</tt>";
         calendar = {
           mode = "month";

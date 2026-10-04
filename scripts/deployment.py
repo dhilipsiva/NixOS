@@ -486,6 +486,7 @@ def stage(repo, host, cfg):
         old = str(Path('/nix/var/nix/profiles/system').resolve())
         recovery = protect_recovery(repo.owner)
         verify_esp_space(system, recovery)
+        closure_diff(system)
         backup = STATE / ('stage-' + datetime.now().strftime('%Y%m%dT%H%M%S'))
         backup.mkdir(mode=0o700)
         shutil.copytree('/boot', backup / 'esp')
@@ -510,6 +511,15 @@ def stage(repo, host, cfg):
                                         'host': host, 'bootMode': boot_mode(cfg),
                                         'recoverySystem': recovery, 'stagedAt': now()})
         print(f'Staged {revision}: {system}. Reboot manually when ready.')
+
+
+def closure_diff(system):
+    """Show what the candidate changes against the running system; never blocks."""
+    current = Path('/run/current-system')
+    nvd = shutil.which('nvd')
+    if nvd and current.exists() and current.resolve() != Path(system):
+        print('Closure changes from the running system:')
+        subprocess.run([nvd, 'diff', str(current), system], check=False)
 
 
 def require_acceptance():

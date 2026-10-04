@@ -51,7 +51,9 @@ requirements and pending acceptance.
 Run `nix fmt`, `nix flake check .`, `nix build --no-link
 .#nixosConfigurations.desktop.config.system.build.toplevel`, and
 `scripts/nixosctl check --stable`. The `formatting` check enforces nixfmt,
-deadnix and ruff. Track every referenced source file and repeat verification in
+deadnix and ruff; `desktop-login` boots the desktop configuration in QEMU through
+the real sops/userborn login path; GitHub Actions repeats evaluation and the light
+checks off-machine. Track every referenced source file and repeat verification in
 a clean checkout before publishing. `path:$PWD` may be used during editing to
 include new files; final Git-flake validation must also pass.
 

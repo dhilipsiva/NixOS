@@ -185,7 +185,8 @@ with `home-manager.users.dhilipsiva.repo.waybar.battery.enable`.
 | Lock | Lock the screen |
 
 Alacritty starts **fish** with the starship prompt, **Atuin** history, **zoxide**
-(`z`) and **direnv** with nix-direnv. **Zellij** uses upstream keybindings, opens
+(`z`), **direnv** with nix-direnv, and nix-index: an unknown command names the
+package that provides it and `, <command>` runs one without installing it. **Zellij** uses upstream keybindings, opens
 fish in new panes and does not auto-start. **Helix** carries its JS/TS/JSON
 language servers. Applications and toolchains (Zed, VS Code, Cursor, Codex,
 Claude Code, Herdr, Python, Node, Rust, uv, Slack, Chrome, Firefox, Dolphin,
@@ -216,7 +217,10 @@ rsync -rt --info=progress2 /mnt/windows/Users/<windows-user>/Documents/ ~/Docume
 ```
 
 The mount uses the filesystem UUID, never touches the Windows EFI partition or
-boot files, and Windows starts from the firmware boot menu. If NTFS refuses to
+boot files. To start Windows, run `reboot-to-windows` or pick **Reboot to
+Windows** in Fuzzel: it sets the firmware's one-shot BootNext to the Windows
+Boot Manager entry (polkit prompt) and reboots; the permanent boot order stays on
+NixOS, so the next restart from Windows returns here. If NTFS refuses to
 mount after hibernation, fully shut Windows down first; never force a write mount.
 
 ## Build and deployment
@@ -231,8 +235,16 @@ scripts/nixosctl check --stable
 
 `nix develop` provides the script, secret and lint tooling. The `formatting`
 check rejects unformatted Nix, unused bindings (deadnix) and ruff findings in the
-Python helpers. Full builds compile the NVIDIA module for the selected kernel.
-Checks do not establish physical GPU, login or firmware behavior. During editing,
+Python helpers. The `desktop-login` check boots the real desktop configuration in
+QEMU with build-time fixture secrets, logs in on a console through sops-nix and
+userborn, and starts the Hyprland session with Waybar and the polkit agent; only
+the GPU device and the UPS are overridden. Full builds compile the NVIDIA module
+for the selected kernel. GitHub Actions (`.github/workflows/check.yml`) evaluates
+every output and runs the light checks on each push, so a broken desktop is never
+the only validator; VM tests, the Hyprland parser and `nixosctl check --stable`
+stay local. Checks still do not establish physical GPU or firmware behavior.
+`nixosctl stage` prints an nvd closure diff against the running system before it
+installs boot entries. During editing,
 `path:$PWD` includes untracked files; final validation uses a clean Git checkout
 with every required file tracked.
 

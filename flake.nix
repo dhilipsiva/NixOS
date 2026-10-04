@@ -39,6 +39,13 @@
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # Weekly prebuilt nix-index database: `command-not-found` suggestions and
+    # `, <command>` without a channel.
+    nix-index-database = {
+      url = "github:nix-community/nix-index-database";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -159,32 +166,36 @@
       # Share software and dotfiles; each host owns its hardware, filesystems,
       # bootloader, secrets file, NixOS/Home Manager stateVersion anchors and
       # platform (`nixpkgs.hostPlatform` in its hardware configuration).
+      # The module list every host shares. mkHost evaluates it for a real system;
+      # the desktop-login check boots the same list inside the NixOS test driver.
+      hostModules = hostModule: [
+        hostModule
+        ./modules/nixos
+        inputs.sops-nix.nixosModules.sops
+        home-manager.nixosModules.home-manager
+        (
+          { pkgs, ... }:
+          {
+            nixpkgs.overlays = [
+              inputs.rust-overlay.overlays.default
+              appsOverlay
+            ];
+            home-manager = {
+              useGlobalPkgs = true;
+              useUserPackages = true;
+              backupCommand = "${pkgs.python3}/bin/python3 ${./scripts/backup-home-file.py}";
+              extraSpecialArgs = { inherit inputs; };
+              sharedModules = [ inputs.nix-index-database.homeModules.nix-index ];
+              users.dhilipsiva = import ./home/dhilipsiva;
+            };
+          }
+        )
+      ];
       mkHost =
         hostModule:
         lib.nixosSystem {
           specialArgs = { inherit inputs; };
-          modules = [
-            hostModule
-            ./modules/nixos
-            inputs.sops-nix.nixosModules.sops
-            home-manager.nixosModules.home-manager
-            (
-              { pkgs, ... }:
-              {
-                nixpkgs.overlays = [
-                  inputs.rust-overlay.overlays.default
-                  appsOverlay
-                ];
-                home-manager = {
-                  useGlobalPkgs = true;
-                  useUserPackages = true;
-                  backupCommand = "${pkgs.python3}/bin/python3 ${./scripts/backup-home-file.py}";
-                  extraSpecialArgs = { inherit inputs; };
-                  users.dhilipsiva = import ./home/dhilipsiva;
-                };
-              }
-            )
-          ];
+          modules = hostModules hostModule;
         };
     in
     {
@@ -253,6 +264,15 @@
 
       checks.${system} = {
         ollama-on-demand = import ./tests/ollama-on-demand.nix { inherit pkgs; };
+
+        # The real desktop configuration boots, decrypts fixture secrets through
+        # sops-nix and userborn, accepts a console login and starts the Hyprland
+        # session. The only hardware-specific overrides are the GPU device and
+        # the UPS, so a session-environment mistake is caught before staging.
+        desktop-login = import ./tests/desktop-login.nix {
+          inherit pkgs inputs;
+          hostModules = hostModules ./hosts/desktop;
+        };
 
         # Each host's storage, power, graphics and application-preservation
         # policy, pinned so a shared-module change cannot silently alter them.
