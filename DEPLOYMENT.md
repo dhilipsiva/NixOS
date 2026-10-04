@@ -11,10 +11,16 @@ confirmed the scaling; the post-boot checks in section 2 still apply to it.
 The monitor moved from HDMI to DisplayPort on 2026-10-04. The checkout now
 targets `DP-1` at 3840x2160@240 with 10-bit colour, adaptive sync in fullscreen
 and scale 1.5, removes the HDMI FRL kernel parameters, lets fullscreen games scan
-out directly, and restricts the compositor to the NVIDIA card by PCI path so
-hardware cursors work. The same mode, depth and scale were applied live with
-`hyprctl eval` and confirmed working before the change was committed. Staging
-needs the owner's sudo password in their own terminal:
+out directly, and restricts the compositor to the NVIDIA card through the udev
+alias `/dev/dri/desktop-nvidia` so hardware cursors work. The same mode, depth
+and scale were applied live with `hyprctl eval` and confirmed before committing.
+
+Generation 16, the first build of this policy, looped back to the greeter after
+login: its `AQ_DRM_DEVICES` used the by-path device name, whose colons aquamarine
+treats as list separators, so Hyprland found no GPU and aborted (crash reports in
+`~/.cache/hyprland/`). The owner booted generation 15 from the menu. The udev
+alias replaces the by-path name; staging the fixed revision needs the owner's
+sudo password in their own terminal:
 
 ```bash
 scripts/nixosctl stage --host desktop && systemctl reboot

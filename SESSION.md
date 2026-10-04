@@ -23,7 +23,8 @@ session needs.
   NVIDIA open module, Samsung Odyssey G81SF 4K over HDMI-A-1, Qualcomm WCN7850
   Wi-Fi (`wlp8s0`, recovered after a motherboard power drain), CyberPower UPS.
 - Display: DisplayPort (DP-1) since 2026-10-04 at 3840x2160@240, 10-bit, VRR
-  in fullscreen, compositor scale 1.5, NVIDIA-only DRM device. The HDMI FRL
+  in fullscreen, compositor scale 1.5, NVIDIA-only DRM device through the
+  colon-free udev alias `/dev/dri/desktop-nvidia`. The HDMI FRL
   workaround is gone; HDR is an untested future change.
 - Boot: Lanzaboote-signed UKIs with the owner's local certificate appended to
   the firmware db; all factory PK/KEK/db/dbx entries are preserved and the

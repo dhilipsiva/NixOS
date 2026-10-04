@@ -30,10 +30,15 @@
     # Fullscreen games may scan out directly, skipping the compositor pass.
     config.render.direct_scanout = 2;
   };
-  # The compositor uses only the GPU wired to the panel. Addressing it by PCI
-  # path keeps the choice stable across card numbering, and a single DRM device
-  # lets Hyprland use hardware cursors instead of software ones.
-  environment.sessionVariables.AQ_DRM_DEVICES = "/dev/dri/by-path/pci-0000:01:00.0-card";
+  # The compositor uses only the GPU wired to the panel, so Hyprland can use
+  # hardware cursors instead of software ones. AQ_DRM_DEVICES is a colon-separated
+  # list, which rules out the by-path names (they contain colons; generation 16
+  # aborted on that), so udev publishes a colon-free alias for the NVIDIA card
+  # by PCI address.
+  services.udev.extraRules = ''
+    KERNEL=="card*", KERNELS=="0000:01:00.0", SUBSYSTEM=="drm", SUBSYSTEMS=="pci", SYMLINK+="dri/desktop-nvidia"
+  '';
+  environment.sessionVariables.AQ_DRM_DEVICES = "/dev/dri/desktop-nvidia";
   # Legible text console and tuigreet login screen at 3840x2160.
   console = {
     font = "${pkgs.terminus_font}/share/consolefonts/ter-132n.psf.gz";

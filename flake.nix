@@ -288,9 +288,7 @@
             &&
               thinkpad.environment.sessionVariables.AQ_DRM_DEVICES
               == "/dev/dri/thinkpad-intel:/dev/dri/thinkpad-nvidia"
-            &&
-              desktop.config.environment.sessionVariables.AQ_DRM_DEVICES
-              == "/dev/dri/by-path/pci-0000:01:00.0-card"
+            && desktop.config.environment.sessionVariables.AQ_DRM_DEVICES == "/dev/dri/desktop-nvidia"
             &&
               thinkpad.home-manager.users.dhilipsiva.wayland.windowManager.hyprland.settings.monitor == [
                 {
