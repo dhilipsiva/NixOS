@@ -1,4 +1,9 @@
-{ config, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 {
   boot.kernelPackages = pkgs.linuxPackagesFor (import ../../pkgs/kernel.nix { inherit pkgs; });
@@ -8,6 +13,14 @@
     KERNEL=="card*", KERNELS=="0000:01:00.0", SUBSYSTEM=="drm", SUBSYSTEMS=="pci", SYMLINK+="dri/thinkpad-nvidia"
   '';
   environment.sessionVariables.AQ_DRM_DEVICES = "/dev/dri/thinkpad-intel:/dev/dri/thinkpad-nvidia";
+  home-manager.users.dhilipsiva.wayland.windowManager.hyprland.settings.monitor = lib.mkForce [
+    {
+      output = "";
+      mode = "preferred";
+      position = "auto";
+      scale = 1;
+    }
+  ];
   hardware.graphics = {
     enable = true;
     enable32Bit = true;

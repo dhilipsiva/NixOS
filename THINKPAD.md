@@ -34,6 +34,11 @@ Intel desktop graphics and NVIDIA PRIME offload. The production NVIDIA driver is
 built against the selected stable kernel. Desktop HDMI, AMD performance and
 no-sleep settings are not imported. Builds use one job / four cores.
 
+The ThinkPad explicitly uses compositor scale **1 (100%, unscaled)** for all
+outputs at their preferred resolution, replacing the shared automatic scaling
+rule. This is declared only in `hosts/thinkpad/graphics.nix`; the desktop keeps
+its independent 1.5 scale. Host-policy checks guard both settings.
+
 Host-specific udev aliases select Intel first in `AQ_DRM_DEVICES`, retaining
 NVIDIA for its external display connectors. This follows the
 [Hyprland multi-GPU configuration](https://wiki.hypr.land/configuring/extra/multi-gpu/)
@@ -154,8 +159,8 @@ profile (`home/dhilipsiva/packages.nix`), Zellij through its module with fish an
 upstream keybindings, hyprpolkitagent, a Bibata cursor and the dark colour-scheme
 preference. The desktop-only parts (systemd initrd, compositor scale 1.5, Terminus
 console font, systemd-oomd user slices, no-sleep policy, HDMI workaround) live in
-`hosts/desktop/`. Set this laptop's own compositor `scale` and `console.font` in
-`hosts/thinkpad/` if its 1920x1080 panel needs them; the shared Alacritty and
-Waybar sizes are logical sizes meant to be scaled by the compositor. Run `nix fmt`
+`hosts/desktop/`. The ThinkPad's compositor scale is explicitly 1 in
+`hosts/thinkpad/graphics.nix`; its console font is not enlarged. Shared Alacritty
+and Waybar sizes remain logical sizes. Run `nix fmt`
 before publishing: the `formatting` flake check rejects unformatted Nix files,
 unused bindings and ruff findings.
