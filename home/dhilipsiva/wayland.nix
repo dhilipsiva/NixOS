@@ -126,6 +126,7 @@ in
         format-ethernet = "{ifname}";
         format-disconnected = "Offline";
         tooltip-format = "{ifname}: {ipaddr}";
+        on-click = "${pkgs.networkmanagerapplet}/bin/nm-connection-editor";
       };
       pulseaudio = { format = "Vol {volume}%"; format-muted = "Muted"; };
       tray.spacing = 8;

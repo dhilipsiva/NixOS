@@ -12,11 +12,11 @@ exists today. Operational procedures are in [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ## Desktop hardware and tuning
 
-Detected on 2026-10-03:
+Detected on 2026-10-03; CPU and Wi-Fi recovery verified on 2026-10-04:
 
 | Component | Hardware |
 | --- | --- |
-| CPU | AMD Ryzen 9 9950X3D |
+| CPU | AMD Ryzen 9 9950X3D; all 16 cores / 32 threads online |
 | Motherboard | MSI MAG X870E TOMAHAWK WIFI, MS-7E59 |
 | GPU | NVIDIA RTX 5090; AMD integrated GPU also present |
 | Display | Samsung Odyssey G81SF, connected to the RTX 5090 over HDMI |
@@ -47,19 +47,24 @@ NVIDIA 595.104.02 and 8-bit SDR. This deliberately limits refresh/HDR; retest hi
 over a working HDMI or DisplayPort link before removing the workaround. It is
 desktop-only and does not change the GPU's compute configuration.
 
-**Firmware needs attention:** generation 12 still sees only 8 cores / 8 threads on
-this 9950X3D, confirmed in the owner's separate terminal on 2026-10-04, with SMT
-reported unavailable. The system-wide CPU topology and boot log also show eight;
-this is not a Codex process limit. The owner reports X3D Gaming Mode is enabled.
-Disable it and check the core/thread counts after reboot; recovery has not yet
-been verified. [MSI documents that mode's core/SMT changes](https://us.msi.com/blog/how-to-boost-amd-ryzen-9-9950x3d-gaming-performance).
-No firmware settings or overclocking were changed by this configuration.
+**Full CPU availability restored:** after the owner's reboot for the BIOS test on
+2026-10-04, generation 12 exposes all 16 cores / 32 threads, CPU lists `0-31`, SMT
+enabled and 128 MiB of L3 cache across two instances. The previous boot exposed
+only 8 cores / 8 threads; the owner had reported X3D Gaming Mode enabled.
+The system path and kernel are unchanged, so no Nix or driver change was needed.
+AMD P-State, the performance governor/EPP and frequency boost are active.
+These observations confirm CPU availability, not benchmark performance. The exact
+firmware settings were not read back by the agent.
 
 **Wi-Fi recovered:** on 2026-10-04 the owner drained motherboard power for about a
 minute and the adapter returned. Generation 12 detects it with `ath12k_wifi7_pci`
 and NetworkManager reports `wlp8s0` connected. No Wi-Fi driver change was needed.
-The earlier disappearance and recovery evidence are recorded in
-[SESSION.md](SESSION.md).
+Automatic connection is a separate outstanding issue: the saved profile expects
+a user password agent, which generation 12's Hyprland session lacks. The repo now
+enables `nm-applet --indicator` and its connection editor. Save the existing Wi-Fi
+password locally for all users to connect before login, then verify the next boot
+as described in [DEPLOYMENT.md](DEPLOYMENT.md). Passwords stay outside Git and the
+Nix store. Earlier disappearance and recovery evidence is in [SESSION.md](SESSION.md).
 
 The desktop never suspends or hibernates. After five minutes of inactivity, Hypridle
 locks the session and powers off the displays; keyboard/mouse activity powers them
@@ -189,6 +194,9 @@ the old `misc.vfr`. These are supported
 not measured performance gains. Display mode and NVIDIA tuning stay in the desktop
 host; cursor handling uses Hyprland's defaults.
 The reduced-effects profile is active in generation 12, verified on 2026-10-04.
+The NetworkManager applet and Waybar network-click editor are configured for the
+next staged generation. The applet provides the Wi-Fi password agent for user
+connections and a tray menu; system-stored connections can start before login.
 
 Login uses the text-based **greetd + tuigreet** screen, which starts Hyprland through
 UWSM for session/service lifecycle management. **Fuzzel** provides a native Wayland
@@ -286,10 +294,12 @@ behavior. During editing, `path:$PWD` includes untracked files; final validation
 must use a clean Git checkout with every required file tracked.
 
 **Generation 12 is running** with the HDMI compatibility change and reduced-effects
-profile. Wi-Fi has recovered; the display remains at 4K60/8-bit, Secure Boot is
-enabled and system/user failed-unit lists are empty. Follow
-[DEPLOYMENT.md](DEPLOYMENT.md) for the unresolved CPU core/SMT issue and the remaining
-physical checks before acceptance.
+profile. All 16 CPU cores / 32 threads are online and Wi-Fi has recovered. The
+running system matches the owner's staged receipt, generation 12 is the boot
+default, the display remains at 4K60/8-bit, Secure Boot is enabled and system/user
+failed-unit lists are empty. The owner completed acceptance/cleanup, freeing
+36.4 GiB with recovery roots retained. Follow [DEPLOYMENT.md](DEPLOYMENT.md) for
+the remaining Wi-Fi password persistence and applet rollout.
 The protected recovery entry retains the original generation 2. Firmware preparation
 and boot evidence are recorded in [SESSION.md](SESSION.md).
 The desktop's encrypted credentials are enrolled with the owner and
@@ -299,6 +309,9 @@ Cleanup policy is in [CLEANUP.md](CLEANUP.md). Session resumption is in
 [SESSION.md](SESSION.md).
 
 ## Adding the ThinkPad
+
+The ThinkPad already has NixOS installed. Follow [THINKPAD.md](THINKPAD.md) for
+the laptop-session handoff and migration of that existing installation.
 
 Clone this repository into exactly the same path and own it as dhilipsiva. Capture
 `nixos-generate-config --show-hardware-config`, DMI board identity, disks/mounts,

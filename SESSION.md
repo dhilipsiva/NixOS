@@ -23,14 +23,20 @@ implementation was published as `82024bb`. Private keys remain outside Git. Use 
 --branch` and `git log -1` to inspect the current publication state.
 
 Current boot, checked 2026-10-04: **generation 12**, boot ID
-`68ba0861-11a6-4d43-b0b0-68bb2855f52f`, with system path
+`38a4c9bd-e126-43bc-8058-29fc878d2f19` (started 13:28:49 Asia/Colombo), with system path
 `/nix/store/r5ycb7kq8nhd7hgzh2h9k9g3yzzb15gc-nixos-system-dhilipsiva-desktop-26.05.20261002.774debe`.
 Both the selected EFI entry and system profile identify generation 12. Hyprland
 reports animations=false, shadows=false, rounding=0 and debug.vfr=true. HDMI-A-1
 remains at 3840x2160/60 Hz, XRGB8888; Secure Boot is enabled and both system/user
-failed-unit lists are empty. The exact staged Git revision still comes from the
-root-only staged receipt; the system path alone does not distinguish documentation
-commits that build the same configuration.
+failed-unit lists are empty. The owner's supplied `staged.json` records revision
+`d4b1b8a3b66183d27dc767d80f0c60e6618bf96d` and exactly matches the running system
+and system profile. Their `bootctl status` also confirms generation 12 is the
+default boot entry. Documentation-only commits through `de0f07e` build that same
+configuration; the new applet change requires another staged generation.
+The owner's 13:35:18 GPU snapshot reports NVIDIA 595.104.02, P8, 40 W, 1% total
+GPU utilization and 418 MiB allocated, with Hyprland using 116 MiB (about 0.36%
+of total VRAM). This is an idle snapshot, not a compute benchmark. Sudo worked
+in the owner's terminal; it does not grant the agent reusable authentication.
 
 The owner reports Wi-Fi recovered after draining motherboard power for about one
 minute. Current enumeration confirms `17cb:1107` at `0000:08:00.0`, bound to
@@ -38,25 +44,51 @@ minute. Current enumeration confirms `17cb:1107` at `0000:08:00.0`, bound to
 is no longer listed. No Wi-Fi driver change was applied. The cold power cycle
 restored detection; the underlying reason for the stuck state remains unproven.
 
-CPU availability is still unresolved: lscpu reports eight cores and one thread
-per core; possible/present/online CPU lists are all `0-7`, SMT active=0 and
-control=notsupported. The boot log activates only eight processors. The owner's
-independent terminal reproduces those values, confirming this is not a Codex
-process-affinity restriction. AMD specifies 16 cores and 32 threads for this model;
-that describes its capability, not the currently enabled configuration. The owner
-subsequently confirmed X3D Gaming Mode was enabled before boot. Its documented
-core/SMT changes make it the leading explanation; the next test is to disable it
-and recheck after boot. Individual CCD/core/SMT settings have not been inspected.
-P-State is active, governor/EPP are performance, boost=1, and the Nix configuration
-and kernel command line have no core-count/SMT limit. See DEPLOYMENT.md for the
-physical BIOS test. No firmware changes or automatic reboot were performed.
+The owner subsequently reported having to enter the Wi-Fi password and connect
+manually on every boot. The sole saved Wi-Fi profile
+`9fe1ee6e-79f3-4b1c-b14c-70a2837dcba4` initially had autoconnect=yes,
+permissions=user:dhilipsiva and psk-flags=1 (agent-owned). NetworkManager logs
+`no secrets: No agents were available for this request`. GNOME Keyring is running
+through greetd's PAM integration, but no NetworkManager secret agent is configured
+in generation 12. A read-only in-memory check found no PSK retrievable from
+NetworkManager; no password was printed or written to a temporary file.
+
+The repository now enables the shared NixOS `programs.nm-applet` service with
+its Waybar-compatible indicator and adds a network-click editor shortcut. The
+agent opened `nm-connection-editor` for the existing desktop profile; the owner
+must enter the password locally and choose system storage/all users for connection
+before login. No network name or password is declared in Nix. Saving the profile,
+activating the applet and verifying automatic connection after reboot remain
+pending. After the owner's first edit, permissions are empty (all users) and
+autoconnect remains enabled, but psk-flags is still 1 and no system PSK is
+retrievable. The owner was asked to select **Store the password for all users**
+inside the password field and save again. The current Wi-Fi connection was not
+intentionally interrupted.
+
+CPU availability is now restored. On boot `38a4c9bd-e126-43bc-8058-29fc878d2f19`,
+lscpu reports **16 cores, two threads per core and 32 logical CPUs**. The
+possible/present/online lists are all `0-31`, SMT active=1 and control=on. The
+kernel log confirms 32 processors activated; this process also has affinity to
+all 32. L2 is 16 MiB across 16 instances and L3 is 128 MiB across two instances.
+All 32 frequency policies use `amd-pstate-epp`, governor/EPP `performance`, and
+boost remains enabled. The system path, Linux 7.2.9 and microcode `0xb404035`
+are unchanged from the preceding eight-CPU boot. No Nix or driver change was
+needed. Wi-Fi, Secure Boot and the working display survived the reboot.
+
+Previously, boot `68ba0861-11a6-4d43-b0b0-68bb2855f52f` exposed eight cores and
+one thread per core, possible/present/online `0-7`, SMT active=0 and
+control=notsupported. The owner's independent terminal reproduced this, ruling
+out a Codex process-affinity restriction. The owner reported X3D Gaming Mode was
+enabled, and was advised to disable that preset and reboot the same generation.
+The subsequent boot restored full topology. The agent has not read back the
+exact firmware settings and did not modify firmware or reboot automatically.
 
 Cross-check: generation 2 boot `2d659db92e814782b151ab2e622623b7` with Linux
 6.18.1 also reports eight CPUs/eight processors activated, predating the new
 configuration. The current `/proc/config.gz` has CONFIG_NR_CPUS=384,
 CONFIG_SMP=y, CONFIG_HOTPLUG_CPU=y, CONFIG_SCHED_SMT=y and CONFIG_SCHED_MC=y.
-The kernel build therefore has CPU capacity and SMT support beyond the observed
-eight logical CPUs.
+These kernel options already supported more than the eight logical CPUs exposed
+before recovery.
 
 The owner shared advice about CPPC, X3D scheduling tools and `processor.max_cstate`.
 Read-only checks already find `amd_pstate` active, preferred-core support enabled,
@@ -64,7 +96,7 @@ and `amd_3d_vcache` loaded/bound to `AMDI0101:00`, with its `amd_x3d_mode` repor
 `frequency`. The module name differs from the platform driver's `amd_x3d_vcache`.
 These are scheduling/performance controls; their presence does not prove both
 CCDs are exposed. No C-state cap, affinity restriction or extra scheduler was
-added. First test X3D Gaming Mode disabled with the same NixOS generation.
+added; full CPU availability subsequently returned with the same NixOS generation.
 
 The owner previously booted **generation 11**, revision
 `0258f5db7c92b37f933841c4700a16f7b7ccb3e5`,
@@ -287,10 +319,20 @@ startup log registers NVIDIA as the primary DRM device and AMD as secondary;
 The compositor renders on NVIDIA. No cursor override or GPU-routing change was
 introduced during cosmetic tuning.
 
-Next: disable X3D Gaming Mode, recheck CPU core/SMT availability and complete the
-remaining physical checks in [DEPLOYMENT.md](DEPLOYMENT.md). Acceptance and cleanup remain pending until all
-remaining physical checks pass. Never clear firmware keys, format a disk, switch
-the live system, or reboot automatically.
+The owner reports completing the final DEPLOYMENT.md acceptance/cleanup step and
+supplied its successful output: 4,077 store paths deleted, 36.4 GiB freed,
+30-day generation retention and recovery roots retained. The cleanup helper calls
+`require_acceptance()` first, so this success establishes that the acceptance gate
+and recovery-root check passed at cleanup time. The root-only accepted receipt
+was not read independently. Earlier observations of inactive timers' service
+conditions predate cleanup and do not establish the current gate state.
+
+Next: finish Wi-Fi password persistence and the applet rollout in
+[DEPLOYMENT.md](DEPLOYMENT.md). CPU recovery, running/staged comparison and initial
+cleanup are complete. The owner has accepted the deployment; individual physical
+checks such as real Ollama inference, screen-off timing, UPS and conferencing
+were not independently observed by the agent. Never clear firmware keys, format
+a disk, switch the live system, or reboot automatically.
 
 The reported `bash: atuin: command not found` came from the preexisting shell
 history integration. The local Home Manager Bash configuration initializes old
@@ -319,5 +361,9 @@ at 22:30. Models, project caches, personal files and Windows data are preserved.
 
 Only the desktop host is configured. Capture the ThinkPad's real hardware,
 filesystems, boot/encryption details and power needs before adding its host.
-The desktop still exposes only eight cores/eight threads; inspect BIOS CCD/SMT
-settings separately after establishing a working baseline.
+The owner confirmed that the ThinkPad already runs NixOS and requested a handoff
+for continuing from that machine at this same repository path. Read
+[THINKPAD.md](THINKPAD.md) in the laptop session; preserve its existing installation
+and create its own host before staging.
+The desktop now exposes all 16 cores/32 threads. RAM speed/channel configuration
+and sustained workload performance have not been established by these checks.

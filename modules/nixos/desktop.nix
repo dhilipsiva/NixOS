@@ -37,6 +37,18 @@
   security.polkit.enable = true;
   security.pam.services.greetd.enableGnomeKeyring = true;
   services.gnome.gnome-keyring.enable = true;
+  # Hyprland needs a NetworkManager secret agent for saved user connections.
+  # The indicator uses Waybar's tray; the editor also supports system-stored
+  # Wi-Fi passwords for autoconnect before login. Credentials stay local.
+  programs.nm-applet.enable = true;
+  # UWSM also runs XDG autostart entries. Let the NixOS systemd user service own
+  # this applet, avoiding a second instance without Waybar's indicator mode.
+  environment.etc."xdg/autostart/nm-applet.desktop".text = ''
+    [Desktop Entry]
+    Type=Application
+    Name=NetworkManager Applet
+    Hidden=true
+  '';
   services.gvfs.enable = true;
   services.udisks2.enable = true;
 }

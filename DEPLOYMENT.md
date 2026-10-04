@@ -1,113 +1,84 @@
 # Remaining desktop deployment
 
 Run commands from `/home/dhilipsiva/projects/dhilipsiva/NixOS` as dhilipsiva.
-Generation **12** is running, confirmed on 2026-10-04. Its system path is
+Generation **12** is running, confirmed on 2026-10-04. Its system path matches
+both the system profile and the owner's staged receipt for `d4b1b8a`:
 `/nix/store/r5ycb7kq8nhd7hgzh2h9k9g3yzzb15gc-nixos-system-dhilipsiva-desktop-26.05.20261002.774debe`.
-The reduced-effects profile is active: animations and shadows are disabled,
-rounding is zero and `debug.vfr` is enabled. HDMI-A-1 retains 3840×2160/60 Hz,
-8-bit SDR. Secure Boot is enabled and system/user failed-unit lists are empty.
+Generation 12 is also the default boot entry. All **16 CPU cores / 32 threads**
+are online, with SMT and frequency boost enabled. The reduced-effects profile is
+active; HDMI-A-1 remains at 3840×2160/60 Hz, 8-bit SDR. NVIDIA is working, Secure
+Boot is enabled and system/user failed-unit lists are empty.
 
-The owner restored Wi-Fi by draining motherboard power for about one minute.
-The Qualcomm WCN7850 is detected again and `wlp8s0` is connected using
-`ath12k_wifi7_pci`. Wi-Fi recovery and staging the reduced-effects profile are
-complete. Evidence and earlier recovery history are in [SESSION.md](SESSION.md).
+The owner completed acceptance/cleanup: the successful cleanup output reports
+4,077 store paths removed and **36.4 GiB freed**, retaining the recovery roots.
+The cleanup helper checks the acceptance gate before collecting. Do not repeat
+initial enrollment, CPU troubleshooting or first-deployment cleanup. Detailed
+history and the limits of independent physical verification are in
+[SESSION.md](SESSION.md).
 
-## 1. Restore full CPU availability
+The Qualcomm Wi-Fi adapter is detected again after the owner's motherboard power
+drain. **Automatic connection still needs fixing:** the existing profile has
+autoconnect enabled but an agent-owned password, and this boot logged `No agents
+were available for this request`. The repository now adds the NetworkManager
+applet to Hyprland and makes Waybar's network indicator open the connection editor;
+those changes are not yet active in generation 12.
 
-The CPU issue remains unresolved. Both the agent and the owner's separate
-terminal report eight cores and eight logical CPUs, with SMT `notsupported`.
-The boot log activated only eight processors and the system-wide `possible`
-CPU list is `0-7`. This is not a per-process CPU-affinity limit. AMD specifies
-[16 cores and 32 threads for the 9950X3D](https://shop-us-en.amd.com/amd-ryzen-9-9950x3d-processor/).
-Those are the expected capabilities, not the currently enabled configuration.
+## 1. Save the existing Wi-Fi password for connection before login
 
-The owner reports **X3D Gaming Mode was enabled before this boot**.
-[MSI documents that this mode changes core and SMT settings](https://us.msi.com/blog/how-to-boost-amd-ryzen-9-9950x3d-gaming-performance),
-making it the leading explanation. Recovery still needs an actual boot with the
-mode disabled. AMD P-State, the performance governor/EPP and frequency boost are
-already active; the Nix configuration and running kernel command line contain no
-core-count limit or SMT-disabling setting.
-
-Generation 2's Linux 6.18.1 boot log also activated only eight CPUs. The current
-kernel has `CONFIG_NR_CPUS=384` and `CONFIG_SCHED_SMT=y`, so it is not built with
-an eight-CPU ceiling or without SMT support.
-
-The X3D optimizer is also already loaded: module `amd_3d_vcache` is bound to
-`AMDI0101:00`, its `amd_x3d_mode` reports `frequency`, and AMD P-State `prefcore`
-reports `enabled`. CPPC/core-affinity tools tune work placement on available cores;
-they cannot expose cores disabled by firmware. Do not add
-`processor.max_cstate=1` for this issue: it limits CPU idle states and does not
-restore cores or SMT. These controls are separate from system suspend.
-
-Save work and enter MSI BIOS manually with **Delete** during boot. Disable
-**X3D Gaming Mode**, save that change with **F10**, and boot generation 12 again.
-Use **F7** for Advanced mode and **Ctrl+F** to search if needed. Preserve Secure
-Boot keys and existing boot/storage settings; do not reset CMOS or load firmware
-defaults. No Nix rebuild is needed for this BIOS test.
-
-After login, verify:
+The agent opened the editor for the existing desktop connection. To reopen it
+before activating the new configuration:
 
 ```bash
-LC_ALL=C lscpu | rg 'CPU\(s\)|Core\(s\)|Thread\(s\)|Socket\(s\)'
-cat /sys/devices/system/cpu/possible
-cat /sys/devices/system/cpu/online
-cat /sys/devices/system/cpu/smt/active
-cat /sys/devices/system/cpu/smt/control
+nix shell .#nixosConfigurations.desktop.pkgs.networkmanagerapplet --command \
+  nm-connection-editor --edit=9fe1ee6e-79f3-4b1c-b14c-70a2837dcba4
 ```
 
-Expected after recovery: **32 CPUs, 16 cores per socket, 2 threads per core**,
-CPU lists `0-31`, SMT active `1` and control `on`. If the counts remain limited,
-record the BIOS settings for **CCD0 Core Control / CCD1 Core Control** (Auto/all
-cores on both CCDs) and **SMT Control** (Enabled, or Auto where that enables it).
-The [MSI AMD 800 BIOS guide](https://download.msi.com/archive/mnu_exe/mb/AMDAM5800BIOS_English.pdf)
-lists these controls on page 38; exact menus/options vary by BIOS version. Their
-current values have not been inspected. A Nix build alone cannot confirm that
-firmware has exposed the missing cores.
+Autoconnect and **All users may connect to this network** are already enabled.
+The remaining step is in **Wi-Fi Security**: enter the Wi-Fi password and use the
+storage icon inside the password field to select **Store the password for all
+users**, then save. The latest check still found password flags `1 (agent-owned)`.
 
-## 2. Finish the remaining physical checks
+The password stays in NetworkManager's local, root-owned connection file, outside
+Git and the Nix store. Do not paste it into chat or Nix configuration. Saving the
+profile does not require taking down the current connection.
 
-After login, open Alacritty with **Super+Enter**:
+Check only non-secret metadata:
 
 ```bash
-scripts/nixosctl status
-readlink -f /run/current-system
-sudo cat /var/lib/nixos-deployment/staged.json
-sudo bootctl status
-nvidia-smi
-hyprctl monitors
+nmcli -f connection.autoconnect,connection.permissions,802-11-wireless-security.psk-flags \
+  connection show uuid 9fe1ee6e-79f3-4b1c-b14c-70a2837dcba4
+```
+
+Expected: autoconnect `yes`, empty permissions (`--`), and password flags
+`0 (none)`, meaning NetworkManager stores the password. The password must actually
+be saved too; flags alone cannot prove it. See the
+[NetworkManager secret flags reference](https://networkmanager.dev/docs/api/latest/secrets-flags.html).
+
+## 2. Activate the published desktop network integration
+
+After the repository checks and publication succeed:
+
+```bash
+scripts/nixosctl stage --host desktop
+```
+
+Reboot manually when ready. The new generation should run `nm-applet --indicator`
+with the Hyprland session, using Waybar's tray. Clicking Waybar's network text
+opens the editor. Verify after boot:
+
+```bash
+nmcli -t -f DEVICE,TYPE,STATE device status
+systemctl --user status nm-applet.service
 systemctl --failed
 systemctl --user --failed
 ```
 
-The running system must match the `system` path in the staged receipt. Recheck
-Secure Boot, display and Wi-Fi after any CPU firmware changes. Higher refresh/HDR
-is a separate future test; the working HDMI FRL workaround stays enabled.
+Confirm Wi-Fi connected without entering its password or manually activating the
+connection. That startup test remains necessary even after the profile is saved.
+The existing update/GC acceptance gate has passed; no repeat cleanup is needed.
 
-- Finish checking sudo, Atuin history, zoxide/ripgrep, audio and the UPS.
-- Confirm the screen locks/powers off after five minutes while the machine keeps
-  running without suspend or hibernation.
-- Check read-only Windows file copying and Secure Boot status/signatures.
-- Exercise Ollama with a real model: its backend was confirmed idle before use;
-  verify request startup, model unloading after a default request and stopping
-  after idle connections close.
-- Check Slack and Teams sign-in, microphone, camera and screen sharing.
-
-If recovery is needed, select **NixOS (protected pre-migration recovery)**, which
-contains the original generation 2 in `/EFI/nixos-recovery/pre-migration.efi`.
-The separate legacy generation 1/2 entries have missing files and are not usable
-fallbacks. Keep the recovery archive, owner age identity and recovery media.
-
-## 3. Accept the deployment and run cleanup
-
-Only after the physical checks pass:
-
-```bash
-scripts/nixosctl accept --host desktop --physical-checks-passed
-scripts/nixosctl cleanup
-```
-
-Acceptance verifies that the running generation matches the staged receipt and
-that credential/signature checks still pass. It enables the configured update,
-GC and store-optimisation jobs. Cleanup retains the protected recovery roots and
-uses the 30-day generation policy; personal files, models and Windows data remain
-outside its scope.
+For recovery, select **NixOS (protected pre-migration recovery)**. The legacy
+separate generation 1/2 entries have missing files; use the protected entry.
+Keep the encrypted recovery archive, owner age identity and recovery media.
+Higher refresh/HDR remains a separate future display test; retain the working
+HDMI workaround until then.

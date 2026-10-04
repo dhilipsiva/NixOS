@@ -3,6 +3,7 @@
 This repository is the single source of truth at
 `/home/dhilipsiva/projects/dhilipsiva/NixOS` on both machines. The installed desktop
 has its own host module. Add the ThinkPad only after capturing its actual hardware.
+The ThinkPad already runs NixOS; [THINKPAD.md](THINKPAD.md) is its migration handoff.
 
 - Latest released stable NixOS and matching Home Manager, with stable application
   channels recorded in `pkgs/stable-channels.json`. Applications from nixpkgs-apps
@@ -15,6 +16,8 @@ has its own host module. Add the ThinkPad only after capturing its actual hardwa
   changes to the Windows disk. Windows data is mounted read-only for copying.
 - Hyprland with UWSM, greetd/tuigreet, Fuzzel, Alacritty, fish, Atuin and zoxide.
   Keep native Hyprland Lua, matching portals and Xwayland compatibility.
+  NetworkManager's applet supplies the desktop password agent. Keep Wi-Fi
+  credentials in the host's local credential store, outside Git and Nix sources.
 - Desktop displays lock/off after 300 seconds; no suspend/hibernate. Laptop
   power policy must be separate. Ollama is socket-started and unloads models
   after requests; physical GPU behavior still requires a runtime check.
@@ -40,7 +43,9 @@ Run `nix flake check .`, `nix build --no-link
 verification in a clean checkout before publishing. `path:$PWD` may be used during
 editing to include new files; final Git-flake validation must also pass.
 
-The desktop currently exposes only 8 cores/8 threads despite identifying as a
-9950X3D. Inspect BIOS CCD/core/SMT settings separately; do not claim software
-restored hidden cores. Build success cannot establish physical GPU, display,
-login, Windows recovery or firmware behavior. See DEPLOYMENT.md for acceptance.
+The desktop's 9950X3D now exposes all 16 cores/32 threads with SMT enabled,
+verified after the owner's reboot on 2026-10-04 using the same generation 12.
+No Nix change was needed to restore CPU availability. Build success cannot
+establish physical GPU, display, login, Windows recovery or firmware behavior.
+Initial acceptance/cleanup is complete. See DEPLOYMENT.md for the remaining
+Wi-Fi persistence and applet rollout checks.
