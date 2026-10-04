@@ -128,7 +128,7 @@ def verify_boot_trust():
         raise Error('Secure Boot must be enabled in user mode; do not clear the firmware keys.')
     record_path = STATE / 'boot-prepared.json'
     if not record_path.exists():
-        raise Error('Run prepare-boot first, check Windows recovery, then append the public db certificate in firmware.')
+        raise Error('Run prepare-boot first, record Windows status, then append the public db certificate in firmware.')
     record = json.loads(record_path.read_text())
     der = cert_der()
     if hashlib.sha256(der).hexdigest() != record['certificateSHA256']:
@@ -210,8 +210,16 @@ def validate_credentials(plain, password_hash, cfg):
             raise Error('UPS secret has not been prepared.')
 
 
+def verify_independent_host_recipient(repo, host, recipient):
+    for other in (repo.path / 'secrets').glob('*.yaml'):
+        if other.stem != host and recipient in other.read_text():
+            raise Error(f'Host encryption identity is already used by {other.stem}; create an independent host key.')
+
+
 def verify_credentials(repo, host, source=None, cfg=None):
     source = (source or repo.path) / 'secrets' / (host + '.yaml')
+    if not source.is_file():
+        raise Error(f'Missing {host} credentials. Run prepare-credentials on the installed host.')
     ciphertext = source.read_text()
     if PLACEHOLDER in ciphertext or VM_RECIPIENT in ciphertext:
         raise Error('Host secrets still contain a placeholder/disposable recipient. Run prepare-credentials.')
@@ -239,6 +247,7 @@ def prepare_credentials(repo, host, cfg):
     host_recipient = run(['ssh-to-age'], capture=True, input=public + '\n')
     if owner_recipient == host_recipient or VM_RECIPIENT in (owner_recipient, host_recipient):
         raise Error('Owner, host and VM identities must be independent.')
+    verify_independent_host_recipient(repo, host, host_recipient)
     source = repo.path / 'secrets' / (host + '.yaml')
     marker = STATE / (host + '-credentials.json')
     if marker.exists():
@@ -311,8 +320,10 @@ def prepare_boot(cfg, windows_status=None):
         })
         print('Systemd-boot recovery is protected and the ESP is backed up. Firmware trust is unchanged.')
         return
-    if windows_status not in ('unencrypted', 'recovery-key-backed-up'):
-        raise Error('Signed boot preparation requires --windows-status after checking Windows recovery.')
+    if windows_status not in ('absent', 'unencrypted', 'recovery-key-backed-up'):
+        raise Error('Signed boot preparation requires --windows-status after checking installed disks and Windows recovery.')
+    if windows_status == 'absent' and cfg.get('windowsRequired', False):
+        raise Error('This host configures Windows storage; absent cannot be recorded.')
     if var('SecureBoot') != b'\x01' or var('SetupMode') != b'\x00':
         raise Error('Keep Secure Boot enabled and existing firmware keys installed.')
     backup = STATE / ('boot-backup-' + datetime.now().strftime('%Y%m%dT%H%M%S'))
@@ -343,7 +354,8 @@ def prepare_boot(cfg, windows_status=None):
     })
     print(f'ESP, trust variables and signature inventory saved in {backup}')
     print(f'Windows readiness recorded: {windows_status}.')
-    print('In MSI firmware: Authorized Signatures (db) -> Append Key -> Linux ESP /nixos-db.cer.')
+    print('In this host\'s firmware, append /nixos-db.cer from the Linux ESP to Authorized Signatures (db).')
+    print('If firmware cannot append a certificate while retaining existing trust, stop and keep the working boot path.')
     print('Keep PK, KEK, Microsoft/OEM db and dbx entries. Never clear or replace them.')
     print('No firmware keys were enrolled and no boot generation was staged.')
 
@@ -456,9 +468,10 @@ def verify_flatpak(cfg):
         return
     for app in apps:
         run(['flatpak', 'info', '--user', '--show-ref', app], owner=cfg['owner'], capture=True)
-    driver = 'org.freedesktop.Platform.GL.nvidia-' + cfg['nvidiaVersion'].replace('.', '-')
-    run(['flatpak', 'info', '--user', '--show-ref', driver], owner=cfg['owner'], capture=True)
-    print('Preserved user Flatpak applications and matching NVIDIA graphics runtime are installed.')
+    if cfg.get('nvidiaVersion'):
+        driver = 'org.freedesktop.Platform.GL.nvidia-' + cfg['nvidiaVersion'].replace('.', '-')
+        run(['flatpak', 'info', '--user', '--show-ref', driver], owner=cfg['owner'], capture=True)
+    print('Required user Flatpak applications are installed.')
 
 
 def stage(repo, host, cfg):

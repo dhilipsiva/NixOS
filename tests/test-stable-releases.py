@@ -10,6 +10,27 @@ spec.loader.exec_module(updater)
 
 
 class StableReleaseTests(unittest.TestCase):
+    def test_compiler_tracks_exact_stable_driver_bundle(self):
+        release = {'tag_name': 'v1.38.0', 'draft': False, 'prerelease': False,
+                   'assets': [{'name': 'linux-npu-driver-v1.38.0.build-ubuntu2404.tar.gz',
+                               'digest': 'sha256:' + 'a' * 64, 'browser_download_url': 'https://example.invalid/bundle'}]}
+        self.assertEqual(updater.npu_compiler_pin(release)['version'], '1.38.0')
+        for change in ({'prerelease': True}, {'assets': []}, {'tag_name': 'v1.39.0'}):
+            with self.assertRaises(ValueError):
+                updater.npu_compiler_pin(dict(release, **change))
+
+    def test_openvino_requires_stable_matching_non_yanked_wheel(self):
+        wheel = {'filename': 'openvino-2026.4.1-build-cp313-cp313-manylinux_2_28_x86_64.whl',
+                 'digests': {'sha256': 'a' * 64}, 'url': 'https://example.invalid/wheel'}
+        metadata = {'info': {'version': '2026.4.1'}, 'urls': [wheel]}
+        self.assertEqual(updater.openvino_wheel_pin(metadata, '2026.4.1')['hash'], 'sha256:' + 'a' * 64)
+        for version in ('2026.4.0', '2026.4.1rc1'):
+            with self.assertRaises(ValueError):
+                updater.openvino_wheel_pin(metadata, version)
+        for changes in ({'yanked': True}, {'digests': {'sha256': 'bad'}}, {'filename': 'wrong-platform.whl'}):
+            with self.assertRaises(ValueError):
+                updater.openvino_wheel_pin(dict(metadata, urls=[dict(wheel, **changes)]), '2026.4.1')
+
     def test_nvidia_requires_recommended_production_release(self):
         info = {"IsBeta": "0", "IsFeaturePreview": "0", "IsRecommended": "1", "DisplayVersion": "595.104.02"}
 

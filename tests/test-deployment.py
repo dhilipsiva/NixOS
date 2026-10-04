@@ -110,6 +110,24 @@ class RecoveryTests(unittest.TestCase):
 
 
 class CredentialTests(unittest.TestCase):
+    def test_copied_host_identity_is_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'secrets').mkdir()
+            (root / 'secrets/thinkpad.yaml').write_text('recipient: copied-host-identity')
+            repo = SimpleNamespace(path=root)
+            with self.assertRaisesRegex(Error, 'already used by thinkpad'):
+                deployment.verify_independent_host_recipient(repo, 'yoga', 'copied-host-identity')
+            deployment.verify_independent_host_recipient(repo, 'yoga', 'unique-yoga-identity')
+
+    def test_unenrolled_yoga_stops_before_decryption(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = SimpleNamespace(path=Path(directory), owner='fixture')
+            with patch.object(deployment, 'decrypt_host') as decrypt:
+                with self.assertRaisesRegex(Error, 'Missing yoga credentials'):
+                    deployment.verify_credentials(repo, 'yoga')
+                decrypt.assert_not_called()
+
     def test_laptop_needs_only_its_password(self):
         payload = {'dhilipsiva': {'hashedPassword': 'fixture'}}
         cfg = {'requiredSecrets': ['dhilipsiva/hashedPassword']}
@@ -120,6 +138,43 @@ class CredentialTests(unittest.TestCase):
             deployment.validate_credentials(payload, 'fixture', {})
         payload['ups'] = {'monitorPassword': 'fixture' * 8}
         deployment.validate_credentials(payload, 'fixture', {})
+
+
+class FlatpakTests(unittest.TestCase):
+    def test_intel_only_checks_required_user_apps(self):
+        cfg = {'owner': 'fixture', 'flatpakApps': ['org.vinegarhq.Sober'], 'nvidiaVersion': None}
+        with patch.object(deployment, 'run') as run:
+            deployment.verify_flatpak(cfg)
+            run.assert_called_once_with(['flatpak', 'info', '--user', '--show-ref', 'org.vinegarhq.Sober'],
+                                        owner='fixture', capture=True)
+
+    def test_thinkpad_still_requires_matching_nvidia_runtime(self):
+        cfg = {'owner': 'fixture', 'flatpakApps': ['org.vinegarhq.Sober'], 'nvidiaVersion': '595.104.02'}
+        with patch.object(deployment, 'run') as run:
+            deployment.verify_flatpak(cfg)
+            self.assertEqual(run.call_count, 2)
+            self.assertEqual(run.call_args.args[0][-1], 'org.freedesktop.Platform.GL.nvidia-595-104-02')
+        with patch.object(deployment, 'run', side_effect=[None, Error('missing runtime')]):
+            with self.assertRaises(Error):
+                deployment.verify_flatpak(cfg)
+
+    def test_missing_sober_blocks_intel_host(self):
+        with patch.object(deployment, 'run', side_effect=Error('missing app')):
+            with self.assertRaises(Error):
+                deployment.verify_flatpak({'owner': 'fixture', 'flatpakApps': ['org.vinegarhq.Sober']})
+
+
+class WindowsStatusTests(unittest.TestCase):
+    def test_absent_does_not_bypass_secure_boot(self):
+        with tempfile.TemporaryDirectory() as directory, patch.object(deployment, 'state_dir'), \
+             patch.object(deployment, 'var', return_value=b'\x00'), \
+             patch.object(deployment.shutil, 'copytree') as backup:
+            with patch.object(deployment, 'STATE', Path(directory)):
+                with self.assertRaisesRegex(Error, 'Keep Secure Boot enabled'):
+                    deployment.prepare_boot({'secureBoot': True}, 'absent')
+                with self.assertRaisesRegex(Error, 'configures Windows'):
+                    deployment.prepare_boot({'secureBoot': True, 'windowsRequired': True}, 'absent')
+                backup.assert_not_called()
 
 
 class StageRollbackTests(unittest.TestCase):

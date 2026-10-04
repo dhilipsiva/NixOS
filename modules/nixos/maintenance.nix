@@ -46,6 +46,11 @@ in
       type = lib.types.str;
       description = "Actual DMI board name; capture separately on each host.";
     };
+    flatpakApps = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ ];
+      description = "User Flatpak applications required before staging and acceptance.";
+    };
   };
   config = lib.mkIf cfg.enable {
     assertions = [

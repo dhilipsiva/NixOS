@@ -26,6 +26,8 @@ NVIDIA_URL = ("https://gfwsl.geforce.com/services_toolkit/services/com/nvidia/se
               "?func=DriverManualLookup&psid=133&pfid=1075&osID=12&languageCode=1033"
               "&beta=0&isWHQL=0&dltype=-1&dch=0&upCRD=null&qnf=0&ctk=null&sort1=&numberOfResults=1")
 GITHUB_CHANNELS = {
+    "intel-npu-driver": ("intel/linux-npu-driver", "v"),
+    "openvino-npu": ("openvinotoolkit/openvino", ""),
     "obs-studio": ("obsproject/obs-studio", ""),
     "codex": ("openai/codex", "rust-v"),
     "zed-editor": ("zed-industries/zed", "v"),
@@ -119,6 +121,33 @@ def newest_python(releases):
     return max(versions, key=version_tuple)
 
 
+def npu_compiler_pin(release):
+    """Use the compiler bundle from the exact driver release, never an RC URL."""
+    version = release_version(release)
+    assets = [a for a in release['assets']
+              if a['name'].startswith(f'linux-npu-driver-v{version}.')
+              and a['name'].endswith('-ubuntu2404.tar.gz')]
+    if len(assets) != 1:
+        raise ValueError('Expected one Ubuntu 24.04 NPU compiler bundle')
+    asset = assets[0]
+    return dict(github_pin(release, asset['name']), url=asset['browser_download_url'])
+
+
+def openvino_wheel_pin(metadata, version):
+    version_tuple(version)
+    if metadata['info']['version'] != version:
+        raise ValueError('OpenVINO wheel metadata differs from its stable release')
+    wheels = [a for a in metadata['urls'] if not a.get('yanked', False)
+              and a['filename'].endswith('-cp313-cp313-manylinux_2_28_x86_64.whl')]
+    if len(wheels) != 1:
+        raise ValueError('Expected one OpenVINO CPython 3.13 Linux wheel')
+    wheel = wheels[0]
+    digest = wheel['digests']['sha256']
+    if not re.fullmatch(r'[0-9a-f]{64}', digest):
+        raise ValueError('Missing OpenVINO wheel SHA-256')
+    return {'version': version, 'url': wheel['url'], 'hash': 'sha256:' + digest}
+
+
 def stable_series(download_page):
     # The official installer links advertise released channels, unlike branch
     # names, which exist before release. Fail if the page format changes.
@@ -172,6 +201,17 @@ def update(repo, check_only=False):
     for name, (project, prefix) in GITHUB_CHANNELS.items():
         url = f"https://api.github.com/repos/{project}/releases/latest"
         channels[name] = {"version": release_version(json.loads(fetch(url)), prefix), "source": url}
+    pins['intel-npu-compiler'] = npu_compiler_pin(json.loads(fetch(channels['intel-npu-driver']['source'])))
+    if pins['intel-npu-compiler']['version'] != channels['intel-npu-driver']['version']:
+        raise ValueError('NPU release changed during metadata refresh; retry')
+    channels['intel-npu-compiler'] = dict(channels['intel-npu-driver'])
+    ov_version = channels['openvino-npu']['version']
+    pins['openvino-npu'] = openvino_wheel_pin(
+        json.loads(fetch(f'https://pypi.org/pypi/openvino/{ov_version}/json')), ov_version)
+    channels['ollama-vulkan'] = dict(channels['ollama'])
+    for name in ('intel-npu-compiler', 'openvino-npu'):
+        if name in old_pins:
+            no_downgrade(name, old_pins[name]['version'], pins[name]['version'])
     fuzzel_url = "https://codeberg.org/api/v1/repos/dnkl/fuzzel/releases/latest"
     channels["fuzzel"] = {"version": release_version(json.loads(fetch(fuzzel_url))), "source": fuzzel_url}
     # UWSM publishes stable version tags without GitHub Release objects.

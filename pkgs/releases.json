@@ -26,5 +26,15 @@
   "linux": {
     "version": "7.2.9",
     "hash": "sha256:b4c5dfbe51a364a6c7f03869200f88c8e1f77403539005f14b7fc6bc91b8d8ba"
+  },
+  "intel-npu-compiler": {
+    "version": "1.38.0",
+    "url": "https://github.com/intel/linux-npu-driver/releases/download/v1.38.0/linux-npu-driver-v1.38.0.20260910-34487311128-ubuntu2404.tar.gz",
+    "hash": "sha256:1efcd4b60c22abee751d8f2705962cbcc2a569de45c7e0e670cf08afbfcdc1d2"
+  },
+  "openvino-npu": {
+    "version": "2026.4.1",
+    "url": "https://files.pythonhosted.org/packages/7f/8b/d2fb2611cd8160cb4c0e5401b9d87312961d77891eade431381e396a8d83/openvino-2026.4.1-22982-cp313-cp313-manylinux_2_28_x86_64.whl",
+    "hash": "sha256:a9b637846c579d7b81b17b6585e0c7b1947574e8d13cf83d7307ce50cd2c352e"
   }
 }

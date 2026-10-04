@@ -7,6 +7,12 @@ has its own host module. The ThinkPad's actual hardware is captured in
 [THINKPAD.md](THINKPAD.md) records its migration, the child's Roblox/OBS
 requirements and pending acceptance.
 
+Yoga software preparation is in `hosts/yoga/` and [YOGA.md](YOGA.md). It has no
+captured hardware yet: never expose `tests/yoga-fixture.nix` as a deployable host.
+Only add Yoga's hardware/installation files from the actual laptop. Its attended
+installation is authorized only after separate USB/internal-disk confirmation;
+the installed desktop and ThinkPad filesystem preservation rules still apply.
+
 - Latest released stable NixOS and matching Home Manager, with stable application
   channels recorded in `pkgs/stable-channels.json`. Applications from nixpkgs-apps
   are packages only (exposed as `pkgs.nixpkgs-apps`); never import its NixOS

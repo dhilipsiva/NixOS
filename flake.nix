@@ -62,6 +62,16 @@
       # sets carry the overlays below and are reached through nixosConfigurations.
       pkgs = nixpkgs.legacyPackages.${system};
       desktop = self.nixosConfigurations.desktop;
+      yogaCaptured =
+        builtins.pathExists ./hosts/yoga/hardware-configuration.nix
+        && builtins.pathExists ./hosts/yoga/installation.nix;
+      yoga = if yogaCaptured then self.nixosConfigurations.yoga else mkHost ./tests/yoga-fixture.nix;
+      intelApps = [
+        "intel-npu-driver"
+        "intel-npu-compiler"
+        "openvino-npu"
+        "ollama-vulkan"
+      ];
 
       # Applications whose packaged version must equal the recorded official
       # stable channel in pkgs/stable-channels.json. The kernel and NVIDIA driver
@@ -202,14 +212,29 @@
       nixosConfigurations = {
         desktop = mkHost ./hosts/desktop;
         thinkpad = mkHost ./hosts/thinkpad;
+      }
+      // lib.optionalAttrs yogaCaptured {
+        yoga = mkHost {
+          imports = [
+            ./hosts/yoga
+            ./hosts/yoga/hardware-configuration.nix
+            ./hosts/yoga/installation.nix
+          ];
+        };
       };
 
       # The shared system and Home Manager configuration, reusable from another
       # flake or a future per-host split.
       nixosModules.default = import ./modules/nixos;
       homeModules.default = import ./home/dhilipsiva;
+      nixosModules.yoga = import ./hosts/yoga;
+      nixosModules.yoga-bootstrap = import ./hosts/yoga/bootstrap.nix;
 
-      packages.${system}.nixosctl = pkgs.callPackage ./pkgs/nixosctl.nix { };
+      packages.${system} = {
+        nixosctl = pkgs.callPackage ./pkgs/nixosctl.nix { };
+        npu-smoke = yoga.pkgs.npu-smoke;
+        ollama-vulkan = yoga.pkgs.ollama-vulkan;
+      };
 
       # `nix fmt` runs nixfmt over the whole tree through its zero-setup treefmt
       # wrapper; `nix develop` provides the tools used by scripts, tests and checks.
@@ -252,17 +277,36 @@
             "unsupported";
         luksDevices = lib.mapAttrs (_: device: device.device) host.config.boot.initrd.luks.devices;
         requiredSecrets = builtins.attrNames host.config.sops.secrets;
-        nvidiaVersion = host.config.hardware.nvidia.package.version;
-        flatpakApps = lib.optional (name == "thinkpad") "org.vinegarhq.Sober";
+        nvidiaVersion =
+          if builtins.elem "nvidia" host.config.services.xserver.videoDrivers then
+            host.config.hardware.nvidia.package.version
+          else
+            null;
+        flatpakApps = host.config.repo.maintenance.flatpakApps;
+        windowsRequired = host.config.fileSystems ? "/mnt/windows";
         secretsFile = "secrets/${name}.yaml";
       }) self.nixosConfigurations;
 
-      lib.stableVersions = lib.genAttrs stableApps (name: desktop.pkgs.${name}.version) // {
-        linux = desktop.config.boot.kernelPackages.kernel.version;
-        nvidia = desktop.config.hardware.nvidia.package.version;
+      lib.pendingHosts = lib.optionalAttrs (!yogaCaptured) {
+        yoga = "Capture hardware-configuration.nix and installation.nix on the Yoga; see YOGA.md.";
       };
+      lib.stableVersions =
+        lib.genAttrs stableApps (name: desktop.pkgs.${name}.version)
+        // lib.genAttrs intelApps (name: yoga.pkgs.${name}.version)
+        // {
+          linux = desktop.config.boot.kernelPackages.kernel.version;
+          nvidia = desktop.config.hardware.nvidia.package.version;
+        };
 
       checks.${system} = {
+        yoga-policies = import ./tests/yoga-policies.nix { inherit pkgs lib yoga; };
+        # This is a complete software build with explicitly fictitious storage.
+        # It is never a stageable host and proves no physical hardware behavior.
+        yoga-software = pkgs.runCommand "yoga-software-check" { } ''
+          test -x ${yoga.config.system.build.toplevel}/bin/switch-to-configuration
+          touch "$out"
+        '';
+        npu-runtime = import ./tests/npu-runtime.nix { inherit pkgs yoga; };
         ollama-on-demand = import ./tests/ollama-on-demand.nix { inherit pkgs; };
 
         # The real desktop configuration boots, decrypts fixture secrets through
@@ -283,12 +327,25 @@
             allHostsStable = builtins.all (
               host:
               host.config.boot.kernelPackages.kernel.version == channels.linux.version
-              && host.config.hardware.nvidia.package.version == channels.nvidia.version
+              && (
+                builtins.elem "nvidia" host.config.services.xserver.videoDrivers
+                -> host.config.hardware.nvidia.package.version == channels.nvidia.version
+              )
             ) (builtins.attrValues self.nixosConfigurations);
           in
           assert lib.assertMsg (
             desktop.config.boot.lanzaboote.enable
             && !desktop.config.systemd.sleep.settings.Sleep.AllowSuspend
+            && !desktop.config.systemd.sleep.settings.Sleep.AllowHibernation
+            && desktop.config.fileSystems."/".device == "/dev/disk/by-uuid/664a9ddf-4ff2-47f8-90b5-65d449dfbca7"
+            && desktop.config.fileSystems."/boot".device == "/dev/disk/by-uuid/85B9-1188"
+            && desktop.config.fileSystems."/mnt/windows".device == "/dev/disk/by-uuid/263CE1813CE14BFD"
+            && builtins.elem "ro" desktop.config.fileSystems."/mnt/windows".options
+            && desktop.config.boot.initrd.luks.devices == { }
+            && desktop.config.services.logind.settings.Login.IdleAction == "ignore"
+            && builtins.all (
+              listener: listener.timeout == 300
+            ) desktop.config.home-manager.users.dhilipsiva.services.hypridle.settings.listener
             && thinkpad.boot.loader.systemd-boot.enable
             &&
               thinkpad.boot.initrd.luks.devices.root.device
@@ -403,7 +460,7 @@
               "${host.pkgs.hyprland}/bin/Hyprland --verify-config -c ${
                 host.config.home-manager.users.dhilipsiva.xdg.configFile."hypr/hyprland.lua".source
               }"
-            ) self.nixosConfigurations;
+            ) (self.nixosConfigurations // { yoga = yoga; });
           in
           desktop.pkgs.runCommand "hyprland-config-check" { } ''
             export XDG_RUNTIME_DIR="$TMPDIR/runtime"
@@ -428,10 +485,13 @@
 
         stable-releases =
           let
-            packages = map (name: desktop.pkgs.${name}) stableApps ++ [
-              desktop.config.boot.kernelPackages.kernel
-              desktop.config.hardware.nvidia.package
-            ];
+            packages =
+              map (name: desktop.pkgs.${name}) stableApps
+              ++ map (name: yoga.pkgs.${name}) intelApps
+              ++ [
+                desktop.config.boot.kernelPackages.kernel
+                desktop.config.hardware.nvidia.package
+              ];
             isStable = package: builtins.match "[0-9]+(\\.[0-9]+){1,3}" package.version != null;
             channels = builtins.fromJSON (builtins.readFile ./pkgs/stable-channels.json);
             versions = self.lib.stableVersions;

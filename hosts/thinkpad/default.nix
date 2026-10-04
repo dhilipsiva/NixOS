@@ -31,6 +31,7 @@
     host = "thinkpad";
     role = "subscriber";
     boardName = "20YSS01K00";
+    flatpakApps = [ "org.vinegarhq.Sober" ];
   };
   nix.settings = {
     max-jobs = 1;

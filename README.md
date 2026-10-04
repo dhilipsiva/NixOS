@@ -13,6 +13,14 @@ exposes `nixosConfigurations.desktop` and `nixosConfigurations.thinkpad`
 the laptop rollout in [THINKPAD.md](THINKPAD.md), and the handoff for a new
 session is [SESSION.md](SESSION.md).
 
+The Intel Arc/NPU Yoga Slim 7 is prepared under `hosts/yoga/`; follow [YOGA.md](YOGA.md)
+for its attended encrypted installation, signed bootstrap and physical acceptance.
+It is not connected or deployed. `nixosConfigurations.yoga` is enabled only when
+its actual generated hardware configuration and installation anchors are added.
+Until then, `checks.x86_64-linux.yoga-software` builds a clearly labeled fixture,
+while `yoga-policies` and `npu-runtime` check policies and library loading.
+The fixture never appears in the deployment manifest.
+
 ## Desktop hardware
 
 | Component | Hardware |
@@ -263,6 +271,9 @@ how to regenerate that fixture, since the previous throwaway key is gone.
 
 Each machine stages only its own host: `--host desktop` on the desktop and
 `--host thinkpad` on the laptop. The checks build both hosts everywhere.
+Once captured, Yoga uses `--host yoga`; the same checks build every captured host.
+The manifest declares each host's required user Flatpaks, and requires NVIDIA
+Flatpak runtime matching only where the host actually uses NVIDIA.
 
 ## ThinkPad migration
 
