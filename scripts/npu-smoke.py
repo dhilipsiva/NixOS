@@ -25,13 +25,15 @@ def main():
     # compiler consumes IR; its private runtime need not match the Python wheel.
     compiled = core.compile_model(model, 'NPU', {'NPU_COMPILER_TYPE': 'DRIVER'})
     execution = compiled.get_property('EXECUTION_DEVICES')
-    if not execution or any(str(device).split('.')[0] != 'NPU' for device in execution):
+    # OpenVINO returns a plain string for a single device and a list otherwise.
+    devices = [execution] if isinstance(execution, str) else list(execution)
+    if not devices or any(str(device).split('.')[0] != 'NPU' for device in devices):
         raise SystemExit(f'Unexpected execution device: {execution}')
     data = np.arange(-8, 8, dtype=np.float32).reshape(1, 16)
     actual = compiled([data])[compiled.output(0)]
     np.testing.assert_allclose(actual, np.maximum(data, 0), rtol=1e-3, atol=1e-3)
     print(f'NPU inference passed: {core.get_property("NPU", "FULL_DEVICE_NAME")}; '
-          f'execution={execution}; OpenVINO={ov.__version__}')
+          f'execution={devices}; OpenVINO={ov.__version__}')
     # Exiting releases the graph/device. Runtime suspend is a separate physical check.
 
 

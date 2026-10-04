@@ -9,6 +9,7 @@
     home.packages = with pkgs; [
       npu-smoke
       libva-utils
+      clinfo
       intel-gpu-tools
     ];
     xdg.desktopEntries.roblox-sober = {

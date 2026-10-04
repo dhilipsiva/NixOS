@@ -71,7 +71,11 @@ systemd-boot, Secure Boot off). The Yoga session captured that installation
 into `hosts/yoga/hardware-configuration.nix` and `installation.nix`, made
 `nixosConfigurations.yoga` a real host with the ThinkPad's unsigned boot policy,
 kept zram as the only swap (`systemd.swap=0` leaves the installer's swap
-partition unused) and installed the user Flatpak Sober 1.8.0. Pending on the
-Yoga: `prepare-credentials`, one commit with the ciphertext, a push credential,
-`publish`, `prepare-boot`, `stage`, a manual reboot and the physical checks in
-YOGA.md. Nothing was staged or switched.
+partition unused) and installed the user Flatpak Sober 1.8.0. The owner
+enrolled the credentials, published `1ee1bc2`, prepared boot, staged it and
+booted it. The runtime audit on that generation (YOGA.md) led to the
+hardware-tuning commit: release-branch Intel media/compute runtimes (the
+master ones failed against libva 2.23 and aborted in OpenCL), the panel's
+120 Hz mode with fullscreen-only VRR, Ollama on the integrated GPU, all cores
+for one build and bolt. That commit is next to publish and stage on the Yoga;
+physical acceptance (`nixosctl accept --host yoga`) is still pending.

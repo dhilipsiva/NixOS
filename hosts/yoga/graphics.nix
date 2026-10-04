@@ -7,9 +7,21 @@
   ];
   services.xserver.videoDrivers = [ "modesetting" ];
   # These overrides affect Yoga alone. OS modules remain on the stable release.
+  # The media and compute runtimes stay on the release branch: master's
+  # intel-media-driver 26.2.4 exports __vaDriverInit_1_24 for a libva 2.24 that
+  # 26.05 does not ship (vainfo failed), and master's intel-compute-runtime
+  # 26.31 aborted in command_stream_receiver.cpp on clinfo. The release builds
+  # (26.1.6 and 26.18.38308.1) were verified on the Arc 140V on 2026-10-04:
+  # H.264/HEVC/VP9/AV1 decode, H.264/HEVC/AV1 encode and OpenCL enumeration.
+  # level-zero follows nixpkgs-apps because the NPU driver, its compiler and
+  # openvino-npu are built against that loader; a newer loader with the older
+  # GPU driver is the supported direction. The compute runtime keeps the
+  # release level-zero as its build input so it is exactly the binary-cached
+  # derivation that was tested, not a local rebuild against newer headers.
   nixpkgs.overlays = [
-    (final: _: {
-      inherit (final.nixpkgs-apps) intel-media-driver intel-compute-runtime level-zero;
+    (final: prev: {
+      inherit (final.nixpkgs-apps) level-zero;
+      intel-compute-runtime = prev.intel-compute-runtime.override { inherit (prev) level-zero; };
       intel-npu-compiler = final.callPackage ../../pkgs/intel-npu-compiler.nix { };
       intel-npu-driver = final.nixpkgs-apps.intel-npu-driver.overrideAttrs (old: {
         postFixup = (old.postFixup or "") + ''
@@ -47,14 +59,20 @@
     earlySetup = true;
   };
   # The panel is 2880x1800 at about 222 PPI; Hyprland 0.56 picks scale 2 above
-  # 200 PPI, so the automatic rule yields 1440x900 logical pixels. Override the
-  # scale here (1.5 gives 1920x1200) only after seeing it on the hardware.
-  home-manager.users.dhilipsiva.wayland.windowManager.hyprland.settings.monitor = lib.mkForce [
-    {
-      output = "";
-      mode = "preferred";
-      position = "auto";
-      scale = "auto";
-    }
-  ];
+  # 200 PPI (1440x900 logical pixels) and the owner kept it after seeing it.
+  # "highrr" selects the panel's 120 Hz mode instead of the 60 Hz preferred
+  # mode; VRR 2 uses its 30-120 Hz adaptive-sync range only while a window is
+  # fullscreen; fullscreen games may scan out directly, as on the desktop.
+  home-manager.users.dhilipsiva.wayland.windowManager.hyprland.settings = {
+    monitor = lib.mkForce [
+      {
+        output = "";
+        mode = "highrr";
+        position = "auto";
+        scale = "auto";
+        vrr = 2;
+      }
+    ];
+    config.render.direct_scanout = 2;
+  };
 }

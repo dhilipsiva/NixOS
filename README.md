@@ -17,7 +17,7 @@ The Yoga Slim 7 (`hosts/yoga/`) is the third host. Its owner-installed NixOS
 26.05 (unencrypted ext4 root, unsigned systemd-boot, Intel Arc and NPU) was
 captured on the laptop on 2026-10-04 and `nixosConfigurations.yoga` is a real
 host; [YOGA.md](YOGA.md) records its inventory, the decisions that differ from
-the earlier signed plan, the remaining enrollment and staging steps and the
+the earlier signed plan, its deployment state, the hardware audit and the
 physical acceptance checklist. `yoga-policies` and `npu-runtime` pin its policy
 and library loading.
 
@@ -72,6 +72,14 @@ screen use a 32-pixel Terminus font.
 - **ThinkPad differences:** the laptop keeps its LUKS root with the scripted
   initrd, systemd-boot without Secure Boot, suspend on lid close, Intel/NVIDIA
   PRIME offload, Flatpak for Sober (Roblox) and native OBS (`hosts/thinkpad/`).
+- **Yoga differences:** the Yoga Slim 7 keeps its owner-installed unencrypted
+  ext4 root (the installer's swap partition stays unused via `systemd.swap=0`)
+  and unsigned systemd-boot with Secure Boot off, suspends on lid close, runs
+  Intel Arc (Lunar Lake) on `xe` with the release-branch media and compute
+  runtimes, the Intel NPU stack and Ollama's Vulkan runner on the integrated
+  GPU, drives its 2880×1800 panel at 120 Hz with automatic scale 2 and
+  fullscreen-only adaptive sync, uses a 24-pixel console font and enables bolt
+  for Thunderbolt docks (`hosts/yoga/`).
 - **Deferred on purpose:** `system.etc.overlay` (immutable `/etc`). Enabling it
   hides the on-disk `/etc` that holds the SSH host key, machine id and saved
   connections, so it needs an attended migration, not a remote staging.

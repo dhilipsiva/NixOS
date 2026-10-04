@@ -59,14 +59,19 @@
     flatpakApps = [ "org.vinegarhq.Sober" ];
     # boardName is in installation.nix, read from the real DMI value.
   };
+  # One derivation may use every core; max-jobs 1 and the daemon weights below
+  # keep the session responsive.
   nix.settings = {
     max-jobs = 1;
-    cores = 4;
+    cores = 0;
   };
   systemd.services.nix-daemon.serviceConfig = {
     CPUWeight = 50;
     IOWeight = 50;
   };
+  # Thunderbolt/USB4 device authorisation (boltctl, udev rules, bolt.service);
+  # the thunderbolt kernel module is in hardware-configuration.nix.
+  services.hardware.bolt.enable = true;
   boot.kernel.sysctl."fs.inotify.max_user_watches" = 1048576;
   environment.systemPackages = with pkgs; [
     btop
@@ -77,6 +82,9 @@
     package = pkgs.ollama-vulkan;
     environmentVariables = {
       OLLAMA_VULKAN = "1";
+      # The Vulkan runner skips integrated GPUs by default; with this it reports
+      # "Intel(R) Graphics (LNL)" with about 21 GiB of shared memory.
+      OLLAMA_IGPU_ENABLE = "1";
       OLLAMA_NUM_PARALLEL = "1";
       OLLAMA_MAX_LOADED_MODELS = "1";
     };
