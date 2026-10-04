@@ -21,7 +21,7 @@ jobs:
             max-jobs = 1
             accept-flake-config = false
       - uses: DeterminateSystems/magic-nix-cache-action@main
-      # Evaluates all captured hosts plus the isolated Yoga software fixture.
+      # Evaluates every host configuration (desktop, ThinkPad and Yoga).
       - run: nix flake check --no-build .
       # The checks that need no virtual machine and no master-branch builds;
       # VM tests, the Hyprland parser and `nixosctl check --stable` stay local.

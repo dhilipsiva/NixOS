@@ -40,6 +40,15 @@
   services.udev.extraRules = ''
     SUBSYSTEM=="accel", KERNEL=="accel*", GROUP="render", MODE="0660"
   '';
+  # 2880x1800 on a 330 mm wide panel: the default 16-pixel console font is
+  # under 2 mm tall. Terminus 12x24 keeps the text console and tuigreet legible.
+  console = {
+    font = "${pkgs.terminus_font}/share/consolefonts/ter-124n.psf.gz";
+    earlySetup = true;
+  };
+  # The panel is 2880x1800 at about 222 PPI; Hyprland 0.56 picks scale 2 above
+  # 200 PPI, so the automatic rule yields 1440x900 logical pixels. Override the
+  # scale here (1.5 gives 1920x1200) only after seeing it on the hardware.
   home-manager.users.dhilipsiva.wayland.windowManager.hyprland.settings.monitor = lib.mkForce [
     {
       output = "";

@@ -20,6 +20,10 @@
     AllowSuspendThenHibernate = false;
   };
   swapDevices = [ ];
+  # The installer left an 8.8 GiB swap partition on the SSD. The systemd GPT
+  # auto-generator activates every swap-typed partition on the root disk unless
+  # told otherwise, so zram stays the only swap and the partition is untouched.
+  boot.kernelParams = [ "systemd.swap=0" ];
   zramSwap = {
     enable = true;
     swapDevices = 1;

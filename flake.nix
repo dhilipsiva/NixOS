@@ -62,10 +62,7 @@
       # sets carry the overlays below and are reached through nixosConfigurations.
       pkgs = nixpkgs.legacyPackages.${system};
       desktop = self.nixosConfigurations.desktop;
-      yogaCaptured =
-        builtins.pathExists ./hosts/yoga/hardware-configuration.nix
-        && builtins.pathExists ./hosts/yoga/installation.nix;
-      yoga = if yogaCaptured then self.nixosConfigurations.yoga else mkHost ./tests/yoga-fixture.nix;
+      yoga = self.nixosConfigurations.yoga;
       intelApps = [
         "intel-npu-driver"
         "intel-npu-compiler"
@@ -212,22 +209,13 @@
       nixosConfigurations = {
         desktop = mkHost ./hosts/desktop;
         thinkpad = mkHost ./hosts/thinkpad;
-      }
-      // lib.optionalAttrs yogaCaptured {
-        yoga = mkHost {
-          imports = [
-            ./hosts/yoga
-            ./hosts/yoga/hardware-configuration.nix
-            ./hosts/yoga/installation.nix
-          ];
-        };
+        yoga = mkHost ./hosts/yoga;
       };
 
       # The shared system and Home Manager configuration, reusable from another
       # flake or a future per-host split.
       nixosModules.default = import ./modules/nixos;
       homeModules.default = import ./home/dhilipsiva;
-      nixosModules.yoga = import ./hosts/yoga;
       nixosModules.yoga-bootstrap = import ./hosts/yoga/bootstrap.nix;
 
       packages.${system} = {
@@ -287,9 +275,6 @@
         secretsFile = "secrets/${name}.yaml";
       }) self.nixosConfigurations;
 
-      lib.pendingHosts = lib.optionalAttrs (!yogaCaptured) {
-        yoga = "Capture hardware-configuration.nix and installation.nix on the Yoga; see YOGA.md.";
-      };
       lib.stableVersions =
         lib.genAttrs stableApps (name: desktop.pkgs.${name}.version)
         // lib.genAttrs intelApps (name: yoga.pkgs.${name}.version)
@@ -300,12 +285,6 @@
 
       checks.${system} = {
         yoga-policies = import ./tests/yoga-policies.nix { inherit pkgs lib yoga; };
-        # This is a complete software build with explicitly fictitious storage.
-        # It is never a stageable host and proves no physical hardware behavior.
-        yoga-software = pkgs.runCommand "yoga-software-check" { } ''
-          test -x ${yoga.config.system.build.toplevel}/bin/switch-to-configuration
-          touch "$out"
-        '';
         npu-runtime = import ./tests/npu-runtime.nix { inherit pkgs yoga; };
         ollama-on-demand = import ./tests/ollama-on-demand.nix { inherit pkgs; };
 
@@ -460,7 +439,7 @@
               "${host.pkgs.hyprland}/bin/Hyprland --verify-config -c ${
                 host.config.home-manager.users.dhilipsiva.xdg.configFile."hypr/hyprland.lua".source
               }"
-            ) (self.nixosConfigurations // { yoga = yoga; });
+            ) self.nixosConfigurations;
           in
           desktop.pkgs.runCommand "hyprland-config-check" { } ''
             export XDG_RUNTIME_DIR="$TMPDIR/runtime"

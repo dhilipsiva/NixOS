@@ -13,13 +13,13 @@ exposes `nixosConfigurations.desktop` and `nixosConfigurations.thinkpad`
 the laptop rollout in [THINKPAD.md](THINKPAD.md), and the handoff for a new
 session is [SESSION.md](SESSION.md).
 
-The Intel Arc/NPU Yoga Slim 7 is prepared under `hosts/yoga/`; follow [YOGA.md](YOGA.md)
-for its attended encrypted installation, signed bootstrap and physical acceptance.
-It is not connected or deployed. `nixosConfigurations.yoga` is enabled only when
-its actual generated hardware configuration and installation anchors are added.
-Until then, `checks.x86_64-linux.yoga-software` builds a clearly labeled fixture,
-while `yoga-policies` and `npu-runtime` check policies and library loading.
-The fixture never appears in the deployment manifest.
+The Yoga Slim 7 (`hosts/yoga/`) is the third host. Its owner-installed NixOS
+26.05 (unencrypted ext4 root, unsigned systemd-boot, Intel Arc and NPU) was
+captured on the laptop on 2026-10-04 and `nixosConfigurations.yoga` is a real
+host; [YOGA.md](YOGA.md) records its inventory, the decisions that differ from
+the earlier signed plan, the remaining enrollment and staging steps and the
+physical acceptance checklist. `yoga-policies` and `npu-runtime` pin its policy
+and library loading.
 
 ## Desktop hardware
 
@@ -120,7 +120,7 @@ Verified versions in this lock on 2026-10-03:
 | NVIDIA production driver | 595.104.02 |
 | Nix | 2.35.2 (`nixVersions.latest`) |
 
-Both machines use the same Git checkout path,
+All machines use the same Git checkout path,
 `/home/dhilipsiva/projects/dhilipsiva/NixOS`, tracking `origin/master`, owned by
 dhilipsiva. The desktop publishes updates around **21:00 Asia/Colombo** (plus up
 to five minutes of jitter): it refreshes release metadata and every flake input in
@@ -269,9 +269,9 @@ exercise the sops path with `secrets/vm-test.yaml`; without it the VM boots in
 break-glass mode (root works, dhilipsiva has no password). DEPLOYMENT.md explains
 how to regenerate that fixture, since the previous throwaway key is gone.
 
-Each machine stages only its own host: `--host desktop` on the desktop and
-`--host thinkpad` on the laptop. The checks build both hosts everywhere.
-Once captured, Yoga uses `--host yoga`; the same checks build every captured host.
+Each machine stages only its own host: `--host desktop` on the desktop,
+`--host thinkpad` on the ThinkPad and `--host yoga` on the Yoga. The checks build
+every host everywhere.
 The manifest declares each host's required user Flatpaks, and requires NVIDIA
 Flatpak runtime matching only where the host actually uses NVIDIA.
 

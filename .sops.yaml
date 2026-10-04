@@ -10,9 +10,8 @@ creation_rules:
     age: age182xup9xqwq450sz4ekgqml4hf65m79f427aj64glmmn5tzylpvfsrp78ws,age1l87vvu5en505fk7vhh24u9kzzcv9c8208efaly3j5pcz72t8syaqxpjq5n
 # END thinkpad
 # BEGIN yoga
-  # Enrollment pending. prepare-credentials writes independent owner/host recipients here.
   - path_regex: secrets/yoga\.yaml$
-    age: age1aqnq0cm7j0zhlwsge72za09s8m0sh2sh2gucpaudaypkfsetu97sy68cqw
+    age: age1cymcpurmj8ecv96zsmxh9m8hchypwaspcy9y4qar86t8prvhy54samuvud,age1et6cf2z0qlfu2tw5qypqqtguusf60y80frfnxdp66eqpd9c7ssgqhpm2ld
 # END yoga
   - path_regex: secrets/vm-test\.yaml$
     age: age10hwn77a4vpj33s9u9j8u698lwmgv0g8trd2x5hk24zt5a0fnvsss6dj8mg

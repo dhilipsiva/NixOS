@@ -1,17 +1,20 @@
 # Repository guidance
 
 This repository is the single source of truth at
-`/home/dhilipsiva/projects/dhilipsiva/NixOS` on both machines. The installed desktop
+`/home/dhilipsiva/projects/dhilipsiva/NixOS` on every machine. The installed desktop
 has its own host module. The ThinkPad's actual hardware is captured in
 `hosts/thinkpad/`; it preserves its existing encrypted installation, and
 [THINKPAD.md](THINKPAD.md) records its migration, the child's Roblox/OBS
 requirements and pending acceptance.
 
-Yoga software preparation is in `hosts/yoga/` and [YOGA.md](YOGA.md). It has no
-captured hardware yet: never expose `tests/yoga-fixture.nix` as a deployable host.
-Only add Yoga's hardware/installation files from the actual laptop. Its attended
-installation is authorized only after separate USB/internal-disk confirmation;
-the installed desktop and ThinkPad filesystem preservation rules still apply.
+The Yoga Slim 7's owner-installed NixOS 26.05 is captured in `hosts/yoga/`
+(`hardware-configuration.nix` and `installation.nix` were generated and read on
+the laptop on 2026-10-04); [YOGA.md](YOGA.md) records its inventory, the
+remaining enrollment and staging steps and the acceptance checklist. It
+preserves the unencrypted ext4 root, the 1 GiB ESP and unsigned systemd-boot
+with Secure Boot disabled; the installer's swap partition stays on disk unused
+(`systemd.swap=0`). Never repartition, encrypt or enable Secure Boot on it
+without an attended, documented migration. No fixture is a deployable host.
 
 - Latest released stable NixOS and matching Home Manager, with stable application
   channels recorded in `pkgs/stable-channels.json`. Applications from nixpkgs-apps

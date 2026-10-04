@@ -9,16 +9,23 @@ let
   channels = builtins.fromJSON (builtins.readFile ../pkgs/stable-channels.json);
 in
 assert lib.assertMsg (
-  c.boot.lanzaboote.enable
-  && c.boot.kernelPackages.kernel.version == channels.linux.version
-  && c.boot.initrd.systemd.enable
-  && !c.boot.lanzaboote.autoEnrollKeys.enable
-  && !c.boot.lanzaboote.autoGenerateKeys.enable
+  # Storage, boot and anchors exactly as captured on the installed laptop.
+  c.repo.maintenance.boardName == "LNVNB161216"
+  && c.fileSystems."/".device == "/dev/disk/by-uuid/5054780a-381e-4518-8493-df4929682c36"
+  && c.fileSystems."/".fsType == "ext4"
+  && c.fileSystems."/boot".device == "/dev/disk/by-uuid/73D4-F5E3"
+  && c.boot.initrd.luks.devices == { }
+  && c.boot.loader.systemd-boot.enable
+  && c.boot.loader.systemd-boot.configurationLimit == 5
   && !c.boot.loader.systemd-boot.editor
-  && c.boot.initrd.luks.devices ? root
-  && !c.boot.initrd.luks.devices.root.allowDiscards
-  && c.boot.initrd.luks.devices.root.keyFile == null
+  && !(c.boot.lanzaboote.enable or false)
+  && c.boot.initrd.systemd.enable
+  && c.boot.kernelPackages.kernel.version == channels.linux.version
+  && c.system.stateVersion == "26.05"
+  && h.home.stateVersion == "26.05"
+  # zram is the only swap; the installer's swap partition stays unused.
   && c.swapDevices == [ ]
+  && builtins.elem "systemd.swap=0" c.boot.kernelParams
   && c.zramSwap.enable
   && c.zramSwap.swapDevices == 1
   && c.zramSwap.memoryPercent == 25
@@ -67,5 +74,5 @@ assert lib.assertMsg (
     == "/var/lib/nixos-deployment/accepted.json"
   && builtins.attrNames c.sops.secrets == [ "dhilipsiva/hashedPassword" ]
   && c.time.timeZone == "Asia/Kolkata"
-) "Yoga storage, graphics, applications, power or acceptance policy changed.";
+) "Yoga storage, boot, graphics, applications, power or acceptance policy changed.";
 pkgs.runCommand "yoga-policies-check" { } "touch $out"

@@ -1,6 +1,6 @@
 # Session handoff
 
-Repository: `/home/dhilipsiva/projects/dhilipsiva/NixOS` on both machines, owned
+Repository: `/home/dhilipsiva/projects/dhilipsiva/NixOS` on every machine, owned
 by dhilipsiva, tracking `origin/master`. Start any session by comparing the
 running system with the published build before trusting state notes:
 
@@ -62,3 +62,16 @@ passes every flake check, the `nixosctl check --stable` gate (both hosts build)
 and a headless VM rehearsal of the boot path. It was rebased onto the laptop
 session's ThinkPad host commit `0a3b61b`, whose checks and host policies it keeps. Staging and the reboot follow the normal `nixosctl`
 workflow; nothing switches live.
+
+## Yoga state (2026-10-04)
+
+The owner installed NixOS 26.05 on the Yoga Slim 7 15ILL9 with the official
+graphical installer (GNOME, generation 1, unencrypted ext4, unsigned
+systemd-boot, Secure Boot off). The Yoga session captured that installation
+into `hosts/yoga/hardware-configuration.nix` and `installation.nix`, made
+`nixosConfigurations.yoga` a real host with the ThinkPad's unsigned boot policy,
+kept zram as the only swap (`systemd.swap=0` leaves the installer's swap
+partition unused) and installed the user Flatpak Sober 1.8.0. Pending on the
+Yoga: `prepare-credentials`, one commit with the ciphertext, a push credential,
+`publish`, `prepare-boot`, `stage`, a manual reboot and the physical checks in
+YOGA.md. Nothing was staged or switched.
