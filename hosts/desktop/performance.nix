@@ -63,5 +63,6 @@
     lm_sensors
     pciutils
     usbutils
+    dmidecode # memory/firmware inventory (root)
   ];
 }
