@@ -44,8 +44,9 @@ session needs.
   `~/.ssh/nixos-update` through `core.sshCommand`; the nightly timer runs at
   21:00 Asia/Colombo and stages verified updates for the next manual reboot.
   Acceptance and the first cleanup (36.4 GiB freed) are complete.
-- Pending: Wi-Fi password still agent-owned (psk-flags 1), so autoconnect before
-  login is unverified. DEPLOYMENT.md tracks this and the staged modernisation.
+- Wi-Fi: password agent-owned in the keyring by the owner's choice; it connects
+  automatically after login, not before. Memory runs its EXPO profile
+  (2 x 48 GiB DDR5-6000) and fwupd shows no pending firmware.
 
 ## Current state (2026-10-04)
 
