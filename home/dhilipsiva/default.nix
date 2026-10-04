@@ -6,7 +6,8 @@
     ./git.nix
     ./terminal.nix # alacritty + zellij
     ./helix.nix
-    ./wayland.nix # native Hyprland + Waybar + notifications/locking
+    ./wayland.nix # native Hyprland + notifications/locking
+    ./waybar.nix # shared status bar; optional laptop battery indicator
     ./services.nix # user timers (time notification)
   ];
 

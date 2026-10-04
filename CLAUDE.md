@@ -48,4 +48,5 @@ verified after the owner's reboot on 2026-10-04 using the same generation 12.
 No Nix change was needed to restore CPU availability. Build success cannot
 establish physical GPU, display, login, Windows recovery or firmware behavior.
 Initial acceptance/cleanup is complete. See DEPLOYMENT.md for the remaining
-Wi-Fi persistence and applet rollout checks.
+Wi-Fi persistence and status bar rollout checks. Shared bar configuration is in
+home/dhilipsiva/waybar.nix; laptop battery display is explicitly host-enabled.

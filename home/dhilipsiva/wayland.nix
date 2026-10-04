@@ -106,48 +106,6 @@ in
     };
   };
 
-  programs.waybar = {
-    enable = true;
-    systemd = { enable = true; targets = [ "graphical-session.target" ]; };
-    settings.mainBar = {
-      layer = "top";
-      position = "bottom";
-      height = 30;
-      modules-left = [ "hyprland/workspaces" "hyprland/submap" ];
-      modules-center = [ "hyprland/window" ];
-      modules-right = [ "tray" "pulseaudio" "network" "cpu" "memory" "clock" ];
-      "hyprland/workspaces" = { disable-scroll = true; all-outputs = true; };
-      "hyprland/window".max-length = 70;
-      cpu = { format = "CPU {usage}%"; interval = 3; };
-      memory = { format = "RAM {percentage}%"; interval = 3; };
-      clock.format = "{:%a %d %b  %H:%M}";
-      network = {
-        format-wifi = "{essid} {signalStrength}%";
-        format-ethernet = "{ifname}";
-        format-disconnected = "Offline";
-        tooltip-format = "{ifname}: {ipaddr}";
-        on-click = "${pkgs.networkmanagerapplet}/bin/nm-connection-editor";
-      };
-      pulseaudio = { format = "Vol {volume}%"; format-muted = "Muted"; };
-      tray.spacing = 8;
-    };
-    style = ''
-      * {
-        font-family: "Fira Code", sans-serif;
-        font-size: 13px;
-        animation: none;
-        transition: none;
-        box-shadow: none;
-        text-shadow: none;
-      }
-      window#waybar { background: #1e222a; color: #abb2bf; }
-      #workspaces button { color: #abb2bf; padding: 0 8px; border-radius: 0; }
-      #workspaces button.active { background: #61afef; color: #1e222a; }
-      #workspaces button.urgent { background: #e06c75; color: #1e222a; }
-      #tray, #pulseaudio, #network, #cpu, #memory, #clock { padding: 0 10px; }
-    '';
-  };
-
   services.mako = {
     enable = true;
     settings = { default-timeout = 5000; font = "Fira Code 11"; };

@@ -46,6 +46,10 @@ fast-forward-only; preserve local work and resolve divergence deliberately.
    on-demand Ollama. Set battery, lid and suspend behavior for a laptop. The
    desktop's no-sleep policy, NVIDIA HDMI workaround and CPU performance policy
    must not be inherited as laptop hardware settings.
+   The shared bar lives in `home/dhilipsiva/waybar.nix`. Once a battery is
+   confirmed, set `home-manager.users.dhilipsiva.repo.waybar.battery.enable = true`
+   in the laptop host. It detects battery devices at runtime; display sizing and
+   battery/power behavior still need validation on the actual laptop.
 4. Enroll laptop-specific encrypted credentials using its own host identity and
    an owner identity available locally. Preserve its working login credential.
    Never copy the desktop's SSH host keys, firmware signing private keys, secret
@@ -74,8 +78,8 @@ No ThinkPad hardware configuration exists yet. `stage --host thinkpad` correctly
 rejects the request until that work is complete. Keep the desktop independently
 deployable throughout the laptop migration.
 
-Desktop reference state: generation 12 works with all 16 CPU cores / 32 threads,
-the recovered Qualcomm Wi-Fi adapter and the 4K60 NVIDIA HDMI workaround. Initial
-acceptance/cleanup completed, freeing 36.4 GiB. Wi-Fi password persistence and the
-new applet rollout are tracked in DEPLOYMENT.md; do not assume those pending
+Desktop reference state: generation 13 works with all 16 CPU cores / 32 threads,
+the recovered Qualcomm Wi-Fi adapter, network applet and 4K60 NVIDIA HDMI workaround.
+Initial acceptance/cleanup completed, freeing 36.4 GiB. Wi-Fi password persistence
+and the improved status bar rollout are tracked in DEPLOYMENT.md; do not assume those pending
 physical checks passed merely because this handoff exists.

@@ -59,10 +59,10 @@ firmware settings were not read back by the agent.
 **Wi-Fi recovered:** on 2026-10-04 the owner drained motherboard power for about a
 minute and the adapter returned. Generation 12 detects it with `ath12k_wifi7_pci`
 and NetworkManager reports `wlp8s0` connected. No Wi-Fi driver change was needed.
-Automatic connection is a separate outstanding issue: the saved profile expects
-a user password agent, which generation 12's Hyprland session lacks. The repo now
-enables `nm-applet --indicator` and its connection editor. Save the existing Wi-Fi
-password locally for all users to connect before login, then verify the next boot
+Automatic connection before login is a separate outstanding issue: the saved
+profile still uses an agent-owned password. Generation 13 now runs
+`nm-applet --indicator`, supplying the agent missing from generation 12. Save the
+existing Wi-Fi password locally for all users to connect before login, then verify the next boot
 as described in [DEPLOYMENT.md](DEPLOYMENT.md). Passwords stay outside Git and the
 Nix store. Earlier disappearance and recovery evidence is in [SESSION.md](SESSION.md).
 
@@ -193,10 +193,37 @@ the old `misc.vfr`. These are supported
 [Hyprland configuration options](https://wiki.hypr.land/configuring/core/config-options/),
 not measured performance gains. Display mode and NVIDIA tuning stay in the desktop
 host; cursor handling uses Hyprland's defaults.
-The reduced-effects profile is active in generation 12, verified on 2026-10-04.
-The NetworkManager applet and Waybar network-click editor are configured for the
-next staged generation. The applet provides the Wi-Fi password agent for user
-connections and a tray menu; system-stored connections can start before login.
+The reduced-effects profile has been active since generation 12, verified on 2026-10-04.
+The NetworkManager applet and Waybar network-click editor are active in generation
+13. The applet provides the Wi-Fi password agent for user connections and a tray
+menu; system-stored connections can start before login.
+
+The improved bottom bar is declared in `home/dhilipsiva/waybar.nix` and awaits
+staging after generation 13. It uses an opaque, high-contrast background, larger
+text, five persistent workspace buttons, and a clock with a calendar tooltip.
+Workspaces beyond five appear when used. Long titles are shortened so controls
+remain usable on narrower screens. CPU/RAM update every five seconds; storage
+and the clock update every minute. Network/audio use Waybar's built-in modules;
+service failures are checked every 30 seconds and hidden when healthy. No GPU
+polling, animations, transparency, or extra compositor effects are added.
+
+| Bar control | Action |
+| --- | --- |
+| Apps | Open Fuzzel |
+| Workspace number | Switch workspace; scrolling is disabled |
+| CPU / RAM | Open btop in Alacritty |
+| SSD | Open Dolphin; hover for available root-filesystem space |
+| Network | Open saved connections; hover for SSID, address and signal details |
+| Volume | Open audio settings; right-click to mute; scroll to adjust volume |
+| Clock | Hover for calendar; scroll through months |
+| Service warning | Open failed system/user service details |
+| Lock | Lock the screen |
+
+The optional laptop battery module is enabled by the future host with
+`home-manager.users.dhilipsiva.repo.waybar.battery.enable = true`; it does not
+guess a battery device or change power policy. The shared layout was previewed
+at 1366, 1920 and 3840 pixels wide; actual laptop hardware remains unverified.
+Configuration follows the [Waybar module reference](https://github.com/Alexays/Waybar/wiki/Configuration).
 
 Login uses the text-based **greetd + tuigreet** screen, which starts Hyprland through
 UWSM for session/service lifecycle management. **Fuzzel** provides a native Wayland
@@ -204,8 +231,9 @@ application launcher on Super+D. **Alacritty** explicitly starts **fish**, with
 **Atuin** integrated into its interactive history and **zoxide** available as `z` for directory jumps. These changes take effect after
 a deliberate system activation/reboot, not merely by editing the repo.
 
-Shared configuration lives in `home/dhilipsiva/wayland.nix`; NVIDIA and idle policy
-are host-specific. Fish uses built-in and packaged vendor completions. The 26.05
+Shared compositor configuration lives in `home/dhilipsiva/wayland.nix`, and the
+bar in `home/dhilipsiva/waybar.nix`; NVIDIA and idle policy are host-specific.
+Fish uses built-in and packaged vendor completions. The 26.05
 manpage-completion generator is disabled because it expects a Python helper that
 fish 4.9 removed.
 
@@ -293,13 +321,14 @@ selected kernel. These checks do not establish physical GPU, login or firmware
 behavior. During editing, `path:$PWD` includes untracked files; final validation
 must use a clean Git checkout with every required file tracked.
 
-**Generation 12 is running** with the HDMI compatibility change and reduced-effects
+**Generation 13 is running** with the HDMI compatibility change, NetworkManager
+applet and reduced-effects
 profile. All 16 CPU cores / 32 threads are online and Wi-Fi has recovered. The
-running system matches the owner's staged receipt, generation 12 is the boot
-default, the display remains at 4K60/8-bit, Secure Boot is enabled and system/user
+running system matches the published `7c8c77d` build, the display remains at
+4K60/8-bit, Secure Boot is enabled and system/user
 failed-unit lists are empty. The owner completed acceptance/cleanup, freeing
 36.4 GiB with recovery roots retained. Follow [DEPLOYMENT.md](DEPLOYMENT.md) for
-the remaining Wi-Fi password persistence and applet rollout.
+the remaining Wi-Fi password persistence and improved status bar rollout.
 The protected recovery entry retains the original generation 2. Firmware preparation
 and boot evidence are recorded in [SESSION.md](SESSION.md).
 The desktop's encrypted credentials are enrolled with the owner and

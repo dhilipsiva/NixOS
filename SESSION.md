@@ -22,7 +22,33 @@ The GitHub write deploy key at `~/.ssh/nixos-update` has been authorized, and th
 implementation was published as `82024bb`. Private keys remain outside Git. Use `git status --short
 --branch` and `git log -1` to inspect the current publication state.
 
-Current boot, checked 2026-10-04: **generation 12**, boot ID
+Current boot, checked 2026-10-04 during the status bar work: **generation 13**,
+boot ID `6da9ef49-5d0d-486c-b82f-41e6481e929e`, system path
+`/nix/store/1xs9pw9qyzcq5ym0vasmgxg0j9b7raqf-nixos-system-dhilipsiva-desktop-26.05.20261002.774debe`.
+This matches the published `7c8c77d` build; the selected EFI entry is generation 13
+and `nm-applet.service` is active. CPU online remains `0-31`, SMT `on`, Secure Boot
+enabled and system/user failed-unit lists empty. The Wi-Fi profile still has
+autoconnect=yes, empty permissions and psk-flags=1; saving a system password and
+checking autoconnect before login remain pending.
+
+The status bar redesign is in `home/dhilipsiva/waybar.nix`, imported by Home
+Manager. It adds five persistent workspaces, a clock/calendar, native resource
+and connectivity modules, useful click actions and an optional host-enabled
+battery indicator. Service failure counts use a 30-second check because the
+pinned native failed-units module can retain stale state after recovery. Its
+helper returns empty text on the healthy running system. GTK accepts the CSS;
+Waybar rendered at 1366, 1920 and 3840 pixel widths in an isolated headless Sway
+preview, querying the running Hyprland only for workspace/title data. The preview
+omitted a second tray host. It did not replace the live bar or activate a system.
+The redesigned bar still requires staging and a manual reboot. Use Git status
+and origin/master to verify the current publication state.
+
+The update timer is enabled for 21:00 Asia/Colombo plus up to five minutes of
+jitter; at this check its next run is 2026-10-04 21:03:53. Updates build, verify,
+publish and stage for a manual reboot, without live switch or automatic reboot.
+Daily GC is 22:00; Sunday optimisation is 22:30 with timer jitter.
+
+Previous CPU recovery boot, checked 2026-10-04: **generation 12**, boot ID
 `38a4c9bd-e126-43bc-8058-29fc878d2f19` (started 13:28:49 Asia/Colombo), with system path
 `/nix/store/r5ycb7kq8nhd7hgzh2h9k9g3yzzb15gc-nixos-system-dhilipsiva-desktop-26.05.20261002.774debe`.
 Both the selected EFI entry and system profile identify generation 12. Hyprland
@@ -57,9 +83,9 @@ The repository now enables the shared NixOS `programs.nm-applet` service with
 its Waybar-compatible indicator and adds a network-click editor shortcut. The
 agent opened `nm-connection-editor` for the existing desktop profile; the owner
 must enter the password locally and choose system storage/all users for connection
-before login. No network name or password is declared in Nix. Saving the profile,
-activating the applet and verifying automatic connection after reboot remain
-pending. After the owner's first edit, permissions are empty (all users) and
+before login. No network name or password is declared in Nix. The applet is now
+active in generation 13; saving a system password and verifying automatic
+connection before login remain pending. After the owner's first edit, permissions are empty (all users) and
 autoconnect remains enabled, but psk-flags is still 1 and no system PSK is
 retrievable. The owner was asked to select **Store the password for all users**
 inside the password field and save again. The current Wi-Fi connection was not
@@ -327,7 +353,7 @@ and recovery-root check passed at cleanup time. The root-only accepted receipt
 was not read independently. Earlier observations of inactive timers' service
 conditions predate cleanup and do not establish the current gate state.
 
-Next: finish Wi-Fi password persistence and the applet rollout in
+Next: finish Wi-Fi password persistence and the improved status bar rollout in
 [DEPLOYMENT.md](DEPLOYMENT.md). CPU recovery, running/staged comparison and initial
 cleanup are complete. The owner has accepted the deployment; individual physical
 checks such as real Ollama inference, screen-off timing, UPS and conferencing

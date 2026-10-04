@@ -1,10 +1,10 @@
 # Remaining desktop deployment
 
 Run commands from `/home/dhilipsiva/projects/dhilipsiva/NixOS` as dhilipsiva.
-Generation **12** is running, confirmed on 2026-10-04. Its system path matches
-both the system profile and the owner's staged receipt for `d4b1b8a`:
-`/nix/store/r5ycb7kq8nhd7hgzh2h9k9g3yzzb15gc-nixos-system-dhilipsiva-desktop-26.05.20261002.774debe`.
-Generation 12 is also the default boot entry. All **16 CPU cores / 32 threads**
+Generation **13** is running, confirmed on 2026-10-04. Its system path matches
+the published `7c8c77d` build:
+`/nix/store/1xs9pw9qyzcq5ym0vasmgxg0j9b7raqf-nixos-system-dhilipsiva-desktop-26.05.20261002.774debe`.
+The NetworkManager applet is active. All **16 CPU cores / 32 threads**
 are online, with SMT and frequency boost enabled. The reduced-effects profile is
 active; HDMI-A-1 remains at 3840×2160/60 Hz, 8-bit SDR. NVIDIA is working, Secure
 Boot is enabled and system/user failed-unit lists are empty.
@@ -17,20 +17,17 @@ history and the limits of independent physical verification are in
 [SESSION.md](SESSION.md).
 
 The Qualcomm Wi-Fi adapter is detected again after the owner's motherboard power
-drain. **Automatic connection still needs fixing:** the existing profile has
-autoconnect enabled but an agent-owned password, and this boot logged `No agents
-were available for this request`. The repository now adds the NetworkManager
-applet to Hyprland and makes Waybar's network indicator open the connection editor;
-those changes are not yet active in generation 12.
+drain. **Automatic connection before login still needs verification:** the existing
+profile has autoconnect enabled but an agent-owned password. Generation 12 logged
+`No agents were available for this request`; generation 13 now supplies that agent.
+The repository's redesigned status bar is the next change to activate.
 
 ## 1. Save the existing Wi-Fi password for connection before login
 
-The agent opened the editor for the existing desktop connection. To reopen it
-before activating the new configuration:
+Open the editor for the existing desktop connection:
 
 ```bash
-nix shell .#nixosConfigurations.desktop.pkgs.networkmanagerapplet --command \
-  nm-connection-editor --edit=9fe1ee6e-79f3-4b1c-b14c-70a2837dcba4
+nm-connection-editor --edit=9fe1ee6e-79f3-4b1c-b14c-70a2837dcba4
 ```
 
 Autoconnect and **All users may connect to this network** are already enabled.
@@ -54,7 +51,7 @@ Expected: autoconnect `yes`, empty permissions (`--`), and password flags
 be saved too; flags alone cannot prove it. See the
 [NetworkManager secret flags reference](https://networkmanager.dev/docs/api/latest/secrets-flags.html).
 
-## 2. Activate the published desktop network integration
+## 2. Activate the improved status bar
 
 After the repository checks and publication succeed:
 
@@ -62,19 +59,21 @@ After the repository checks and publication succeed:
 scripts/nixosctl stage --host desktop
 ```
 
-Reboot manually when ready. The new generation should run `nm-applet --indicator`
-with the Hyprland session, using Waybar's tray. Clicking Waybar's network text
-opens the editor. Verify after boot:
+Reboot manually when ready. The new bottom bar has five workspace buttons,
+a clock/calendar, CPU/RAM/storage readings, network/audio controls, service
+warnings, the existing tray and a lock button. Verify after boot:
 
 ```bash
 nmcli -t -f DEVICE,TYPE,STATE device status
-systemctl --user status nm-applet.service
+systemctl --user status waybar.service
 systemctl --failed
 systemctl --user --failed
 ```
 
 Confirm Wi-Fi connected without entering its password or manually activating the
 connection. That startup test remains necessary even after the profile is saved.
+Check the bar's launcher, workspace buttons, network/audio settings and lock
+control. Layout previews and successful builds do not verify clicks on this boot.
 The existing update/GC acceptance gate has passed; no repeat cleanup is needed.
 
 For recovery, select **NixOS (protected pre-migration recovery)**. The legacy
