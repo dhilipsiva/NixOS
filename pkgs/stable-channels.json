@@ -101,7 +101,7 @@
   },
   "uv": {
     "source": "https://api.github.com/repos/astral-sh/uv/releases/latest",
-    "version": "0.12.22"
+    "version": "0.12.23"
   },
   "uwsm": {
     "source": "https://api.github.com/repos/Vladimir-csp/uwsm/tags?per_page=100",

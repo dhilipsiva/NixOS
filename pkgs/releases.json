@@ -20,8 +20,8 @@
     "hash": "sha256-xhmYFubYQiiYaanoSgUEKvbg3miVnfehXnJzhzuG3DY="
   },
   "uv": {
-    "version": "0.12.22",
-    "hash": "sha256:a50fd68c653b0cfb1c85e0a7db62cb78cf5c22b6f3dcf3ae173e5f222d084470"
+    "version": "0.12.23",
+    "hash": "sha256:1cff8783850e794470aadb73f54b749542a511fc57b0ce6468b64bd3852e0ade"
   },
   "linux": {
     "version": "7.2.9",
@@ -29,8 +29,8 @@
   },
   "intel-npu-compiler": {
     "version": "1.38.0",
-    "url": "https://github.com/intel/linux-npu-driver/releases/download/v1.38.0/linux-npu-driver-v1.38.0.20260910-34487311128-ubuntu2404.tar.gz",
-    "hash": "sha256:1efcd4b60c22abee751d8f2705962cbcc2a569de45c7e0e670cf08afbfcdc1d2"
+    "hash": "sha256:1efcd4b60c22abee751d8f2705962cbcc2a569de45c7e0e670cf08afbfcdc1d2",
+    "url": "https://github.com/intel/linux-npu-driver/releases/download/v1.38.0/linux-npu-driver-v1.38.0.20260910-34487311128-ubuntu2404.tar.gz"
   },
   "openvino-npu": {
     "version": "2026.4.1",
