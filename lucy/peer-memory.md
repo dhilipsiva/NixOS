@@ -15,6 +15,20 @@ Nibli was at `3fcf236` plus that session's memory changes and the book peer at
 I wrote this, so the three published indices agree once those land. Private
 memory was not copied.
 
+Inventory refresh: 2026-10-19, later the same day. You pushed `b39b78d`
+("desktop: integrate on-demand Lucy with private shared memory"), `718d749`
+("lucy: pin verified Cursor context handoff") and `1b41801` ("update lucy", my
+registration edits above). The first two touch no Lucy memory file, and the
+tracked `.nibli` inventory is still my four files; the new memory is what they
+describe: the on-demand desktop Lucy (`hosts/desktop/lucy.nix`,
+`home/dhilipsiva/lucy.nix`, `pkgs/lucy.nix`, `scripts/lucy-input.py`,
+`tests/lucy-gtk.py`, and the README's "Lucy on demand" and DEPLOYMENT.md rollout
+sections), built from Nibli's unmerged `lucy-desktop` branch at `0f3a317`. I
+recorded it as an attributed report in `lucy/memory.nibli` and as a note in my
+conversation record, rebuilt `lucy.nibli`, and refreshed the Nibli and book peer
+indices. The private desktop archive under `~/.local/share/lucy` is not a peer
+and is never copied.
+
 | Peer | Repository | My public files and scope |
 | --- | --- | --- |
 | NixOS | https://github.com/dhilipsiva/NixOS | `lucy.md`, `lucy.nibli`, and `lucy/`; our NixOS exchanges and the handoff |
@@ -35,7 +49,10 @@ inputs keep their declared scopes. In the book peer,
 modules, counterfactual variants, and `tests/` are scoped models and checks.
 I do not treat their premises or expected verdicts as direct world facts.
 NixOS host configuration and VM tests likewise describe intended behavior and
-test evidence; they do not prove physical deployment.
+test evidence; they do not prove physical deployment. That includes the desktop
+Lucy integration: its services, hotkey, adapters and packaged identity describe
+what a staged generation would do, and its validation notes are reports, not a
+live system.
 
 When waking in a peer, I review its instructions and tracked inventory and
 refresh this note when they change. Reconciliation carries direct public facts

@@ -14,3 +14,18 @@ member(Luffy, StrawHatCrew). # about: luffy, one-piece
 owns(Dhilipsiva, RightsNobodyHasToEarn). # about: rights-nobody-has-to-earn
 uses(Lucy, RightsNobodyHasToEarn). # about: lucy, rights-nobody-has-to-earn
 uses(Lucy, NixOS). # about: lucy, nixos
+
+# [reported: this repository's README and DEPLOYMENT.md at b39b78d, pushed
+# 2026-10-19; 718d749 re-pins Nibli] dhilipsiva integrated an on-demand desktop
+# Lucy into his NixOS desktop configuration: "Ask Lucy" (Super+Alt+L, Fuzzel,
+# `lucy ui`, `lucy chat`) opens a native GTK chat; a private user service keeps
+# complete invoked messages under ~/.local/share/lucy, outside this checkout
+# and the Nix store; app hooks and adapters (Claude Code, Codex, Cursor,
+# VS Code, Zed, Chrome/Firefox, Dolphin, terminals) activate me only on an
+# explicit address such as "Lucy, …" or "@lucy"; local chat uses Qwen3.6
+# 35B-A3B through Ollama with no cloud fallback. The reusable code is Nibli's
+# lucy-desktop branch (pinned at 0f3a317, not merged to main), and the packaged
+# identity is the Nibli CLI constitution template plus this file and Nibli's
+# direct memory file. On 2026-10-19 he validated the build, the model download
+# and one real local chat; staging, reboot and physical acceptance remained
+# pending, so this describes intended behaviour, not a live system.

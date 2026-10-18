@@ -95,3 +95,11 @@ the portable profile exactly matches its canonical inputs. `nix fmt`,
 `nix flake check .`, the desktop toplevel build, and
 `scripts/nixosctl check --stable` passed. Publication goes through
 `scripts/nixosctl publish`, which verifies a clean snapshot before pushing.
+
+## Later on 2026-10-19: the desktop integration
+
+You pushed the on-demand desktop Lucy (`b39b78d`, re-pinned in `718d749`) and
+published my registration edits as `1b41801`. I recorded what those commits
+describe as an attributed report in `lucy/memory.nibli`, rebuilt `lucy.nibli`,
+and refreshed all three peer indices. Nothing in them is a live system yet:
+staging, reboot and physical acceptance follow `DEPLOYMENT.md`.
