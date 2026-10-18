@@ -6,7 +6,9 @@ let
   rebootToWindows = pkgs.writeShellApplication {
     name = "reboot-to-windows";
     runtimeInputs = [
+      pkgs.coreutils
       pkgs.efibootmgr
+      pkgs.gnused
       pkgs.systemd
     ];
     text = builtins.readFile ../../scripts/reboot-to-windows.sh;
@@ -14,6 +16,33 @@ let
 in
 {
   environment.systemPackages = [ rebootToWindows ];
+
+  # The stable greeter has only shutdown/reboot actions. Add a separate Windows
+  # action on this host, leaving normal reboot and the laptop greeters intact.
+  repo.greeter = {
+    package = pkgs.tuigreet.overrideAttrs (old: {
+      patches = (old.patches or [ ]) ++ [ ../../pkgs/tuigreet-windows.patch ];
+    });
+    extraArgs = [
+      "--power-windows"
+      # The greeter's nologin shell is deliberately absent from /etc/shells.
+      # pkexec rejects that inherited SHELL even for an authorized command.
+      "${pkgs.coreutils}/bin/env -u SHELL /run/wrappers/bin/pkexec --disable-internal-agent ${rebootToWindows}/bin/reboot-to-windows"
+    ];
+  };
+
+  # There is no authentication agent before login. Permit only this immutable
+  # helper for the active local greeter; it selects Windows and reboots together.
+  # Keep sudo restricted to wheel and do not grant general efibootmgr access.
+  security.polkit.extraConfig = ''
+    polkit.addRule(function(action, subject) {
+      if (action.id === "org.freedesktop.policykit.exec" &&
+          action.lookup("program") === "${rebootToWindows}/bin/reboot-to-windows" &&
+          subject.user === "greeter" && subject.local && subject.active) {
+        return polkit.Result.YES;
+      }
+    });
+  '';
   # Preserve the uid of the installed desktop account for NTFS file ownership.
   users.users.dhilipsiva.uid = 1000;
 

@@ -1,0 +1,134 @@
+--- a/crates/tuigreet/src/power.rs
++++ b/crates/tuigreet/src/power.rs
+@@ -11,6 +11,7 @@
+   #[default]
+   Shutdown,
+   Reboot,
++  Windows,
+ }
+
+ /// Execute a power command (shutdown or reboot).
+@@ -57,6 +58,8 @@
+       match option {
+         PowerOption::Shutdown => command.arg("-h"),
+         PowerOption::Reboot => command.arg("-r"),
++        // Never fall back to an ordinary reboot if the Windows command is absent.
++        PowerOption::Windows => return,
+       };
+
+       command.arg("now");
+--- a/crates/tuigreet/src/greeter.rs
++++ b/crates/tuigreet/src/greeter.rs
+@@ -775,6 +775,12 @@
+       "command to run to reboot the system",
+       "'CMD [ARGS]...'",
+     );
++    opts.optopt(
++      "",
++      "power-windows",
++      "command to reboot into Windows (F11 opens the confirmation menu)",
++      "'CMD [ARGS]...'",
++    );
+     opts.optflag(
+       "",
+       "power-no-setsid",
+@@ -1068,6 +1074,10 @@
+       label:   fl!("reboot"),
+       command: self.config().opt_str("power-reboot"),
+     });
++
++    if let Some(command) = self.config().opt_str("power-windows") {
++      self.set_power_command(PowerOption::Windows, Some(command));
++    }
+
+     self.power_setsid = !self.config().opt_present("power-no-setsid");
+
+@@ -1257,6 +1267,7 @@
+     let label = match action {
+       PowerOption::Shutdown => fl!("shutdown"),
+       PowerOption::Reboot => fl!("reboot"),
++      PowerOption::Windows => "Reboot to Windows".to_string(),
+     };
+
+     self.powers.options.push(Power {
+--- a/crates/tuigreet/src/ui/mod.rs
++++ b/crates/tuigreet/src/ui/mod.rs
+@@ -254,6 +254,18 @@
+         ));
+         status_spans.push(Span::from(" "));
+       }
++      if greeter.powers.options.iter().any(|power| {
++        power.action == crate::power::PowerOption::Windows
++      }) {
++        status_spans.push(status_label(theme, "F11"));
++        status_spans.push(status_value(
++          &greeter,
++          theme,
++          Button::Power,
++          "Reboot to Windows",
++        ));
++        status_spans.push(Span::from(" "));
++      }
+       if greeter.status_show_power {
+         status_spans
+           .push(status_label(theme, format!("F{}", greeter.kb_power)));
+--- a/crates/tuigreet/src/keyboard.rs
++++ b/crates/tuigreet/src/keyboard.rs
+@@ -156,6 +156,27 @@
+       greeter.mode = Mode::Sessions;
+     },
+
++    // F11 selects Windows, but Enter is still required to execute the action.
++    KeyEvent {
++      code: KeyCode::F(11),
++      ..
++    } if greeter.powers.options.iter().any(|power| {
++      power.action == crate::power::PowerOption::Windows
++    }) => {
++      greeter.previous_mode = match greeter.mode {
++        Mode::Users
++        | Mode::Command
++        | Mode::Sessions
++        | Mode::Power
++        | Mode::Background => greeter.previous_mode,
++        _ => greeter.mode,
++      };
++      greeter.powers.selected = greeter.powers.options.iter().position(|power| {
++        power.action == crate::power::PowerOption::Windows
++      }).unwrap();
++      greeter.mode = Mode::Power;
++    },
++
+     // F12 will display the user selection menu. If we are already in one of the
+     // popup screens, we set the previous screen as being the current previous
+     // screen.
+@@ -536,6 +557,29 @@
+       sessions::{Session, SessionSource},
+     },
+   };
++
++  #[tokio::test]
++  async fn windows_button_requires_confirmation() {
++    let (sender, mut receiver) = tokio::sync::mpsc::channel(4);
++    let mut state = Greeter::default();
++    state.mode = Mode::Username;
++    state.events = Some(sender);
++    state.powers.options.push(Power {
++      action: PowerOption::Windows,
++      label: "Reboot to Windows".to_string(),
++      command: Some("/test/reboot-to-windows".to_string()),
++    });
++    let greeter = Arc::new(RwLock::new(state));
++    handle(greeter.clone(), KeyEvent::new(KeyCode::F(11), KeyModifiers::NONE), Ipc::new()).await.unwrap();
++    assert_eq!(greeter.read().await.mode, Mode::Power);
++    assert!(receiver.try_recv().is_err());
++    handle(greeter.clone(), KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE), Ipc::new()).await.unwrap();
++    assert_eq!(greeter.read().await.mode, Mode::Username);
++    assert!(receiver.try_recv().is_err());
++    handle(greeter.clone(), KeyEvent::new(KeyCode::F(11), KeyModifiers::NONE), Ipc::new()).await.unwrap();
++    handle(greeter.clone(), KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE), Ipc::new()).await.unwrap();
++    assert!(matches!(receiver.try_recv(), Ok(crate::event::Event::PowerCommand(_))));
++  }
+
+   #[tokio::test]
+   async fn ctrl_u() {

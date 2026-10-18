@@ -239,6 +239,13 @@ Boot Manager entry (polkit prompt) and reboots; the permanent boot order stays o
 NixOS, so the next restart from Windows returns here. If NTFS refuses to
 mount after hibernation, fully shut Windows down first; never force a write mount.
 
+On the desktop login screen, **F11 Reboot to Windows** opens the power menu
+with **Reboot to Windows** selected. Press **Enter** to reboot, or **Esc** to
+cancel. The same action is available under **F12 Power** alongside normal reboot
+and shutdown. It works before login without a password; permission is limited to
+the active local greeter running this fixed helper. The laptop greeters are
+unchanged. `reboot-to-windows --help` displays command usage without rebooting.
+
 ## Build and deployment
 
 ```bash

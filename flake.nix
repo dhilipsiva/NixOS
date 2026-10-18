@@ -408,6 +408,7 @@
               python3 ${./tests/test-nixosctl.py} ${./scripts}
               python3 ${./tests/test-deployment.py} ${./scripts}
               python3 ${./tests/test-secret-encryption.py} ${./scripts}
+              python3 ${./tests/test-reboot-to-windows.py} ${./scripts/reboot-to-windows.sh}
               python3 ${./scripts/check-secrets.py} ${./.}
               touch "$out"
             '';

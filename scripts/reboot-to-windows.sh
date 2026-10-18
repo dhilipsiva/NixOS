@@ -6,6 +6,15 @@
 # `reboot-to-windows` with efibootmgr and systemd on PATH; run from the
 # checkout, it fetches efibootmgr through the system's pinned nixpkgs registry.
 set -euo pipefail
+if [ "$#" -gt 0 ]; then
+  if [ "$#" -eq 1 ] && { [ "$1" = "--help" ] || [ "$1" = "-h" ]; }; then
+    echo "Usage: reboot-to-windows"
+    echo "Reboot once into Windows Boot Manager, preserving the permanent boot order."
+    exit 0
+  fi
+  echo "Usage: reboot-to-windows (no arguments)" >&2
+  exit 2
+fi
 if ! command -v efibootmgr > /dev/null 2>&1; then
   if [ -n "${REBOOT_TO_WINDOWS_BOOTSTRAPPED:-}" ]; then
     echo "efibootmgr is still missing after nix shell; install the generation that packages reboot-to-windows." >&2

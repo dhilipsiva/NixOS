@@ -111,5 +111,24 @@ pkgs.testers.runNixOSTest {
     machine.send_chars("test\n")
     machine.send_chars("touch /tmp/login-ok\n")
     machine.wait_for_file("/tmp/login-ok")
+
+    # Return to the actual pre-login greeter and exercise the Windows button.
+    # This BIOS VM has no EFI variables, so the real helper must fail without
+    # rebooting. pkexec's audit record proves the local greeter was authorized.
+    machine.succeed("test ! -d /sys/firmware/efi/efivars")
+    machine.succeed("loginctl terminate-user dhilipsiva")
+    machine.send_key("ctrl-alt-f1")
+    machine.wait_until_tty_matches("1", "F11.*Reboot to Windows")
+    machine.send_key("f11")
+    machine.wait_until_tty_matches("1", "Power options")
+    machine.screenshot("windows-power-menu")
+    machine.send_key("esc")
+    machine.send_key("f11")
+    machine.send_key("ret")
+    machine.wait_until_succeeds(
+        "journalctl -t pkexec --no-pager | grep -E 'Executing command.*USER=root.*COMMAND=.*reboot-to-windows'"
+    )
+    machine.wait_until_tty_matches("1", "exit status")
+    machine.succeed("systemctl is-active greetd")
   '';
 }
