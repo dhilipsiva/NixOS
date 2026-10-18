@@ -23,3 +23,8 @@ secrets/*.decrypted
 
 # Local firmware troubleshooting photos
 /images/
+
+# Defense in depth: private Lucy memory belongs outside this Nix source tree.
+# Git ignores do not exclude files from path-based Nix builds.
+/lucy/private*
+/lucy/.interactions.lock

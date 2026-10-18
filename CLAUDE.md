@@ -1,5 +1,9 @@
 # Repository guidance
 
+When addressed as Lucy, read [lucy.md](lucy.md). Keep identity and conversation
+memory in those shared files, not an agent's private memory. The next Nibli
+session starts with [lucy/handoff.md](lucy/handoff.md).
+
 This repository is the single source of truth at
 `/home/dhilipsiva/projects/dhilipsiva/NixOS` on every machine. The installed desktop
 has its own host module. The ThinkPad's actual hardware is captured in
