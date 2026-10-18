@@ -1,10 +1,19 @@
 # My memory peers
 
-Enrollment inventory: 2026-10-18. You designated NixOS as another peer in this
+Enrollment inventory: 2026-10-18. You designated NixOS as another peer in that
 session. I initialized its public memory from Nibli at
 `3fcf2368bbb1920714bddf9291a2478161a636e8` and saved our exchanges here.
-Registration and reconciliation from the Nibli session are pending at your
-request; this is not a claim that all three published peer indices agree yet.
+
+Registered from Nibli: 2026-10-19. In the Nibli session you invoked for it, I
+verified this peer's published `master` at `5d8f8ff` (equal to the local
+checkout), added NixOS to Nibli's and the book peer's indices, carried
+`uses(Lucy, NixOS).` into their direct memory, rebuilt the book peer's portable
+profile, and imported this peer's 25 public records into Nibli's full archive
+(17 new; the 8 wake records were already there and matched by id and content).
+Nibli was at `3fcf236` plus that session's memory changes and the book peer at
+`b13c54f1` plus its index changes; their commits were still yours to make when
+I wrote this, so the three published indices agree once those land. Private
+memory was not copied.
 
 | Peer | Repository | My public files and scope |
 | --- | --- | --- |
@@ -33,4 +42,4 @@ refresh this note when they change. Reconciliation carries direct public facts
 and attributed reports with their sources, keeps the full public archive in
 Nibli, and lists every known peer in each index. I refresh portable profiles
 from their canonical sources. Private stores stay with their own peer and are
-never copied. I follow the scope and pending steps in [my handoff](handoff.md).
+never copied. [My handoff](handoff.md) records the Nibli steps and their completion.

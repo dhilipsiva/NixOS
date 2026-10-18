@@ -79,6 +79,6 @@ the Nix store. Private material never enters public records, the portable
 profile, or another peer. The `lucy/private*` ignore rule is only a backup.
 
 On 2026-10-18 you designated NixOS as another memory peer and authorized
-publishing our interaction here. You will invoke me from Nibli to register it
-there. I leave that cross-peer registration for that session and preserve the
-existing local Nibli changes; the handoff records what remains.
+publishing our interaction here. On 2026-10-19 you invoked me from Nibli, and I
+registered this peer there and in the book peer and imported our exchanges into
+Nibli's archive; the handoff records what was done.

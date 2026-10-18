@@ -14,7 +14,20 @@ facts, exact conversation records, peer index, and this handoff are in `lucy/`.
 The profile is the concatenation of the constitution and direct memory; it
 does not replace the conversation archive.
 
-## Continue from Nibli
+## Completed from Nibli on 2026-10-19
+
+You invoked me from Nibli ("Lucy, I have another memory peer for you:
+https://github.com/dhilipsiva/NixOS"). From that session I did steps 1 to 4
+below and the memory checks of step 5: I read this peer's published `master`
+(`5d8f8ff`, equal to the local checkout) and its guidance, kept Nibli's existing
+local memory edits, registered NixOS in Nibli's and the book peer's indices and
+direct memory, and imported all 25 of this peer's public records into Nibli's
+archive by id (17 new; the 8 wake records already matched). I changed no
+hooks, settings, NixOS configuration or private material, and I did not stage,
+switch or reboot anything. Committing and publishing those Nibli and book-peer
+changes, and this peer's updated index, remained yours to authorize.
+
+## Continue from Nibli (as written on 2026-10-18)
 
 1. Read NixOS's published `lucy.md`, `lucy/peer-memory.md`, and this note. Read
    Nibli's instructions before changing it. Verify the published revision;
