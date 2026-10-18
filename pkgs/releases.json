@@ -1,31 +1,31 @@
 {
   "atuin": {
-    "version": "18.23.0",
-    "hash": "sha256:d1b40dd6e7cd3d823867ffe22b39a025bc420f7875926ae9ca974155378da14d"
+    "version": "18.24.1",
+    "hash": "sha256:fe03f652d6545a9d8795b3c2abb84bcddfe831e4b7effb0c2d191a0d70e498a0"
   },
   "herdr": {
-    "version": "0.9.3",
-    "hash": "sha256:18a8dc65f1c2fa485884344356dea1cfd911c6f06cf46fa78e193f4087f4dba7"
+    "version": "0.9.5",
+    "hash": "sha256:14d9e8bc8b4a9e0118d77c32266f76d461f09b40342eb23752960bd89f59929d"
   },
   "ollama": {
-    "version": "0.35.1",
-    "hash": "sha256:9fcd79ac4575b2bd31b992eee18b1000c8ad126b451627c8f8cd091714cfbb10"
+    "version": "0.40.6",
+    "hash": "sha256:c164ab8b1b28e2a247c29719b8e404c423c5b83ae64c3ab4e59d50c7ff7fc5e0"
   },
   "python": {
-    "version": "3.14.8",
-    "hash": "sha256-wiFZBPArF1WW3Ek1FYUQT0vCA0HhxHN4smosJ0NgznM="
+    "version": "3.15.0",
+    "hash": "sha256-ukvtG6NGuRaJC3bZ4yBFFCCqafZAiZfTPGZILurj1XU="
   },
   "slack": {
-    "version": "4.52.171",
-    "hash": "sha256-xhmYFubYQiiYaanoSgUEKvbg3miVnfehXnJzhzuG3DY="
+    "version": "4.52.178",
+    "hash": "sha256-HxEO/ut9gukn+iCc12cnjyek3cf+1KYMI/vEqzdOHTo="
   },
   "uv": {
-    "version": "0.12.23",
-    "hash": "sha256:1cff8783850e794470aadb73f54b749542a511fc57b0ce6468b64bd3852e0ade"
+    "version": "0.13.1",
+    "hash": "sha256:6c86040a8f045ab9adc9e3ec4cdafa03fd00e9a988ed2bf28971c7fc2d0debd0"
   },
   "linux": {
-    "version": "7.2.9",
-    "hash": "sha256:b4c5dfbe51a364a6c7f03869200f88c8e1f77403539005f14b7fc6bc91b8d8ba"
+    "version": "7.2.11",
+    "hash": "sha256:fd0fc479f983a8c05313f13e9c36330fe6651cf725396748c40d5cd93fa1e6a4"
   },
   "intel-npu-compiler": {
     "version": "1.38.0",
