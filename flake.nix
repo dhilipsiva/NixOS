@@ -290,6 +290,21 @@
         };
 
       checks.${system} = {
+        lucy-vscode =
+          let
+            lucy = self.packages.${system}.lucy;
+          in
+          pkgs.runCommand "lucy-vscode-install-check" { nativeBuildInputs = [ desktop.pkgs.vscode ]; } ''
+            # Enrollment also runs on later logins; an existing install must work.
+            for attempt in 1 2; do
+              code --user-data-dir "$TMPDIR/user-data" --extensions-dir "$TMPDIR/extensions" \
+                --install-extension ${lucy.vsix}
+            done
+            code --user-data-dir "$TMPDIR/user-data" --extensions-dir "$TMPDIR/extensions" \
+              --list-extensions | grep -Fx nibli.lucy
+            test -w "$TMPDIR/extensions/nibli.lucy-1.0.0/package.json"
+            touch "$out"
+          '';
         lucy-gtk =
           let
             lucy = self.packages.${system}.lucy;

@@ -42,6 +42,9 @@ let
   vsix = pkgs.runCommand "lucy-vscode-1.0.0.vsix" { nativeBuildInputs = [ pkgs.zip ]; } ''
     mkdir extension
     cp ${nibli}/lucy-cli/desktop/adapters/vscode/* extension/
+    # Store sources are read-only; VS Code updates package.json metadata after
+    # extracting a VSIX and preserves the file modes recorded in the archive.
+    chmod u+w extension/*
     cat > extension.vsixmanifest <<'EOF'
     <?xml version="1.0" encoding="utf-8"?>
     <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011">

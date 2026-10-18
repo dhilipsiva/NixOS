@@ -1,10 +1,11 @@
-# Remaining desktop deployment
+# Desktop deployment and acceptance
 
 Run commands from `/home/dhilipsiva/projects/dhilipsiva/NixOS` as dhilipsiva.
-Generation **15** is running: the published `44d446b` modernisation (systemd
-initrd, userborn, sudo-rs, Nix 2.35, nftables with systemd-resolved, rootless
-Docker, compositor scale 1.5 and the rest listed in README.md). The owner
-confirmed the scaling; the post-boot checks in section 2 still apply to it.
+Generation **24** was confirmed running on 2026-10-19 after the owner staged
+and rebooted. `/run/current-system` and the system profile both resolved to
+`/nix/store/fv7isyq743h3b9v07ifr47a7lv678zq2-nixos-system-dhilipsiva-desktop-26.05.20261015.26f4107`.
+The post-boot checks below still distinguish observed behavior from pending
+physical acceptance.
 
 ## Lucy desktop integration rollout
 
@@ -49,8 +50,29 @@ post-boot enrollment remain separate acceptance steps. The isolated backend test
 needs access to Ollama's service-owned model directory; the current user cannot
 read it and has no cached sudo authorization.
 
+Post-boot validation on 2026-10-19: Hyprland reported DP-1 at 3840×2160,
+239.996 Hz, scale 1.5, XBGR2101010, with hardware cursors. No system units
+were failed. Lucy's user service had exited on SIGTERM; restarting it restored
+the private socket. A native Wayland file-handoff window then opened and closed
+successfully, issuing only `open` and `close`, without memory loading or inference.
+The earlier Dolphin launch failures occurred while the socket was unavailable.
 
-## 1. Stage the DisplayPort display policy
+Adapter enrollment exposed a VSIX packaging bug: files copied from the Nix
+store retained read-only modes, preventing VS Code from updating the extracted
+manifest. The package now makes those archive entries owner-writable, and a
+flake check installs the extension twice in an isolated profile. The corrected
+extension installed in the real account; retrying the boot generation's old
+enrollment then failed again, and VS Code requested a restart before repair
+could finish. A temporary user-unit override at
+`$XDG_RUNTIME_DIR/systemd/user/lucy-adapters.service.d/90-vsix-repair.conf`
+selects the verified fixed package for this login. After saving work and
+restarting VS Code, retry `systemctl --user restart lucy-adapters.service`.
+The permanent fix follows normal publication and staging; the temporary
+override disappears on reboot. App trust and physical input acceptance remain
+pending.
+
+
+## 1. DisplayPort display policy and recovery history
 
 The monitor moved from HDMI to DisplayPort on 2026-10-04. The checkout now
 targets `DP-1` at 3840x2160@240 with 10-bit colour, adaptive sync in fullscreen
