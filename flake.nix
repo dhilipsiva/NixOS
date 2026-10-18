@@ -4,7 +4,7 @@
   inputs = {
     # Reusable Lucy code belongs to Nibli; never copy private runtime data here.
     nibli = {
-      url = "github:dhilipsiva/nibli/a11eae703f750b2ebfd62cc89c18d3aa2d9acc11";
+      url = "github:dhilipsiva/nibli/0f3a3179c44d449ec0020415e98ec534d9cfd0d1";
       flake = false;
     };
     # Keep NixOS and Home Manager on the newest released stable series together.
