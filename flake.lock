@@ -78,6 +78,23 @@
         "type": "github"
       }
     },
+    "nibli": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1792352939,
+        "narHash": "sha256-3BQ8777gzFGsVPWfxGqCDD7C4BOi1+yxf9tDVQlKXz4=",
+        "owner": "dhilipsiva",
+        "repo": "nibli",
+        "rev": "a11eae703f750b2ebfd62cc89c18d3aa2d9acc11",
+        "type": "github"
+      },
+      "original": {
+        "owner": "dhilipsiva",
+        "repo": "nibli",
+        "rev": "a11eae703f750b2ebfd62cc89c18d3aa2d9acc11",
+        "type": "github"
+      }
+    },
     "nix-index-database": {
       "inputs": {
         "nixpkgs": [
@@ -177,6 +194,7 @@
       "inputs": {
         "home-manager": "home-manager",
         "lanzaboote": "lanzaboote",
+        "nibli": "nibli",
         "nix-index-database": "nix-index-database",
         "nixos-hardware": "nixos-hardware",
         "nixpkgs": "nixpkgs",

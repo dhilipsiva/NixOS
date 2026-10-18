@@ -176,6 +176,7 @@ Wi-Fi password agent and a tray menu.
 | Super+1…0 / Super+Shift+1…0 | Switch workspace / move window |
 | Super+H/J/K/L | Focus left/down/up/right |
 | Super+Ctrl+L | Lock |
+| Super+Alt+L | Ask Lucy (desktop only; opening does not start inference) |
 | Super+F / Super+Shift+Space | Fullscreen / floating window |
 | Super+V | Toggle split direction |
 | Super+Shift+Q / Super+Shift+E | Close window / log out |
@@ -221,6 +222,63 @@ and stops after the proxy has had no connections for five minutes.
 one parallel request, and reserves 2 GiB of GPU headroom. Models are downloaded
 explicitly with `ollama pull`; inspect with `ollama ps` and
 `systemctl status ollama-proxy.socket ollama-proxy.service ollama.service`.
+
+## Lucy on demand (desktop only)
+
+`lucy ui`, **Ask Lucy** in Fuzzel, and **Super+Alt+L** open a native GTK chat.
+Sending in that named chat or `lucy chat` invokes Lucy. Other apps require a
+leading address such as `Lucy, …`, `Hey Lucy`, `@lucy`, `/lucy`, or their named
+Lucy action. Ordinary prompts, quoted text and subject mentions such as
+“Lucy said” do not activate her. Activation belongs to one conversation;
+`Lucy, sleep`, closing it, signing out or restarting the service ends it.
+**Stop** cancels the current task and pending approvals.
+
+The reusable implementation is a revision-pinned Nibli input, not a second
+identity copied into this repository. The user service stores complete invoked
+messages privately under `~/.local/share/lucy` and uses a rebuildable text index
+for bounded recall. Private conversation data never belongs in this checkout or
+the Nix store. Existing public peer commands remain explicit. Invoked cloud apps
+receive relevant private excerpts, as selected; their models and permission
+controls remain theirs.
+
+Local chat uses Qwen3.6 35B-A3B Q4_K_M with a pinned manifest digest and 16K
+context. `lucy setup-model` explicitly downloads and verifies it. Inference does
+not download missing weights or fall back to a cloud model. Desktop Ollama has
+cloud features disabled, one model/request at a time, 2 GiB GPU headroom and
+unloading after requests. Build success does not establish physical GPU fit.
+
+At the first graphical login after staging, `lucy-adapters.service` enrolls
+adapters with additive settings merges and backups. Conflicting existing files
+are left for a manual merge. It does not approve app trust or change credentials.
+`lucy integrations install` retries enrollment; `lucy integrations status` prints
+the inventory generated from all user/system packages and desktop entries,
+including each adapter's recording limitations. The ThinkPad and Yoga do not
+enable this service or its input helper.
+
+| Interface | Invocation and recording |
+| --- | --- |
+| Claude Code / Codex | Prompt hooks supply memory; response hooks save final messages. Commentary requires explicit recording. Codex must trust the hooks in its own UI. |
+| Cursor | Prompt/response hooks; manually invoke `/lucy` to retrieve context because its submission hook cannot inject it. |
+| VS Code | Sticky `@lucy` participant uses the selected model; automatic participant detection is absent. |
+| Zed | Manual `/lucy` skill with autonomous invocation disabled. Responses and sleep require explicit commands because a reliable close/response hook is unavailable. |
+| Chrome / Firefox | Explicit selected-text/page handoff and memory-context preparation. Load the browser extension from the installed package's `share/lucy/browser-extension`; persistent Firefox installation requires signing. Web-chat transcripts require explicit import. |
+| Dolphin | “Ask Lucy about these files” service menu. |
+| Alacritty / Zellij / Helix | `lucy chat`, `lucy ui --files FILE…`, or explicit JSON handoff on stdin. |
+| Slack / Discord / Teams / Bruno / Arduino / Lutris / other utilities | Desktop shortcut and explicit task context; no background scraping or input monitoring. |
+
+`lucy memory recall --source APP --session ID --text TOPIC` and session-bound
+`lucy mcp --source APP --session ID` require an activated conversation. Complete
+messages can be imported explicitly with `lucy archive import < messages.json`;
+`lucy archive reindex` rebuilds search. See the packaged Nibli runtime README for
+the record schema and adapter contracts. Sources without stable event IDs cannot
+reliably distinguish duplicate deliveries from intentionally repeated prompts.
+
+File tools operate in the chosen workspace. Edits show a diff; commands run in an
+offline workspace sandbox after approval. App launches, window changes,
+screenshots and GUI input also show pending actions. Privileged diagnostics and
+the short-lived input helper additionally authenticate through polkit. GUI work
+stops when cancellation or a locked session is detected; coordinate scaling and
+physical mouse/keyboard behavior require attended acceptance after staging.
 
 ## Copying files from Windows
 

@@ -6,6 +6,50 @@ initrd, userborn, sudo-rs, Nix 2.35, nftables with systemd-resolved, rootless
 Docker, compositor scale 1.5 and the rest listed in README.md). The owner
 confirmed the scaling; the post-boot checks in section 2 still apply to it.
 
+## Lucy desktop integration rollout
+
+The Lucy integration is desktop-only. Publish the verified Nibli source revision,
+pin it in this flake, then publish this repository through `scripts/nixosctl
+publish`. Only after those checks succeed, run `scripts/nixosctl stage --host
+desktop`. Staging installs the next boot generation; it does not switch the live
+system. Reboot manually when ready.
+
+After boot, inspect `systemctl --user status lucy lucy-adapters` and
+`lucy integrations status`. The first service holds only session state until
+invocation; the second merges the adapter settings and installs the VS Code
+extension. It preserves existing models/credentials, writes backups, and refuses
+conflicts. Review Codex's hooks in Codex, grant VS Code's selected-model access,
+load the Chrome extension, and complete Firefox signing/trust as appropriate.
+These application steps are not established by a Nix build or the login VM.
+
+`lucy setup-model` explicitly downloads the pinned Qwen3.6 model and checks the
+manifest digest. Verify an actual local reply with `lucy chat`, use `ollama ps`
+and `nvidia-smi` to check fit and unloading, and test Stop during a long reply.
+Missing models, digest mismatches and GPU contention must produce visible local
+errors. No cloud fallback is configured.
+
+Physical acceptance still includes an attended screenshot/coordinate check at
+scale 1.5 and mouse/keyboard actions in a disposable window, followed by lock,
+cancel and close tests. Confirm the virtual input device disappears after each
+action and `lucy-input.service` is inactive. Root input starts only after polkit
+authentication and has a short maximum lifetime. Do not infer these results from
+the headless GTK or unit tests.
+
+Implementation validation on 2026-10-19: the pinned model downloaded and verified.
+On the RTX 5090, a real chat read a disposable file through the tool and returned
+its marker in 22.16 seconds. VRAM peaked at 24,723 MiB and returned to the
+1,159 MiB desktop baseline; Ollama reported no loaded model afterward. A separate
+cancellation during model startup returned immediately and left no loaded model.
+Hyprland reported DP-1 at 3840×2160, scale 1.5; a 100×100 logical-pixel capture
+produced a 150×150 image, which was then deleted. The native GTK window, private
+Unix-socket service, activation/privacy tests, Lucy's Nibli checks, desktop login
+VM and all-host stable builds passed. Full inference with the backend isolated
+from external networking, physical mouse/keyboard behavior, app trust, and
+post-boot enrollment remain separate acceptance steps. The isolated backend test
+needs access to Ollama's service-owned model directory; the current user cannot
+read it and has no cached sudo authorization.
+
+
 ## 1. Stage the DisplayPort display policy
 
 The monitor moved from HDMI to DisplayPort on 2026-10-04. The checkout now

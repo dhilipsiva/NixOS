@@ -10,6 +10,7 @@
     ./waybar.nix # shared status bar; optional laptop battery indicator
     ./services.nix # user timers (time notification)
     ./packages.nix # applications and developer tools
+    ./lucy.nix # enabled only by the desktop host
   ];
 
   home.username = "dhilipsiva";

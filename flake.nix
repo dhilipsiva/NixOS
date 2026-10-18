@@ -2,6 +2,11 @@
   description = "Dhilipsiva's NixOS hosts and shared Home Manager configuration";
 
   inputs = {
+    # Reusable Lucy code belongs to Nibli; never copy private runtime data here.
+    nibli = {
+      url = "github:dhilipsiva/nibli/a11eae703f750b2ebfd62cc89c18d3aa2d9acc11";
+      flake = false;
+    };
     # Keep NixOS and Home Manager on the newest released stable series together.
     # The maintenance updater advances both branches after an official release.
     nixpkgs.url = "github:nixos/nixpkgs/nixos-26.05";
@@ -219,6 +224,7 @@
       nixosModules.yoga-bootstrap = import ./hosts/yoga/bootstrap.nix;
 
       packages.${system} = {
+        lucy = desktop.config.home-manager.users.dhilipsiva.repo.lucy.package;
         nixosctl = pkgs.callPackage ./pkgs/nixosctl.nix { };
         npu-smoke = yoga.pkgs.npu-smoke;
         ollama-vulkan = yoga.pkgs.ollama-vulkan;
@@ -284,6 +290,44 @@
         };
 
       checks.${system} = {
+        lucy-gtk =
+          let
+            lucy = self.packages.${system}.lucy;
+          in
+          pkgs.runCommand "lucy-gtk-check"
+            {
+              nativeBuildInputs = [
+                pkgs.xvfb-run
+                pkgs.dbus
+              ];
+              GI_TYPELIB_PATH = lucy.gtkTypelibs;
+              PYTHONPATH = "${inputs.nibli}/lucy-cli/desktop";
+            }
+            ''
+              export HOME="$TMPDIR/home"
+              mkdir -p "$HOME"
+              export XDG_RUNTIME_DIR="$TMPDIR/runtime"
+              mkdir -m700 "$XDG_RUNTIME_DIR"
+              GDK_BACKEND=x11 dbus-run-session --config-file=${pkgs.dbus}/share/dbus-1/session.conf -- xvfb-run ${lucy.python}/bin/python3 ${./tests/lucy-gtk.py}
+              touch "$out"
+            '';
+        lucy-desktop =
+          pkgs.runCommand "lucy-desktop-check"
+            {
+              nativeBuildInputs = [
+                pkgs.python3
+                pkgs.nodejs
+                pkgs.ruff
+              ];
+            }
+            ''
+              export PYTHONPATH=${inputs.nibli}/lucy-cli/desktop
+              python3 -m unittest discover -s ${inputs.nibli}/lucy-cli/desktop/tests -v
+              ruff check ${inputs.nibli}/lucy-cli/desktop
+              node --check ${inputs.nibli}/lucy-cli/desktop/adapters/vscode/extension.js
+              node --check ${inputs.nibli}/lucy-cli/desktop/adapters/browser/popup.js
+              touch "$out"
+            '';
         yoga-policies = import ./tests/yoga-policies.nix { inherit pkgs lib yoga; };
         npu-runtime = import ./tests/npu-runtime.nix { inherit pkgs yoga; };
         ollama-on-demand = import ./tests/ollama-on-demand.nix { inherit pkgs; };
@@ -314,6 +358,11 @@
           in
           assert lib.assertMsg (
             desktop.config.boot.lanzaboote.enable
+            && desktop.config.home-manager.users.dhilipsiva.repo.lucy.enable
+            && !thinkpad.home-manager.users.dhilipsiva.repo.lucy.enable
+            && !yoga.config.home-manager.users.dhilipsiva.repo.lucy.enable
+            && desktop.config.services.ollama.environmentVariables.OLLAMA_NO_CLOUD == "1"
+            && desktop.config.systemd.services.lucy-input.wantedBy == [ ]
             && !desktop.config.systemd.sleep.settings.Sleep.AllowSuspend
             && !desktop.config.systemd.sleep.settings.Sleep.AllowHibernation
             && desktop.config.fileSystems."/".device == "/dev/disk/by-uuid/664a9ddf-4ff2-47f8-90b5-65d449dfbca7"
