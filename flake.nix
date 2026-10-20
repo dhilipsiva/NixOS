@@ -343,6 +343,20 @@
               node --check ${inputs.nibli}/lucy-cli/desktop/adapters/browser/popup.js
               touch "$out"
             '';
+        # The laptop's packaged runtime must import with the host's pinned model.
+        lucy-yoga-model =
+          let
+            lucy = yoga.config.home-manager.users.dhilipsiva.repo.lucy.package;
+          in
+          pkgs.runCommand "lucy-yoga-model-check" { PYTHONPATH = lucy.desktopSource; } ''
+            ${lucy.python}/bin/python3 -c '
+            from lucy_desktop import model
+            assert model.MODEL == "${lucy.model.name}", model.MODEL
+            assert model.DIGEST == "${lucy.model.digest}", model.DIGEST
+            assert model.CONTEXT == ${toString lucy.model.context}, model.CONTEXT
+            '
+            touch "$out"
+          '';
         yoga-policies = import ./tests/yoga-policies.nix { inherit pkgs lib yoga; };
         npu-runtime = import ./tests/npu-runtime.nix { inherit pkgs yoga; };
         ollama-on-demand = import ./tests/ollama-on-demand.nix { inherit pkgs; };
@@ -375,7 +389,9 @@
             desktop.config.boot.lanzaboote.enable
             && desktop.config.home-manager.users.dhilipsiva.repo.lucy.enable
             && !thinkpad.home-manager.users.dhilipsiva.repo.lucy.enable
-            && !yoga.config.home-manager.users.dhilipsiva.repo.lucy.enable
+            && yoga.config.home-manager.users.dhilipsiva.repo.lucy.enable
+            # Only the desktop runs Nibli's own model pin; tests/yoga-policies.nix pins the laptop's.
+            && desktop.config.repo.lucy.model == null
             && desktop.config.services.ollama.environmentVariables.OLLAMA_NO_CLOUD == "1"
             && desktop.config.systemd.services.lucy-input.wantedBy == [ ]
             && !desktop.config.systemd.sleep.settings.Sleep.AllowSuspend

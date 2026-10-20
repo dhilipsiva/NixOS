@@ -78,8 +78,9 @@ it, even if Git would ignore them: `path:` builds can copy ignored files into
 the Nix store. Private material never enters public records, the portable
 profile, or another peer. The `lucy/private*` ignore rule is only a backup.
 
-The on-demand desktop service (`hosts/desktop/lucy.nix`, README "Lucy on
-demand") keeps its own private archive under `~/.local/share/lucy`. It is not a
+The on-demand desktop service (`modules/nixos/lucy.nix`, enabled by the desktop
+and the Yoga, README "Lucy on demand") keeps its own private archive under
+`~/.local/share/lucy`. It is not a
 peer, nothing publishes from it automatically, and its packaged identity reads
 this peer's and Nibli's direct memory files at the Nibli revision the flake
 pins, so a direct fact added here reaches it only after a re-pin and a staged

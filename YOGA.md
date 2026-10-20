@@ -88,6 +88,21 @@ commit and the physical acceptance are still pending (see "Operator steps").
   `C-008 One Piece` is visible on 2.4 GHz (channel 4) and 5 GHz (channel 153).
 - **Battery conservation mode** (Lenovo charge limit): declined by the owner,
   not configured.
+- **Lucy with a laptop-sized model (2026-10-20).** The owner asked for Lucy on
+  this less powerful host without touching the desktop. The shared module
+  `modules/nixos/lucy.nix` now carries the integration; the desktop enables it
+  with Nibli's own pin (Qwen3.6 35B-A3B Q4_K_M, about 25 GiB at peak on the
+  RTX 5090), and its evaluated system is unchanged. Ollama here runs on the
+  Arc 140V through Vulkan from a 23 GiB shared heap on 32 GiB of RAM; the NPU
+  has no Ollama backend and Nibli speaks only Ollama's loopback API. Qwen3.6
+  ships only 27B and 35B-A3B sizes, so `repo.lucy.model` pins Qwen3.5 9B
+  Q4_K_M (5.2 GiB weights plus a 0.9 GiB vision projector, the same `qwen3.5`
+  renderer/parser as the desktop's model, 16K context). The dense
+  `qwen3.6:27b-q4_K_M` (16.2 GiB) fits the heap but would take minutes per
+  reply and cannot stay in the page cache between the unloads Lucy requests.
+  The digest is the SHA-256 of the registry manifest, the method that
+  reproduces Nibli's desktop digest. `tests/yoga-policies.nix` pins the model
+  and the `lucy-yoga-model` check imports the patched runtime.
 - `hosts/yoga/bootstrap.nix` and `tests/yoga-fixture.nix` are no longer used:
   the flake builds the real host, and no fixture or bootstrap is exposed as a
   deployable host. They were left in the tree for the owner to delete.
@@ -117,7 +132,11 @@ commit and the physical acceptance are still pending (see "Operator steps").
   on `NPU` and rejects other devices (it accepts the plain string OpenVINO
   returns for a single execution device).
 - Ollama with the Vulkan runner and `OLLAMA_IGPU_ENABLE=1`, socket activation,
-  five-minute idle stop and model unloading after each request.
+  five-minute idle stop, model unloading after each request and cloud features
+  disabled.
+- On-demand Lucy (README "Lucy on demand") with Qwen3.5 9B Q4_K_M pinned for
+  the integrated GPU, the user services `lucy` and `lucy-adapters`, the
+  short-lived `lucy-input` helper behind polkit, and `uinput` loaded.
 - One Nix build may use all eight cores; bolt manages Thunderbolt
   authorisation; `clinfo`, `vainfo` and `intel_gpu_top` are in the user profile
   for the acceptance checks.
@@ -182,6 +201,14 @@ nmcli -f IN-USE,SSID,CHAN,FREQ,SIGNAL device wifi list   # the * row on channel 
 Revert with `nmcli connection modify "C-008 One Piece" 802-11-wireless.band ""`
 and reconnect if 5 GHz is unreliable.
 
+## Operator steps for Lucy (2026-10-20)
+
+The published revision stages like any other: `scripts/nixosctl stage --host
+yoga` (sudo), then `systemctl reboot`. After the first graphical login run
+`lucy setup-model` once as `dhilipsiva`; it downloads about 6 GiB and must
+print `Pinned model verified: sha256:56671c2a…`. Inference refuses a missing or
+different model, and nothing downloads on its own.
+
 ## Physical acceptance checklist
 
 - `readlink -f /run/current-system` equals the staged path; tuigreet login,
@@ -211,6 +238,12 @@ and reconnect if 5 GHz is unreliable.
 - Pull a small Ollama model, run inference, confirm `Vulkan0 Intel(R) Graphics
   (LNL)` in `journalctl -u ollama -b` and that `ollama.service` stops after
   the idle timeout.
+- `systemctl --user status lucy lucy-adapters` healthy; `lucy chat` returns a
+  real local reply with the Vulkan runner in `journalctl -u ollama -b`;
+  `ollama ps` is empty afterwards; **Stop** during a long reply returns at
+  once and leaves no loaded model. Note the reply latency: the 9B model is the
+  size chosen for this GPU, and a slower or faster pin is a one-line change in
+  `hosts/yoga/default.nix`.
 - Boot **NixOS (protected pre-migration recovery)** (the GNOME generation) once
   and return to the staged generation.
 

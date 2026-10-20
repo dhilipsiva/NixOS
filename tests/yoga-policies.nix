@@ -74,6 +74,11 @@ assert lib.assertMsg
     && c.services.ollama.environmentVariables.OLLAMA_IGPU_ENABLE == "1"
     && c.systemd.services.ollama.wantedBy == [ ]
     && c.systemd.services.ollama.unitConfig.StopWhenUnneeded
+    # Lucy runs on the integrated GPU's shared heap with a smaller pinned Qwen.
+    && h.repo.lucy.enable
+    && c.repo.lucy.model.name == "qwen3.5:9b-q4_K_M"
+    && h.repo.lucy.package.model == c.repo.lucy.model
+    && c.services.ollama.environmentVariables.OLLAMA_NO_CLOUD == "1"
     && c.services.hardware.bolt.enable
     && c.nix.settings.max-jobs == 1
     && c.nix.settings.cores == 0
@@ -90,5 +95,5 @@ assert lib.assertMsg
     && builtins.attrNames c.sops.secrets == [ "dhilipsiva/hashedPassword" ]
     && c.time.timeZone == "Asia/Kolkata"
   )
-  "Yoga storage, boot, graphics runtimes, display, Ollama, Nix cores, bolt, applications, power or acceptance policy changed.";
+  "Yoga storage, boot, graphics runtimes, display, Ollama, Lucy, Nix cores, bolt, applications, power or acceptance policy changed.";
 pkgs.runCommand "yoga-policies-check" { } "touch $out"

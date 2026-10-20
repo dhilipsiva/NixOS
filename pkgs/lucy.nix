@@ -6,6 +6,13 @@
   inventory,
   inputHelper,
   dmiHelper,
+  # The host's own Ollama build serves as the client for lucy setup-model, so a
+  # Vulkan host does not also carry the CUDA distribution.
+  ollama,
+  # Nibli pins the Ollama model for the desktop GPU. A host with less memory
+  # passes { name, digest, context } to pin a smaller tag at build time; null
+  # leaves Nibli's source untouched.
+  model ? null,
 }:
 let
   rustPlatform = pkgs.makeRustPlatform {
@@ -39,6 +46,24 @@ let
     pkgs.glib.out
     pkgs.harfbuzz
   ];
+  # Only the three pinned constants change; every other line of the runtime is
+  # Nibli's. The greps fail the build if that file's layout moves.
+  desktopSource =
+    if model == null then
+      "${nibli}/lucy-cli/desktop"
+    else
+      pkgs.runCommand "lucy-desktop-${lib.replaceStrings [ ":" ] [ "-" ] model.name}" { } ''
+        cp -r ${nibli}/lucy-cli/desktop $out
+        chmod -R u+w $out
+        sed -i \
+          -e "s|^MODEL = .*|MODEL = '${model.name}'|" \
+          -e "s|^DIGEST = .*|DIGEST = '${model.digest}'|" \
+          -e "s|^CONTEXT = .*|CONTEXT = ${toString model.context}|" \
+          $out/lucy_desktop/model.py
+        grep -Fxq "MODEL = '${model.name}'" $out/lucy_desktop/model.py
+        grep -Fxq "DIGEST = '${model.digest}'" $out/lucy_desktop/model.py
+        grep -Fxq "CONTEXT = ${toString model.context}" $out/lucy_desktop/model.py
+      '';
   vsix = pkgs.runCommand "lucy-vscode-1.0.0.vsix" { nativeBuildInputs = [ pkgs.zip ]; } ''
     mkdir extension
     cp ${nibli}/lucy-cli/desktop/adapters/vscode/* extension/
@@ -58,22 +83,22 @@ let
     EOF
     zip -qr "$out" extension extension.vsixmanifest '[Content_Types].xml'
   '';
-  runtimePaths = with pkgs; [
-    bubblewrap
-    ripgrep
-    coreutils
-    systemd
-    hyprland
-    grim
-    ydotool
-    gtk3
-    polkit
+  runtimePaths = [
+    pkgs.bubblewrap
+    pkgs.ripgrep
+    pkgs.coreutils
+    pkgs.systemd
+    pkgs.hyprland
+    pkgs.grim
+    pkgs.ydotool
+    pkgs.gtk3
+    pkgs.polkit
     ollama
     python
-    vscode
+    pkgs.vscode
   ];
   runtime = pkgs.writeShellScript "lucy-desktop" ''
-    export PYTHONPATH=${nibli}/lucy-cli/desktop
+    export PYTHONPATH=${desktopSource}
     export GI_TYPELIB_PATH=${gtkTypelibs}
     export PATH=${lib.makeBinPath runtimePaths}:$PATH
     exec ${python}/bin/python3 -m lucy_desktop "$@"
@@ -111,7 +136,7 @@ pkgs.symlinkJoin {
         ]
       }
     mkdir -p "$out/share/lucy"
-    ln -s ${nibli}/lucy-cli/desktop/adapters/browser "$out/share/lucy/browser-extension"
+    ln -s ${desktopSource}/adapters/browser "$out/share/lucy/browser-extension"
     ln -s ${vsix} "$out/share/lucy/lucy.vsix"
     ln -s ${inventory} "$out/share/lucy/integrations.json"
   '';
@@ -122,6 +147,8 @@ pkgs.symlinkJoin {
       vsix
       python
       gtkTypelibs
+      desktopSource
+      model
       ;
   };
 }

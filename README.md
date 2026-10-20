@@ -176,7 +176,7 @@ Wi-Fi password agent and a tray menu.
 | Super+1…0 / Super+Shift+1…0 | Switch workspace / move window |
 | Super+H/J/K/L | Focus left/down/up/right |
 | Super+Ctrl+L | Lock |
-| Super+Alt+L | Ask Lucy (desktop only; opening does not start inference) |
+| Super+Alt+L | Ask Lucy (desktop and Yoga; opening does not start inference) |
 | Super+F / Super+Shift+Space | Fullscreen / floating window |
 | Super+V | Toggle split direction |
 | Super+Shift+Q / Super+Shift+E | Close window / log out |
@@ -223,7 +223,7 @@ one parallel request, and reserves 2 GiB of GPU headroom. Models are downloaded
 explicitly with `ollama pull`; inspect with `ollama ps` and
 `systemctl status ollama-proxy.socket ollama-proxy.service ollama.service`.
 
-## Lucy on demand (desktop only)
+## Lucy on demand (desktop and Yoga)
 
 `lucy ui`, **Ask Lucy** in Fuzzel, and **Super+Alt+L** open a native GTK chat.
 Sending in that named chat or `lucy chat` invokes Lucy. Other apps require a
@@ -241,19 +241,25 @@ the Nix store. Existing public peer commands remain explicit. Invoked cloud apps
 receive relevant private excerpts, as selected; their models and permission
 controls remain theirs.
 
-Local chat uses Qwen3.6 35B-A3B Q4_K_M with a pinned manifest digest and 16K
-context. `lucy setup-model` explicitly downloads and verifies it. Inference does
-not download missing weights or fall back to a cloud model. Desktop Ollama has
-cloud features disabled, one model/request at a time, 2 GiB GPU headroom and
-unloading after requests. Build success does not establish physical GPU fit.
+Local chat uses a pinned Ollama model with its manifest digest and 16K context.
+The desktop keeps Nibli's pin, Qwen3.6 35B-A3B Q4_K_M, which peaks near 25 GiB
+on the RTX 5090. The Yoga's integrated Arc 140V shares a 23 GiB Vulkan heap with
+32 GiB of RAM, so `hosts/yoga/default.nix` pins Qwen3.5 9B Q4_K_M (about 6 GiB,
+the same qwen3.5 tool-call format) through `repo.lucy.model`; only that constant
+changes in the packaged Nibli runtime (`pkgs/lucy.nix`), and the `lucy-yoga-model`
+check imports it. `lucy setup-model` explicitly downloads and verifies the host's
+model. Inference does not download missing weights or fall back to a cloud model.
+Ollama on both hosts has cloud features disabled, one model/request at a time and
+unloading after requests; the desktop keeps 2 GiB of GPU headroom. Build success
+does not establish physical GPU fit.
 
 At the first graphical login after staging, `lucy-adapters.service` enrolls
 adapters with additive settings merges and backups. Conflicting existing files
 are left for a manual merge. It does not approve app trust or change credentials.
 `lucy integrations install` retries enrollment; `lucy integrations status` prints
 the inventory generated from all user/system packages and desktop entries,
-including each adapter's recording limitations. The ThinkPad and Yoga do not
-enable this service or its input helper.
+including each adapter's recording limitations. The ThinkPad does not enable
+this service or its input helper.
 
 | Interface | Invocation and recording |
 | --- | --- |

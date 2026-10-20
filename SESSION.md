@@ -79,3 +79,23 @@ master ones failed against libva 2.23 and aborted in OpenCL), the panel's
 120 Hz mode with fullscreen-only VRR, Ollama on the integrated GPU, all cores
 for one build and bolt. That commit is next to publish and stage on the Yoga;
 physical acceptance (`nixosctl accept --host yoga`) is still pending.
+
+## Yoga state (2026-10-20)
+
+The running generation 5 (`2db8i034…`, staged 2026-10-18) predates the Windows
+helpers and the desktop Lucy work; its pending update to the published tip was
+configuration-only for the Yoga (the same kernel, initrd and parameters, no
+package changes). The owner then asked for Lucy on this less powerful host
+without affecting the desktop. The integration moved from `hosts/desktop/lucy.nix`
+to the opt-in `modules/nixos/lucy.nix`, which each enabling host imports at its
+host-module position so merged lists keep their order; `repo.lucy.model` pins a
+host model, and `pkgs/lucy.nix` substitutes only Nibli's three model constants
+and takes the host's Ollama build as the client. The Yoga pins Qwen3.5 9B Q4_K_M
+(digest `56671c2a…`, about 6 GiB) because Nibli's Qwen3.6 35B-A3B needs about
+25 GiB and Qwen3.6 has no smaller size; the NPU has no Ollama backend, so the
+Arc 140V's Vulkan runner serves it. Verified: the desktop and ThinkPad toplevels
+evaluate to the same store paths as before the change (`fn01gcrh…`,
+`s1bydcq5…`), the Yoga closure grows by about 4 MiB, and `nix fmt`, `nix flake
+check .` (including the new `lucy-yoga-model` check) and `scripts/nixosctl check
+--stable` passed. Staging (`scripts/nixosctl stage --host yoga`), the reboot,
+`lucy setup-model` and the YOGA.md acceptance remain the owner's steps.

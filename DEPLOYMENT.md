@@ -9,7 +9,8 @@ physical acceptance.
 
 ## Lucy desktop integration rollout
 
-The Lucy integration is desktop-only. Publish the verified Nibli source revision,
+The Lucy integration runs on the desktop with Nibli's model pin and on the Yoga
+with a smaller pinned model (YOGA.md). Publish the verified Nibli source revision,
 pin it in this flake, then publish this repository through `scripts/nixosctl
 publish`. Only after those checks succeed, run `scripts/nixosctl stage --host
 desktop`. Staging installs the next boot generation; it does not switch the live

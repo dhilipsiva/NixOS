@@ -11,7 +11,7 @@
     ./hardware-configuration.nix
     ./graphics.nix
     ./performance.nix
-    ./lucy.nix
+    ../../modules/nixos/lucy.nix
     ./power.nix
     ./windows.nix
     ./maintenance.nix
@@ -24,6 +24,11 @@
   ];
 
   networking.hostName = "dhilipsiva-desktop";
+
+  # On-demand Lucy with Nibli's own model pin; the RTX 5090 holds Qwen3.6
+  # 35B-A3B with about 25 GiB of VRAM at peak. The module is imported above in
+  # its original position so the desktop's merged lists keep their order.
+  repo.lucy.enable = true;
 
   # Each host selects its encrypted secrets; the ThinkPad can use its own file.
   sops.defaultSopsFile = ../../secrets/desktop.yaml;

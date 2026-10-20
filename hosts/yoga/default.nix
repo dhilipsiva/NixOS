@@ -18,6 +18,7 @@
     ./graphics.nix
     ./power.nix
     ./applications.nix
+    ../../modules/nixos/lucy.nix
   ];
   networking.hostName = "dhilipsiva-yoga";
   time.timeZone = lib.mkForce "Asia/Kolkata";
@@ -87,6 +88,23 @@
       OLLAMA_IGPU_ENABLE = "1";
       OLLAMA_NUM_PARALLEL = "1";
       OLLAMA_MAX_LOADED_MODELS = "1";
+    };
+  };
+  # Lucy on the laptop. Ollama runs on the Arc 140V through Vulkan from a
+  # 23 GiB shared heap on 32 GiB of RAM; the NPU has no Ollama backend. Nibli's
+  # pin, Qwen3.6 35B-A3B, needs about 25 GiB at peak and Qwen3.6 ships no
+  # smaller size, so this host pins the newest small Qwen: the same qwen3.5
+  # renderer/parser (tool-call format) as the desktop's model, about 6 GiB of
+  # weights, 16K context. Digest: SHA-256 of the registry manifest
+  # (registry.ollama.ai/v2/library/qwen3.5/manifests/9b-q4_K_M), computed on
+  # 2026-10-20 with the method that reproduces Nibli's desktop digest. The dense
+  # qwen3.6:27b-q4_K_M (16.2 GiB) also fits the heap but would take minutes per
+  # reply on this GPU and cannot stay in the page cache between unloads.
+  repo.lucy = {
+    enable = true;
+    model = {
+      name = "qwen3.5:9b-q4_K_M";
+      digest = "56671c2ab9385f9cfcb404638e32cd62d88e3501d44822208363c010179a3c90";
     };
   };
   assertions = [
