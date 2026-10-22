@@ -128,6 +128,23 @@ class CredentialTests(unittest.TestCase):
                     deployment.verify_credentials(repo, 'yoga')
                 decrypt.assert_not_called()
 
+    def test_vm_recipient_comes_from_sops_config_alone(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'secrets').mkdir()
+            (root / '.sops.yaml').write_text('creation_rules:\n  - path_regex: secrets/vm-test\\.yaml$\n'
+                                             '    age: age1replacedvmrecipient\n')
+            (root / 'secrets/desktop.yaml').write_text('recipient: age1replacedvmrecipient')
+            repo = SimpleNamespace(path=root, owner='fixture')
+            self.assertEqual(deployment.vm_recipient(root), 'age1replacedvmrecipient')
+            with patch.object(deployment, 'decrypt_host') as decrypt:
+                with self.assertRaisesRegex(Error, 'disposable recipient'):
+                    deployment.verify_credentials(repo, 'desktop')
+                decrypt.assert_not_called()
+            (root / '.sops.yaml').write_text('creation_rules: []\n')
+            with self.assertRaisesRegex(Error, 'no age recipient'):
+                deployment.vm_recipient(root)
+
     def test_laptop_needs_only_its_password(self):
         payload = {'dhilipsiva': {'hashedPassword': 'fixture'}}
         cfg = {'requiredSecrets': ['dhilipsiva/hashedPassword']}

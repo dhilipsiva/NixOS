@@ -103,9 +103,9 @@ commit and the physical acceptance are still pending (see "Operator steps").
   The digest is the SHA-256 of the registry manifest, the method that
   reproduces Nibli's desktop digest. `tests/yoga-policies.nix` pins the model
   and the `lucy-yoga-model` check imports the patched runtime.
-- `hosts/yoga/bootstrap.nix` and `tests/yoga-fixture.nix` are no longer used:
-  the flake builds the real host, and no fixture or bootstrap is exposed as a
-  deployable host. They were left in the tree for the owner to delete.
+- `hosts/yoga/bootstrap.nix` and `tests/yoga-fixture.nix` were removed on
+  2026-10-22: the flake builds the real host, and no fixture or bootstrap is
+  exposed as a deployable host.
 
 ## Configured behavior
 

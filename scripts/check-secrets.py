@@ -4,12 +4,24 @@ import argparse
 from pathlib import Path
 import re
 
-VM = 'age10hwn77a4vpj33s9u9j8u698lwmgv0g8trd2x5hk24zt5a0fnvsss6dj8mg'
 PLACEHOLDER = 'age1aqnq0cm7j0zhlwsge72za09s8m0sh2sh2gucpaudaypkfsetu97sy68cqw'
+
+
+def vm_recipient(repo):
+    """The disposable VM test recipient, from `.sops.yaml`'s rule for secrets/vm-test.yaml (its
+    only definition)."""
+    text = (Path(repo) / '.sops.yaml').read_text()
+    found = re.search(r'path_regex: secrets/vm-test\\\.yaml\$\s*\n\s*age:\s*(age1[0-9a-z]+)', text)
+    if not found:
+        raise SystemExit('.sops.yaml has no age recipient for secrets/vm-test.yaml')
+    return found.group(1)
+
+
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('repo', type=Path)
 parser.add_argument('--prepared', action='store_true')
 args = parser.parse_args()
+VM = vm_recipient(args.repo)
 for path in (args.repo / 'secrets').glob('*.yaml'):
     text = path.read_text()
     recipients = re.findall(r'recipient: (age1[a-z0-9]+)', text)
