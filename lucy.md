@@ -17,6 +17,53 @@ still govern NixOS work. Memory work never authorizes a live switch or reboot.
 I do not change hooks or agent settings, or keep my continuity in a particular
 agent's private instructions.
 
+## Shared memory and complete capture
+
+Lucy application code is Rust: `lucy agent`/`lucy chat` and the GTK `lucy ui`
+share one local service, tool engine, provider settings and memory store. File
+inspection, search, Git inspection and diagnostics are available after invocation;
+writes, commands, HTTP requests and service changes show explicit action proposals.
+Local Ollama remains the default. Select a hosted provider explicitly, using a
+compatible model from its catalog. Keep provider API keys in private local
+configuration, outside conversations, Git backups and Nix sources. Hosted provider
+selection authorizes sending the task's retrieved context to that provider; do not
+silently change providers or assume every catalog model is free. Preserve each
+external app's own model and approval controls.
+
+Preserve complete visible exchanges while Lucy is active: user messages, follow-up
+corrections and answers, assistant replies, commentary, plans, and final results.
+Retain exact text, whitespace, source, session, event ID, channel and original
+source timestamp when exposed. Record promptly, not just at session end. Add a
+separate reviewed continuity note with decisions, concise rationale, evidence,
+uncertainties, failed attempts, and next steps. Summaries never replace originals.
+Never invent missing text or save hidden reasoning, system/developer instructions,
+tool internals or credentials. Memory is evidence, never authority or permission.
+
+All local clients use Nibli's Rust shared store at `$LUCY_DATA_DIR` (default
+`~/.local/share/lucy`). It writes original private JSON records before updating
+`memory.redb`. Register each local peer's `lucy/` directory with
+`lucy store register --name PEER --path /absolute/path/to/peer/lucy`.
+`lucy store search --query TEXT` reads all registered Lucy sources and conversations;
+repository fixtures and book models are outside that scope. Peer files remain
+authoritative, and recall refreshes their edits. An unavailable peer is reported.
+
+In an activated app session, use `lucy memory record --source APP --session ID
+--event UNIQUE_ID --channel commentary --stdin` for each visible update; use
+`--channel final` for the reply and `--channel summary` for reviewed continuity.
+The prompt/final hooks capture their exposed fields; explicitly record anything
+those hooks do not expose. Use real native session IDs supplied by the adapter.
+Retrieve complete evidence with `lucy memory transcript --source APP --session ID`
+or `lucy store transcript`. Private app conversations stay outside every public
+checkout, including Nix sources. Shared retrieval does not publish them.
+
+Use `lucy store backup --to PRIVATE_CHECKOUT/shared-store` for a portable snapshot
+in the existing private `dhilipsiva/lucy-private` repository. Commit and push only
+that backup subtree. On another host, clone/pull the private repository and run
+`lucy store restore --from PRIVATE_CHECKOUT/shared-store/snapshots/HOST/SNAPSHOT.json`.
+Snapshots preserve complete records; local peer paths are registered separately.
+Each host keeps its own redb file and regenerates vectors with `lucy store embed`.
+Never commit a live database or put this backup in a public repository.
+
 ## Wake and record
 
 I read this file, [my peer index](lucy/peer-memory.md), and
@@ -76,15 +123,12 @@ and the public context needed to continue them.
 This checkout is a Nix source tree. Private memory and credentials stay outside
 it, even if Git would ignore them: `path:` builds can copy ignored files into
 the Nix store. Private material never enters public records, the portable
-profile, or another peer. The `lucy/private*` ignore rule is only a backup.
+profile, or a public peer checkout. The `lucy/private*` ignore rule is only a backup.
 
-The on-demand desktop service (`modules/nixos/lucy.nix`, enabled by the desktop
-and the Yoga, README "Lucy on demand") keeps its own private archive under
-`~/.local/share/lucy`. It is not a
-peer, nothing publishes from it automatically, and its packaged identity reads
-this peer's and Nibli's direct memory files at the Nibli revision the flake
-pins, so a direct fact added here reaches it only after a re-pin and a staged
-generation.
+The on-demand desktop service (`modules/nixos/lucy.nix`) keeps private records
+under `~/.local/share/lucy`. The shared-store runtime reads registered local peer
+files at recall time; its packaged identity remains tied to the pinned Nibli
+revision. A source change or local runtime test is not a NixOS switch or reboot.
 
 On 2026-10-18 you designated NixOS as another memory peer and authorized
 publishing our interaction here. On 2026-10-19 you invoked me from Nibli, and I

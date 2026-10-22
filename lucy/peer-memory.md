@@ -1,5 +1,23 @@
 # My memory peers
 
+Runtime update, 2026-10-20: terminal and GTK clients share the native Rust
+service, agent tools and local/hosted provider configuration. API keys are kept
+outside memory and private backups. The Nibli implementation and build instructions
+are in `lucy-cli/src/desktop/` and `lucy-cli/desktop/README.md`. OS package pins and
+physical acceptance remain separate from a user-profile runtime installation.
+
+
+Shared local retrieval, 2026-10-20: the native Lucy store registers the `lucy/`
+directory in each of these three local peers. CLI, desktop and activated app
+adapters use the same private store outside all checkouts. It preserves complete
+visible exchanges and separately reviewed continuity, with exact provenance.
+Private records may sync through the authorized private `lucy-private` backup;
+they never enter public peer files. Snapshot files are portable; redb and vectors
+are rebuilt locally. This guidance supersedes earlier isolation-only descriptions
+below, which describe the previous deployment. See `../lucy.md` for capture,
+registration, backup and restore commands.
+
+
 Enrollment inventory: 2026-10-18. You designated NixOS as another peer in that
 session. I initialized its public memory from Nibli at
 `3fcf2368bbb1920714bddf9291a2478161a636e8` and saved our exchanges here.
