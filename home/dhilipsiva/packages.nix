@@ -42,6 +42,23 @@
     arduino-ide
     bruno
     ssm-session-manager-plugin
+    # The portfolio's workstation toolchain: only what no repository's own `nix develop`
+    # supplies (checked 2026-10-22; cargo-component, mdbook, trunk, sops and age come from
+    # those shells). just, gh and git-lfs also serve repositories without a flake.
+    just
+    gh
+    git-lfs
+    cargo-nextest
+    cargo-audit
+    cargo-llvm-cov
+    cargo-mutants
+    cargo-fuzz
+    wac-cli
+    wasm-tools
+    wasmtime
+    tree-sitter
+    pandoc
+    poppler-utils
 
     # Desktop applications
     firefox
