@@ -100,29 +100,9 @@ checksum-pinned stable releases. Rust uses rust-overlay's stable channel. The OS
 modules and core dependencies stay on the NixOS release branch; a stable OS does
 not imply every bundled dependency is the newest upstream release.
 
-Verified versions in this lock on 2026-10-03:
-
-| Tool | Version |
-| --- | --- |
-| Hyprland | 0.56.2 |
-| Fuzzel | 1.15.0 |
-| tuigreet | 0.11.1 |
-| Alacritty | 0.17.0 |
-| fish | 4.9.3 |
-| Helix | 25.07.1 |
-| Codex | 0.160.0 |
-| Claude Code | 2.1.285, upstream **stable** channel |
-| Atuin | 18.23.0 |
-| Ollama | 0.35.1 |
-| Zed | 1.22.0 |
-| Herdr | 0.9.3 |
-| OBS Studio (ThinkPad) | 32.2.2, upstream stable |
-| zoxide / ripgrep | 0.10.0 / 15.2.0 |
-| uv | 0.12.22 |
-| Slack | 4.52.171, official Linux channel |
-| Google Chrome / Teams web app | 154.0.8037.97 / official Teams site |
-| Lanzaboote | 1.2.0 |
-| Rust | 1.99.0, with Cargo, Clippy, rustfmt, rust-analyzer, and sources |
+The versions in this lock are what `nix eval --json .#lib.stableVersions` prints: the nightly
+moves them, so no table here can stay true. The `stable-releases` check refuses any that is a
+prerelease or differs from its recorded stable channel.
 | Python | 3.14.8 as the separate `python-latest` package |
 | Linux kernel | 7.2.9 |
 | NVIDIA production driver | 595.104.02 |
@@ -134,8 +114,8 @@ dhilipsiva. The desktop publishes updates around **21:00 Asia/Colombo** (plus up
 to five minutes of jitter): it refreshes release metadata and every flake input in
 an isolated worktree, checks and builds every configured host, commits only
 release/input files, pushes with its repository-scoped deploy key and stages the
-result for the next manual reboot. The future ThinkPad subscriber pulls and stages
-at about **21:30**. Failed builds, offline services or rejected pushes leave the
+result for the next manual reboot. The ThinkPad (accepted on 2026-10-04, THINKPAD.md) pulls and
+stages at about **21:30**. Failed builds, offline services or rejected pushes leave the
 previous boot generation in place. Nothing switches live or reboots automatically.
 The updater never advances `stateVersion` and refuses prereleases, downgrades and
 packages that disagree with the recorded official stable channel.

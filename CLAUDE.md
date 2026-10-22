@@ -9,7 +9,7 @@ This repository is the single source of truth at
 has its own host module. The ThinkPad's actual hardware is captured in
 `hosts/thinkpad/`; it preserves its existing encrypted installation, and
 [THINKPAD.md](THINKPAD.md) records its migration, the child's Roblox/OBS
-requirements and pending acceptance.
+requirements and its acceptance on 2026-10-04.
 
 The Yoga Slim 7's owner-installed NixOS 26.05 is captured in `hosts/yoga/`
 (`hardware-configuration.nix` and `installation.nix` were generated and read on
