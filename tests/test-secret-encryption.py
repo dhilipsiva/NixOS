@@ -36,7 +36,8 @@ with tempfile.TemporaryDirectory() as directory:
         raise AssertionError('An unrelated identity decrypted the host secret')
     repository = root / 'repository'
     (repository / 'secrets').mkdir(parents=True)
-    (repository / '.sops.yaml').write_text('creation_rules:\n# BEGIN thinkpad\n# END thinkpad\n')
+    (repository / '.sops.yaml').write_text('creation_rules:\n  - path_regex: secrets/vm-test\\.yaml$\n'
+                                           '    age: age1fixturevmrecipient\n# BEGIN thinkpad\n# END thinkpad\n')
     home = root / 'home'
     home.mkdir()
     actual = pwd.getpwuid(os.getuid())

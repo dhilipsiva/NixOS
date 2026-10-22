@@ -113,7 +113,9 @@ class Repository:
 
     def check(self, source=None, stable=False):
         source = source or self.path
-        flake = f'path:{source}'
+        # git+file: copies tracked files only (the working tree's changes to them included),
+        # never ignored ones such as images/, into the world-readable store.
+        flake = f'git+file:{source}'
         hosts = json.loads(run(['nix', 'eval', '--json', f'{flake}#lib.hosts'], owner=self.owner, capture=True))
         if not hosts:
             raise Error('No configured hosts.')
@@ -158,7 +160,7 @@ class Repository:
             raise Error('Checkout changed after sync; refusing to publish an outdated candidate.')
         with self.snapshot(base) as candidate:
             run([sys.executable, candidate / 'scripts/update-stable-releases.py', candidate], owner=self.owner)
-            run(['nix', 'flake', 'update', '--refresh', '--flake', f'path:{candidate}'], owner=self.owner)
+            run(['nix', 'flake', 'update', '--refresh', '--flake', f'git+file:{candidate}'], owner=self.owner)
             self.check(candidate, stable=True)
             def git(*args):
                 return run(['git', '-C', candidate, *args], owner=self.owner, capture=True,
@@ -182,7 +184,7 @@ class Repository:
 
 
 def manifest(repo, host):
-    hosts = json.loads(run(['nix', 'eval', '--json', f'path:{repo.path}#lib.hosts'],
+    hosts = json.loads(run(['nix', 'eval', '--json', f'git+file:{repo.path}#lib.hosts'],
                            owner=repo.owner, capture=True))
     if host not in hosts:
         raise Error(f'Host {host!r} is not configured. Capture its hardware first.')

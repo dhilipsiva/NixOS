@@ -228,7 +228,6 @@
       # flake or a future per-host split.
       nixosModules.default = import ./modules/nixos;
       homeModules.default = import ./home/dhilipsiva;
-      nixosModules.yoga-bootstrap = import ./hosts/yoga/bootstrap.nix;
 
       packages.${system} = {
         lucy = desktop.config.home-manager.users.dhilipsiva.repo.lucy.package;

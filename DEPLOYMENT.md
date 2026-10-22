@@ -150,8 +150,9 @@ nix develop -c bash -c '
 ```
 
 Then replace the old recipient `age10hwn77a4vpj33s9u9j8u698lwmgv0g8trd2x5hk24zt5a0fnvsss6dj8mg`
-in `.sops.yaml`, `scripts/check-secrets.py` and `scripts/deployment.py` with the
-printed one, run `nix flake check .`, and boot the VM with
+in `.sops.yaml` (its only definition; `scripts/check-secrets.py` and
+`scripts/deployment.py` read it from there) with the printed one, run
+`nix flake check .`, and boot the VM with
 `QEMU_OPTS="-m 4096 -fw_cfg name=opt/vmhostkey,file=$HOME/.local/state/nixosctl/vm-test-host-key"`.
 Log in as `dhilipsiva` with password `test` to prove userborn received the hash.
 

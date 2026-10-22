@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import pwd
+import re
 import secrets
 import shutil
 import struct
@@ -15,10 +16,19 @@ from nixosctl import Error, run
 
 STATE = Path('/var/lib/nixos-deployment')
 EFI = Path('/sys/firmware/efi/efivars')
-VM_RECIPIENT = 'age10hwn77a4vpj33s9u9j8u698lwmgv0g8trd2x5hk24zt5a0fnvsss6dj8mg'
 PLACEHOLDER = 'age1aqnq0cm7j0zhlwsge72za09s8m0sh2sh2gucpaudaypkfsetu97sy68cqw'
 HOST_KEY = Path('/etc/ssh/ssh_host_ed25519_key')
 DB_CERT = Path('/var/lib/sbctl/keys/db/db.pem')
+
+
+def vm_recipient(repo):
+    """The disposable VM test recipient, from `.sops.yaml`'s rule for secrets/vm-test.yaml (its
+    only definition)."""
+    text = (Path(repo) / '.sops.yaml').read_text()
+    found = re.search(r'path_regex: secrets/vm-test\\\.yaml\$\s*\n\s*age:\s*(age1[0-9a-z]+)', text)
+    if not found:
+        raise Error('.sops.yaml has no age recipient for secrets/vm-test.yaml')
+    return found.group(1)
 
 
 def now():
@@ -221,7 +231,7 @@ def verify_credentials(repo, host, source=None, cfg=None):
     if not source.is_file():
         raise Error(f'Missing {host} credentials. Run prepare-credentials on the installed host.')
     ciphertext = source.read_text()
-    if PLACEHOLDER in ciphertext or VM_RECIPIENT in ciphertext:
+    if PLACEHOLDER in ciphertext or vm_recipient(repo.path) in ciphertext:
         raise Error('Host secrets still contain a placeholder/disposable recipient. Run prepare-credentials.')
     plain = decrypt_host(source)
     validate_credentials(plain, shadow_hash(repo.owner), cfg or {})
@@ -245,7 +255,7 @@ def prepare_credentials(repo, host, cfg):
     os.chmod(HOST_KEY, 0o600)
     public = run(['ssh-keygen', '-y', '-f', HOST_KEY], capture=True)
     host_recipient = run(['ssh-to-age'], capture=True, input=public + '\n')
-    if owner_recipient == host_recipient or VM_RECIPIENT in (owner_recipient, host_recipient):
+    if owner_recipient == host_recipient or vm_recipient(repo.path) in (owner_recipient, host_recipient):
         raise Error('Owner, host and VM identities must be independent.')
     verify_independent_host_recipient(repo, host, host_recipient)
     source = repo.path / 'secrets' / (host + '.yaml')
