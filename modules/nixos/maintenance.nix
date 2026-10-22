@@ -81,6 +81,21 @@ in
         IOSchedulingClass = "idle";
         TimeoutStartSec = "6h";
       };
+      # A failed night leaves a record `nixosctl status` shows, not only a journal entry.
+      onFailure = [ "nixos-update-failed.service" ];
+    };
+    systemd.services.nixos-update-failed = {
+      description = "Record a failed nightly NixOS update";
+      serviceConfig = {
+        Type = "oneshot";
+        UMask = "0077";
+      };
+      script = ''
+        state=/var/lib/nixos-deployment
+        printf '{"time": "%s", "unit": "nixos-update.service"}\n' "$(date --utc +%Y-%m-%dT%H:%M:%S+00:00)" > "$state/last-failure.json.tmp"
+        mv "$state/last-failure.json.tmp" "$state/last-failure.json"
+        echo "nixos-update.service failed; journalctl -u nixos-update.service has the cause" >&2
+      '';
     };
     systemd.timers.nixos-update = {
       wantedBy = [ "timers.target" ];
