@@ -159,6 +159,13 @@
               "rust-src"
               "rust-analyzer"
             ];
+            # For repositories without a dev shell of their own (rights' ui/, botwork's guests,
+            # dex's GUI checked outside `nix develop`).
+            targets = [
+              "wasm32-unknown-unknown"
+              "wasm32-wasip1"
+              "wasm32-wasip2"
+            ];
           };
           ollama = newer apps.ollama releases.ollama.version ollamaRelease;
           ollama-cuda = newer apps.ollama-cuda releases.ollama.version ollamaRelease;
