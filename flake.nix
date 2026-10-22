@@ -543,6 +543,26 @@
             touch "$out"
           '';
 
+        # The kernel bridge follows the release's own series, never linuxPackages_latest: with
+        # latest moved to another series (as on 2026-10-20, when it became 7.3 while the
+        # release stayed 7.2.11 and the nightly halted), the same kernel must be selected.
+        kernel-series =
+          let
+            selected = import ./pkgs/kernel.nix { inherit (desktop) pkgs; };
+            moved = import ./pkgs/kernel.nix {
+              pkgs = desktop.pkgs // {
+                linuxPackages_latest = desktop.pkgs.linuxPackages;
+              };
+            };
+          in
+          assert lib.assertMsg (
+            desktop.pkgs.linuxPackages.kernel.version != selected.version
+          ) "The check needs linuxPackages and the release to differ in series.";
+          assert lib.assertMsg (
+            selected.drvPath == moved.drvPath
+          ) "The kernel changed when linuxPackages_latest moved to another series.";
+          pkgs.runCommand "kernel-series-check" { } "touch $out";
+
         stable-releases =
           let
             packages =
