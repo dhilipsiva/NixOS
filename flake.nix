@@ -385,76 +385,113 @@
               )
             ) (builtins.attrValues self.nixosConfigurations);
           in
-          assert lib.assertMsg (
-            desktop.config.boot.lanzaboote.enable
-            && desktop.config.home-manager.users.dhilipsiva.repo.lucy.enable
-            && !thinkpad.home-manager.users.dhilipsiva.repo.lucy.enable
-            && yoga.config.home-manager.users.dhilipsiva.repo.lucy.enable
-            # Only the desktop runs Nibli's own model pin; tests/yoga-policies.nix pins the laptop's.
-            && desktop.config.repo.lucy.model == null
-            && desktop.config.services.ollama.environmentVariables.OLLAMA_NO_CLOUD == "1"
-            && desktop.config.systemd.services.lucy-input.wantedBy == [ ]
-            && !desktop.config.systemd.sleep.settings.Sleep.AllowSuspend
-            && !desktop.config.systemd.sleep.settings.Sleep.AllowHibernation
-            && desktop.config.fileSystems."/".device == "/dev/disk/by-uuid/664a9ddf-4ff2-47f8-90b5-65d449dfbca7"
-            && desktop.config.fileSystems."/boot".device == "/dev/disk/by-uuid/85B9-1188"
-            && desktop.config.fileSystems."/mnt/windows".device == "/dev/disk/by-uuid/263CE1813CE14BFD"
-            && builtins.elem "ro" desktop.config.fileSystems."/mnt/windows".options
-            && desktop.config.boot.initrd.luks.devices == { }
-            && desktop.config.services.logind.settings.Login.IdleAction == "ignore"
-            && builtins.all (
-              listener: listener.timeout == 300
-            ) desktop.config.home-manager.users.dhilipsiva.services.hypridle.settings.listener
-            && thinkpad.boot.loader.systemd-boot.enable
-            &&
-              thinkpad.boot.initrd.luks.devices.root.device
-              == "/dev/disk/by-uuid/4a7c2f90-d44a-479c-82f6-f764d6cab51d"
-            && thinkpad.fileSystems."/".device == "/dev/disk/by-uuid/84250d8e-f63c-4427-99dd-db945a069258"
-            && thinkpad.fileSystems."/boot".device == "/dev/disk/by-uuid/BE19-6095"
-            && !thinkpad.boot.initrd.luks.devices.root.allowDiscards
-            && !thinkpad.boot.initrd.luks.devices.root.bypassWorkqueues
-            && thinkpad.swapDevices == [ ]
-            && thinkpad.zramSwap.enable
-            && thinkpad.zramSwap.swapDevices == 1
-            && thinkpad.zramSwap.algorithm == "zstd"
-            && thinkpad.zramSwap.memoryPercent == 25
-            && thinkpad.zramSwap.priority == 100
-            && thinkpad.zramSwap.writebackDevice == null
-            && !thinkpad.systemd.oomd.enableUserSlices
-            && thinkpad.system.stateVersion == "24.11"
-            && thinkpad.home-manager.users.dhilipsiva.home.stateVersion == "26.05"
-            && thinkpad.systemd.sleep.settings.Sleep.AllowSuspend
-            && !thinkpad.systemd.sleep.settings.Sleep.AllowHibernation
-            && thinkpad.services.logind.settings.Login.IdleAction == "ignore"
-            && thinkpad.services.logind.settings.Login.HandleLidSwitch == "suspend"
-            && thinkpad.services.logind.settings.Login.HandleLidSwitchDocked == "ignore"
-            && thinkpad.hardware.nvidia.prime.offload.enable
-            && thinkpad.hardware.nvidia.dynamicBoost.enable
-            && !desktop.config.hardware.nvidia.dynamicBoost.enable
-            && thinkpad.hardware.nvidia.prime.intelBusId == "PCI:0:2:0"
-            && thinkpad.hardware.nvidia.prime.nvidiaBusId == "PCI:1:0:0"
-            &&
-              thinkpad.environment.sessionVariables.AQ_DRM_DEVICES
-              == "/dev/dri/thinkpad-intel:/dev/dri/thinkpad-nvidia"
-            && desktop.config.environment.sessionVariables.AQ_DRM_DEVICES == "/dev/dri/desktop-nvidia"
-            &&
-              thinkpad.home-manager.users.dhilipsiva.wayland.windowManager.hyprland.settings.monitor == [
-                {
-                  output = "";
-                  mode = "preferred";
-                  position = "auto";
-                  scale = 1;
-                }
-              ]
-            && builtins.any (
-              monitor: monitor.output == "DP-1" && monitor.scale == 1.5
-            ) desktop.config.home-manager.users.dhilipsiva.wayland.windowManager.hyprland.settings.monitor
-            && thinkpad.services.flatpak.enable
-            && thinkpad.programs.obs-studio.enable
-            && thinkpad.programs.obs-studio.package.version == channels.obs-studio.version
-            && self.lib.hosts.thinkpad.requiredSecrets == [ "dhilipsiva/hashedPassword" ]
-            && allHostsStable
-          ) "Host storage, power, graphics, stable versions or application preservation policy changed.";
+          let
+            # Each clause is named by its own text, so a failure says which one drifted.
+            policy = {
+              "desktop.config.boot.lanzaboote.enable" = desktop.config.boot.lanzaboote.enable;
+              "desktop.config.home-manager.users.dhilipsiva.repo.lucy.enable" =
+                desktop.config.home-manager.users.dhilipsiva.repo.lucy.enable;
+              "!thinkpad.home-manager.users.dhilipsiva.repo.lucy.enable" =
+                !thinkpad.home-manager.users.dhilipsiva.repo.lucy.enable;
+              # Only the desktop runs Nibli's own model pin; tests/yoga-policies.nix pins the laptop's.
+              "yoga.config.home-manager.users.dhilipsiva.repo.lucy.enable" =
+                yoga.config.home-manager.users.dhilipsiva.repo.lucy.enable;
+              "desktop.config.repo.lucy.model == null" = desktop.config.repo.lucy.model == null;
+              "desktop.config.services.ollama.environmentVariables.OLLAMA_NO_CLOUD == \"1\"" =
+                desktop.config.services.ollama.environmentVariables.OLLAMA_NO_CLOUD == "1";
+              "desktop.config.systemd.services.lucy-input.wantedBy == [ ]" =
+                desktop.config.systemd.services.lucy-input.wantedBy == [ ];
+              "!desktop.config.systemd.sleep.settings.Sleep.AllowSuspend" =
+                !desktop.config.systemd.sleep.settings.Sleep.AllowSuspend;
+              "!desktop.config.systemd.sleep.settings.Sleep.AllowHibernation" =
+                !desktop.config.systemd.sleep.settings.Sleep.AllowHibernation;
+              "desktop.config.fileSystems.\"/\".device == \"/dev/disk/by-uuid/664a9ddf-4ff2-47f8-90b5-65d449dfbca7\"" =
+                desktop.config.fileSystems."/".device == "/dev/disk/by-uuid/664a9ddf-4ff2-47f8-90b5-65d449dfbca7";
+              "desktop.config.fileSystems.\"/boot\".device == \"/dev/disk/by-uuid/85B9-1188\"" =
+                desktop.config.fileSystems."/boot".device == "/dev/disk/by-uuid/85B9-1188";
+              "desktop.config.fileSystems.\"/mnt/windows\".device == \"/dev/disk/by-uuid/263CE1813CE14BFD\"" =
+                desktop.config.fileSystems."/mnt/windows".device == "/dev/disk/by-uuid/263CE1813CE14BFD";
+              "builtins.elem \"ro\" desktop.config.fileSystems.\"/mnt/windows\".options" =
+                builtins.elem "ro"
+                  desktop.config.fileSystems."/mnt/windows".options;
+              "desktop.config.boot.initrd.luks.devices == { }" = desktop.config.boot.initrd.luks.devices == { };
+              "desktop.config.services.logind.settings.Login.IdleAction == \"ignore\"" =
+                desktop.config.services.logind.settings.Login.IdleAction == "ignore";
+              "builtins.all ( listener: listener.timeout == 300 ) desktop.config.home-manager.users.dhilipsiva.services.hypridle.settings.listener" =
+                builtins.all (
+                  listener: listener.timeout == 300
+                ) desktop.config.home-manager.users.dhilipsiva.services.hypridle.settings.listener;
+              "thinkpad.boot.loader.systemd-boot.enable" = thinkpad.boot.loader.systemd-boot.enable;
+              "thinkpad.boot.initrd.luks.devices.root.device == \"/dev/disk/by-uuid/4a7c2f90-d44a-479c-82f6-f764d6cab51d\"" =
+                thinkpad.boot.initrd.luks.devices.root.device
+                == "/dev/disk/by-uuid/4a7c2f90-d44a-479c-82f6-f764d6cab51d";
+              "thinkpad.fileSystems.\"/\".device == \"/dev/disk/by-uuid/84250d8e-f63c-4427-99dd-db945a069258\"" =
+                thinkpad.fileSystems."/".device == "/dev/disk/by-uuid/84250d8e-f63c-4427-99dd-db945a069258";
+              "thinkpad.fileSystems.\"/boot\".device == \"/dev/disk/by-uuid/BE19-6095\"" =
+                thinkpad.fileSystems."/boot".device == "/dev/disk/by-uuid/BE19-6095";
+              "!thinkpad.boot.initrd.luks.devices.root.allowDiscards" =
+                !thinkpad.boot.initrd.luks.devices.root.allowDiscards;
+              "!thinkpad.boot.initrd.luks.devices.root.bypassWorkqueues" =
+                !thinkpad.boot.initrd.luks.devices.root.bypassWorkqueues;
+              "thinkpad.swapDevices == [ ]" = thinkpad.swapDevices == [ ];
+              "thinkpad.zramSwap.enable" = thinkpad.zramSwap.enable;
+              "thinkpad.zramSwap.swapDevices == 1" = thinkpad.zramSwap.swapDevices == 1;
+              "thinkpad.zramSwap.algorithm == \"zstd\"" = thinkpad.zramSwap.algorithm == "zstd";
+              "thinkpad.zramSwap.memoryPercent == 25" = thinkpad.zramSwap.memoryPercent == 25;
+              "thinkpad.zramSwap.priority == 100" = thinkpad.zramSwap.priority == 100;
+              "thinkpad.zramSwap.writebackDevice == null" = thinkpad.zramSwap.writebackDevice == null;
+              "!thinkpad.systemd.oomd.enableUserSlices" = !thinkpad.systemd.oomd.enableUserSlices;
+              "thinkpad.system.stateVersion == \"24.11\"" = thinkpad.system.stateVersion == "24.11";
+              "thinkpad.home-manager.users.dhilipsiva.home.stateVersion == \"26.05\"" =
+                thinkpad.home-manager.users.dhilipsiva.home.stateVersion == "26.05";
+              "thinkpad.systemd.sleep.settings.Sleep.AllowSuspend" =
+                thinkpad.systemd.sleep.settings.Sleep.AllowSuspend;
+              "!thinkpad.systemd.sleep.settings.Sleep.AllowHibernation" =
+                !thinkpad.systemd.sleep.settings.Sleep.AllowHibernation;
+              "thinkpad.services.logind.settings.Login.IdleAction == \"ignore\"" =
+                thinkpad.services.logind.settings.Login.IdleAction == "ignore";
+              "thinkpad.services.logind.settings.Login.HandleLidSwitch == \"suspend\"" =
+                thinkpad.services.logind.settings.Login.HandleLidSwitch == "suspend";
+              "thinkpad.services.logind.settings.Login.HandleLidSwitchDocked == \"ignore\"" =
+                thinkpad.services.logind.settings.Login.HandleLidSwitchDocked == "ignore";
+              "thinkpad.hardware.nvidia.prime.offload.enable" = thinkpad.hardware.nvidia.prime.offload.enable;
+              "thinkpad.hardware.nvidia.dynamicBoost.enable" = thinkpad.hardware.nvidia.dynamicBoost.enable;
+              "!desktop.config.hardware.nvidia.dynamicBoost.enable" =
+                !desktop.config.hardware.nvidia.dynamicBoost.enable;
+              "thinkpad.hardware.nvidia.prime.intelBusId == \"PCI:0:2:0\"" =
+                thinkpad.hardware.nvidia.prime.intelBusId == "PCI:0:2:0";
+              "thinkpad.hardware.nvidia.prime.nvidiaBusId == \"PCI:1:0:0\"" =
+                thinkpad.hardware.nvidia.prime.nvidiaBusId == "PCI:1:0:0";
+              "thinkpad.environment.sessionVariables.AQ_DRM_DEVICES == \"/dev/dri/thinkpad-intel:/dev/dri/thinkpad-nvidia\"" =
+                thinkpad.environment.sessionVariables.AQ_DRM_DEVICES
+                == "/dev/dri/thinkpad-intel:/dev/dri/thinkpad-nvidia";
+              "desktop.config.environment.sessionVariables.AQ_DRM_DEVICES == \"/dev/dri/desktop-nvidia\"" =
+                desktop.config.environment.sessionVariables.AQ_DRM_DEVICES == "/dev/dri/desktop-nvidia";
+              "thinkpad.home-manager.users.dhilipsiva.wayland.windowManager.hyprland.settings.monitor == [ { output = \"\"; mode = \"preferred\"; position = \"auto\"; scale = 1; } ]" =
+                thinkpad.home-manager.users.dhilipsiva.wayland.windowManager.hyprland.settings.monitor == [
+                  {
+                    output = "";
+                    mode = "preferred";
+                    position = "auto";
+                    scale = 1;
+                  }
+                ];
+              "builtins.any ( monitor: monitor.output == \"DP-1\" && monitor.scale == 1.5 ) desktop.config.home-manager.users.dhilipsiva.wayland.windowManager.hyprland.settings.monitor" =
+                builtins.any (
+                  monitor: monitor.output == "DP-1" && monitor.scale == 1.5
+                ) desktop.config.home-manager.users.dhilipsiva.wayland.windowManager.hyprland.settings.monitor;
+              "thinkpad.services.flatpak.enable" = thinkpad.services.flatpak.enable;
+              "thinkpad.programs.obs-studio.enable" = thinkpad.programs.obs-studio.enable;
+              "thinkpad.programs.obs-studio.package.version == channels.obs-studio.version" =
+                thinkpad.programs.obs-studio.package.version == channels.obs-studio.version;
+              "self.lib.hosts.thinkpad.requiredSecrets == [ \"dhilipsiva/hashedPassword\" ]" =
+                self.lib.hosts.thinkpad.requiredSecrets == [ "dhilipsiva/hashedPassword" ];
+              "allHostsStable" = allHostsStable;
+            };
+            drifted = builtins.filter (name: !policy.${name}) (builtins.attrNames policy);
+          in
+          assert lib.assertMsg (drifted == [ ])
+            "Host storage, power, graphics, stable versions or application preservation policy changed. Drifted: ${lib.concatStringsSep "; " drifted}";
           pkgs.runCommand "host-policies-check" { } "touch $out";
 
         obs-nvenc-runpath =

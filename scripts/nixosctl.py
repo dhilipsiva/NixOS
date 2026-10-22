@@ -2,6 +2,7 @@
 """Operate the shared NixOS checkout without merging, discarding work or rebooting."""
 import argparse
 from contextlib import contextmanager
+from datetime import datetime, timezone
 import fcntl
 import json
 import os
@@ -213,6 +214,42 @@ def deployment_lock():
         yield
 
 
+# The deployment state directory (root-only, 0700; systemd.tmpfiles in maintenance.nix).
+STATE = Path('/var/lib/nixos-deployment')
+
+
+def record_success(state, head, role):
+    """Record the last successful `maintain` run (publish or sync, then stage), atomically."""
+    record = {'time': datetime.now(timezone.utc).isoformat(timespec='seconds'),
+              'head': head, 'role': role}
+    partial = state / 'last-success.json.tmp'
+    partial.write_text(json.dumps(record) + '\n')
+    partial.replace(state / 'last-success.json')
+
+
+def read_record(state, name):
+    """A recorded run (`last-success.json`, or `last-failure.json` from nixos-update-failed), or None."""
+    try:
+        return json.loads((state / name).read_text())
+    except FileNotFoundError:
+        return None
+
+
+def print_records(state):
+    for label, name in (('Last successful update', 'last-success.json'),
+                        ('Last failed update', 'last-failure.json')):
+        try:
+            record = read_record(state, name)
+        except PermissionError:
+            print(f'{label}: readable only by root (sudo nixosctl status)')
+            continue
+        if record is None:
+            print(f'{label}: none recorded')
+        else:
+            detail = f" ({record['role']} at {record['head']})" if 'head' in record else ''
+            print(f"{label}: {record['time']}{detail}")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--repo', type=Path, default=DEFAULT_REPO)
@@ -249,6 +286,7 @@ def main():
         print(f'System profile: {Path("/nix/var/nix/profiles/system").resolve()}')
         print('Boot default is separate; inspect sudo bootctl list before rebooting.')
         print('Unattended updates and GC require: /var/lib/nixos-deployment/accepted.json')
+        print_records(STATE)
     else:
         import deployment
         if args.command == 'setup-publisher':
@@ -277,6 +315,7 @@ def main():
                     # All Git and Nix work runs as the checkout owner.
                     repo.nightly(base)
                 deployment.stage(repo, args.host, cfg)
+                record_success(STATE, repo.head(), cfg['role'])
 
 
 if __name__ == '__main__':

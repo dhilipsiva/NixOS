@@ -136,6 +136,30 @@ class GitWorkflowTests(unittest.TestCase):
             recovery.assert_not_called()
 
 
+class RecordTests(unittest.TestCase):
+    def test_a_successful_update_is_recorded_and_reported(self):
+        with tempfile.TemporaryDirectory() as directory:
+            state = Path(directory)
+            self.assertIsNone(ctl.read_record(state, 'last-success.json'))
+            ctl.record_success(state, 'abc1234', 'publisher')
+            record = ctl.read_record(state, 'last-success.json')
+            self.assertEqual((record['head'], record['role']), ('abc1234', 'publisher'))
+            self.assertRegex(record['time'], r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+00:00$')
+            self.assertFalse((state / 'last-success.json.tmp').exists())
+            with patch('builtins.print') as printed:
+                ctl.print_records(state)
+            lines = [call.args[0] for call in printed.call_args_list]
+            self.assertIn(f"Last successful update: {record['time']} (publisher at abc1234)", lines)
+            self.assertIn('Last failed update: none recorded', lines)
+
+    def test_an_unreadable_state_directory_says_so(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with patch.object(ctl, 'read_record', side_effect=PermissionError), \
+                    patch('builtins.print') as printed:
+                ctl.print_records(Path(directory))
+            self.assertTrue(all('readable only by root' in call.args[0] for call in printed.call_args_list))
+
+
 class FirmwareTests(unittest.TestCase):
     def test_signature_list_retains_old_and_new_certificates(self):
         import struct
