@@ -546,21 +546,30 @@
         # The kernel bridge follows the release's own series, never linuxPackages_latest: with
         # latest moved to another series (as on 2026-10-20, when it became 7.3 while the
         # release stayed 7.2.11 and the nightly halted), the same kernel must be selected.
+        # Every spelling of Nixpkgs' latest kernel throws, so the check holds whatever series
+        # latest happens to be in the locked Nixpkgs.
         kernel-series =
           let
+            refused = throw "pkgs/kernel.nix must not read Nixpkgs' latest kernel";
             selected = import ./pkgs/kernel.nix { inherit (desktop) pkgs; };
-            moved = import ./pkgs/kernel.nix {
+            blind = import ./pkgs/kernel.nix {
               pkgs = desktop.pkgs // {
-                linuxPackages_latest = desktop.pkgs.linuxPackages;
+                linuxPackages_latest = refused;
+                linux_latest = refused;
+                linuxKernel = desktop.pkgs.linuxKernel // {
+                  packages = desktop.pkgs.linuxKernel.packages // {
+                    linux_latest = refused;
+                  };
+                  kernels = desktop.pkgs.linuxKernel.kernels // {
+                    linux_latest = refused;
+                  };
+                };
               };
             };
           in
           assert lib.assertMsg (
-            desktop.pkgs.linuxPackages.kernel.version != selected.version
-          ) "The check needs linuxPackages and the release to differ in series.";
-          assert lib.assertMsg (
-            selected.drvPath == moved.drvPath
-          ) "The kernel changed when linuxPackages_latest moved to another series.";
+            selected.drvPath == blind.drvPath
+          ) "The kernel depends on Nixpkgs' latest kernel.";
           pkgs.runCommand "kernel-series-check" { } "touch $out";
 
         stable-releases =

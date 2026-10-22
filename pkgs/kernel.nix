@@ -9,7 +9,7 @@ let
   attribute = "linuxPackages_" + lib.replaceStrings [ "." ] [ "_" ] series;
   base =
     (pkgs.${attribute}
-      or (throw "Kernel ${release.version} needs Nixpkgs' ${attribute} recipe, which this Nixpkgs no longer has; move the release to a supported series.")
+      or (throw "Kernel ${release.version} needs Nixpkgs' ${attribute} recipe, which this Nixpkgs does not have yet; publication waits until Nixpkgs packages the ${series} series.")
     ).kernel;
 in
 assert lib.assertMsg (
