@@ -366,3 +366,9 @@ Manager application profile and Zellij module) applies there too; compositor
 scale and console font remain host settings. Follow [THINKPAD.md](THINKPAD.md)
 for its rollout, physical checks and recovery. Never copy desktop UUIDs, signing
 private keys, SSH host keys or the no-sleep policy onto it.
+
+## Licence
+
+MIT OR Apache-2.0, at your option: [LICENSE-MIT](LICENSE-MIT) and
+[LICENSE-APACHE](LICENSE-APACHE). The packages under `pkgs/` keep their upstream licences in
+their `meta.license`.
