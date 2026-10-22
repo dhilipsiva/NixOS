@@ -53,6 +53,9 @@ pkgs.testers.runNixOSTest {
       environment.sessionVariables.AQ_DRM_DEVICES = lib.mkForce "/dev/dri/card0";
       power.ups.enable = lib.mkForce false;
       sops.defaultSopsFile = lib.mkForce "${fixture}/secrets.yaml";
+      # The fixture is built, so validating it at evaluation time would build it during
+      # `nix flake check --no-build` (import from derivation); the VM decrypts it at boot anyway.
+      sops.validateSopsFiles = lib.mkForce false;
       # Activation runs before sops-install-secrets-for-users.service reads the key.
       system.activationScripts.desktopLoginFixtureKey.text = ''
         install -D -m 600 ${fixture}/host_key /etc/ssh/ssh_host_ed25519_key
