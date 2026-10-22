@@ -107,7 +107,7 @@ pkexec true                                       # Hyprland-styled polkit promp
 resolvectl status | head -12
 sudo nft list ruleset | head -30
 findmnt /tmp                                      # tmpfs
-nix --version                                     # 2.35.2
+nix --version                                     # 2.35.3
 bluetoothctl show | head -3
 zellij --version; cat ~/.config/zellij/config.kdl
 command -v nix-channel || echo "nix-channel removed as intended"

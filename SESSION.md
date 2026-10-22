@@ -54,7 +54,9 @@ The owner reports the ThinkPad boots and works on its staged configuration and
 accepted it; `system.etc.overlay` is an attended task for the laptop's VM session
 (THINKPAD.md).
 
-Generation 15 (published `44d446b`, the modernisation) is running and the owner
+Generation 24 is running (checked 2026-10-22: `/run/current-system` and `system-24-link` are
+`fv7isyq743h3b9v07ifr47a7lv678zq2-nixos-system-dhilipsiva-desktop-26.05.20261015.26f4107`, staged
+2026-10-19). Earlier: generation 15 (published `44d446b`, the modernisation) ran and the owner
 confirmed the 1.5 scale. The checkout adds the DisplayPort display policy
 described in DEPLOYMENT.md; the previous modernisation built as
 `/nix/store/vwbdamgnanaghnwwafwg27mbd8p9q6ng-nixos-system-dhilipsiva-desktop-26.05.20261002.774debe`,
