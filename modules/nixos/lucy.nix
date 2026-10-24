@@ -1,5 +1,5 @@
 # On-demand Lucy desktop integration (README "Lucy on demand"). A host opts in
-# by importing this module and setting repo.lucy.enable. Nibli pins one Ollama
+# by importing this module and setting repo.lucy.enable. Lucy pins one Ollama
 # model for the desktop GPU; a host whose memory cannot hold it sets
 # repo.lucy.model to a smaller library tag with that tag's manifest digest, and
 # only that pin changes in the packaged runtime.
@@ -65,14 +65,14 @@ let
     )
   );
   identity = pkgs.writeText "lucy-identity.nibli" (
-    builtins.readFile "${inputs.nibli}/lucy-cli/constitution/lucy.nibli"
+    builtins.readFile "${inputs.lucy}/lucy-cli/constitution/lucy.nibli"
     + "\n"
     + builtins.readFile ../../lucy/memory.nibli
     + "\n"
-    + builtins.readFile "${inputs.nibli}/lucy/memory.nibli"
+    + builtins.readFile "${inputs.lucy}/lucy/memory.nibli"
   );
   package = pkgs.callPackage ../../pkgs/lucy.nix {
-    nibli = inputs.nibli;
+    lucy = inputs.lucy;
     ollama = config.services.ollama.package;
     inherit
       identity
@@ -108,7 +108,7 @@ in
       );
       default = null;
       description = ''
-        Replace Nibli's pinned Ollama model on this host. null keeps Nibli's
+        Replace Lucy's pinned Ollama model on this host. null keeps Lucy's
         own pin, sized for the desktop GPU. Inference still refuses a missing
         or changed model; lucy setup-model downloads the configured tag.
       '';

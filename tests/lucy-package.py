@@ -135,7 +135,12 @@ def main():
                 with service(args.binary, env, workspace, root / 'service.log') as path:
                     opened = rpc(path, {'op': 'open'})
                     assert opened['model'] == args.model, opened
-                    assert not data.exists(), 'Opening the service loaded private memory'
+                    # The observer may create continuity and peer-sync state while asleep.
+                    # Opening still must not activate a session, open conversation indexes,
+                    # or contact the model.
+                    assert not (data / 'memory.redb').exists(), 'Opening loaded the conversation index'
+                    assert not rpc(path, {'op': 'status'})['active']
+                    assert not model.requests, 'Opening the service invoked inference'
                     assert path.stat().st_mode & 0o777 == 0o600
                     empty = audit()
                     assert empty['integrity'] == 'checked', empty

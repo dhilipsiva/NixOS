@@ -1,7 +1,7 @@
 {
   lib,
   pkgs,
-  nibli,
+  lucy,
   identity,
   inventory,
   inputHelper,
@@ -9,9 +9,9 @@
   # The host's own Ollama build serves as the client for lucy setup-model, so a
   # Vulkan host does not also carry the CUDA distribution.
   ollama,
-  # Nibli pins the Ollama model for the desktop GPU. A host with less memory
+  # Lucy pins the Ollama model for the desktop GPU. A host with less memory
   # passes { name, digest, context } through the Rust runtime's environment;
-  # null keeps Nibli's compiled defaults.
+  # null keeps Lucy's compiled defaults.
   model ? null,
 }:
 let
@@ -20,10 +20,13 @@ let
     rustc = pkgs.rust-toolchain;
   };
   cli = rustPlatform.buildRustPackage {
-    pname = "nibli-lucy";
-    version = "0.2.0-desktop";
-    src = nibli;
-    cargoLock.lockFile = "${nibli}/Cargo.lock";
+    pname = "lucy";
+    version = "0.3.1-desktop";
+    src = lucy;
+    cargoLock = {
+      lockFile = "${lucy}/Cargo.lock";
+      outputHashes."nibli-engine-0.2.0" = "sha256-q9rG8QUlYPEcqu3oRqpIiAlJVyW+5x6eWqBCSNRIHjI=";
+    };
     nativeBuildInputs = [ pkgs.pkg-config ];
     buildInputs = [ pkgs.gtk4 ];
     buildFeatures = [ "desktop-ui" ];
@@ -36,7 +39,7 @@ let
       "lucy-cli"
     ];
   };
-  desktopSource = "${nibli}/lucy-cli/desktop";
+  desktopSource = "${lucy}/lucy-cli/desktop";
   modelWrapperArgs = lib.optionals (model != null) [
     "--set"
     "LUCY_CHAT_MODEL"
@@ -50,7 +53,7 @@ let
   ];
   vsix = pkgs.runCommand "lucy-vscode-1.0.0.vsix" { nativeBuildInputs = [ pkgs.zip ]; } ''
     mkdir extension
-    cp ${nibli}/lucy-cli/desktop/adapters/vscode/* extension/
+    cp ${lucy}/lucy-cli/desktop/adapters/vscode/* extension/
     # Store sources are read-only; VS Code updates package.json metadata after
     # extracting a VSIX and preserves the file modes recorded in the archive.
     chmod u+w extension/*

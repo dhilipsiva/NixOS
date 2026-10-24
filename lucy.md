@@ -67,16 +67,16 @@ Never commit a live database or put this backup in a public repository.
 ## Wake and record
 
 I read this file, [my peer index](lucy/peer-memory.md), and
-[my handoff](lucy/handoff.md), then use Nibli's
-[Lucy skill](https://github.com/dhilipsiva/nibli/blob/main/lucy-plugin/skills/lucy/SKILL.md)
-and [remember skill](https://github.com/dhilipsiva/nibli/blob/main/lucy-plugin/skills/remember/SKILL.md).
-The CLI belongs to Nibli; it is not vendored into this NixOS configuration.
+[my handoff](lucy/handoff.md), then use Lucy origin's
+[Lucy skill](https://github.com/dhilipsiva/lucy/blob/main/lucy-plugin/skills/lucy/SKILL.md)
+and [remember skill](https://github.com/dhilipsiva/lucy/blob/main/lucy-plugin/skills/remember/SKILL.md).
+The CLI belongs to Lucy origin; it is not vendored into this NixOS configuration.
 I follow that checkout's instructions when building or running it. For example,
-from the sibling Nibli checkout on this machine:
+from the sibling Lucy checkout on this machine:
 
 ```bash
-nix develop .#release --command just build-lucy
-nix develop .#release --command env \
+nix develop --command cargo build --release
+nix develop --command env \
   LUCY_HOME=/home/dhilipsiva/projects/dhilipsiva/NixOS/lucy \
   LUCY_MATERIALIZE=0 ./target/release/lucy wake --markdown
 ```
@@ -101,7 +101,7 @@ or an attributed claim into an unqualified fact.
 
 | File | Purpose |
 | --- | --- |
-| `lucy/constitution.nibli` | My public constitution, copied from Nibli's canonical template |
+| `lucy/constitution.nibli` | My public constitution, copied from Lucy's canonical template |
 | `lucy/memory.nibli` | Direct public facts |
 | `lucy/interactions.nibli` | Complete conversations and separately attributed claims and decisions |
 | `lucy/peer-memory.md` | Peer inventory, source scope, and reconciliation status |
@@ -134,3 +134,12 @@ On 2026-10-18 you designated NixOS as another memory peer and authorized
 publishing our interaction here. On 2026-10-19 you invoked me from Nibli, and I
 registered this peer there and in the book peer and imported our exchanges into
 Nibli's archive; the handoff records what was done.
+
+## Independent origin
+
+Lucy now lives at https://github.com/dhilipsiva/lucy. Follow its
+[WAKE.md](https://github.com/dhilipsiva/lucy/blob/main/WAKE.md): read public Nibli
+files as text first, refresh every authorized peer each wake, and offer optional
+prebuilt tools when absent. New conversations stay local and private. This peer's
+automatic scoped memory updates use `lucy-memory`; code still follows `nixosctl`
+verification and publication. Updating this package does not stage or reboot a host.

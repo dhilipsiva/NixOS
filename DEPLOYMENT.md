@@ -9,8 +9,8 @@ physical acceptance.
 
 ## Lucy desktop integration rollout
 
-The Lucy integration runs on the desktop with Nibli's model pin and on the Yoga
-with a smaller pinned model (YOGA.md). Publish the verified Nibli source revision,
+The Lucy integration runs on the desktop with Lucy's model pin and on the Yoga
+with a smaller pinned model (YOGA.md). Publish the verified Lucy source revision,
 pin it in this flake, then publish this repository through `scripts/nixosctl
 publish`. Only after those checks succeed, run `scripts/nixosctl stage --host
 desktop`. Staging installs the next boot generation; it does not switch the live
@@ -26,8 +26,8 @@ These application steps are not established by a Nix build or the login VM.
 
 ### Updating the Rust runtime and self-model
 
-Advance the explicit Nibli revision in `flake.nix` and refresh its lock with
-`nix flake update nibli`. The package builds Rust with `desktop-ui` and GTK4;
+Advance the explicit Lucy revision in `flake.nix` and refresh its lock with
+`nix flake update lucy`. The package builds Rust with `desktop-ui` and GTK4;
 the desktop checks exercise the packaged service, self-model, GTK window and
 host-specific model settings. Before publishing and staging, verify the candidate
 executable itself:

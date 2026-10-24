@@ -2,9 +2,9 @@
   description = "Dhilipsiva's NixOS hosts and shared Home Manager configuration";
 
   inputs = {
-    # Reusable Lucy code belongs to Nibli; never copy private runtime data here.
-    nibli = {
-      url = "github:dhilipsiva/nibli/168f32b3a127adf7ea7497e1b9879d327fd80a85";
+    # Reusable Lucy code belongs to the independent Lucy origin; never copy private runtime data here.
+    lucy = {
+      url = "github:dhilipsiva/lucy/879b06cddd82ddd98a8bc5d049ce1ea12ae85a51";
       flake = false;
     };
     # Keep NixOS and Home Manager on the newest released stable series together.
@@ -327,7 +327,7 @@
             ''
               export HOME="$TMPDIR/home"
               mkdir -p "$HOME"
-              bash ${inputs.nibli}/lucy-cli/desktop/test-window.sh ${lucy}/bin/lucy
+              bash ${inputs.lucy}/lucy-cli/desktop/test-window.sh ${lucy}/bin/lucy
               touch "$out"
             '';
         lucy-desktop =
@@ -340,8 +340,8 @@
             }
             ''
               python3 ${./tests/lucy-package.py} --binary ${self.packages.${system}.lucy}/bin/lucy
-              node --check ${inputs.nibli}/lucy-cli/desktop/adapters/vscode/extension.js
-              node --check ${inputs.nibli}/lucy-cli/desktop/adapters/browser/popup.js
+              node --check ${inputs.lucy}/lucy-cli/desktop/adapters/vscode/extension.js
+              node --check ${inputs.lucy}/lucy-cli/desktop/adapters/browser/popup.js
               touch "$out"
             '';
         # Exercise the laptop wrapper's model, digest and context against a local
@@ -393,7 +393,7 @@
                 desktop.config.home-manager.users.dhilipsiva.repo.lucy.enable;
               "!thinkpad.home-manager.users.dhilipsiva.repo.lucy.enable" =
                 !thinkpad.home-manager.users.dhilipsiva.repo.lucy.enable;
-              # Only the desktop runs Nibli's own model pin; tests/yoga-policies.nix pins the laptop's.
+              # Only the desktop runs Lucy's own model pin; tests/yoga-policies.nix pins the laptop's.
               "yoga.config.home-manager.users.dhilipsiva.repo.lucy.enable" =
                 yoga.config.home-manager.users.dhilipsiva.repo.lucy.enable;
               "desktop.config.repo.lucy.model == null" = desktop.config.repo.lucy.model == null;
