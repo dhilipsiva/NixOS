@@ -16,6 +16,7 @@
     ./windows.nix
     ./maintenance.nix
     ./secure-boot.nix
+    ./applications.nix
     # nixos-hardware supplies AMD microcode, the NVIDIA video driver selection
     # (-nonprime: one discrete GPU wired to the monitor) and periodic SSD TRIM.
     inputs.nixos-hardware.nixosModules.common-cpu-amd

@@ -403,6 +403,10 @@
               "desktop.config.boot.lanzaboote.enable" = desktop.config.boot.lanzaboote.enable;
               "desktop.config.home-manager.users.dhilipsiva.repo.lucy.enable" =
                 desktop.config.home-manager.users.dhilipsiva.repo.lucy.enable;
+              # Roblox on the desktop: Sober from Flathub, required before staging.
+              "desktop.config.services.flatpak.enable" = desktop.config.services.flatpak.enable;
+              "self.lib.hosts.desktop.flatpakApps == [ \"org.vinegarhq.Sober\" ]" =
+                self.lib.hosts.desktop.flatpakApps == [ "org.vinegarhq.Sober" ];
               # The desktop runs Lucy's own model pin; both laptops pin the smaller
               # qwen3.5:9b (tests/yoga-policies.nix for the Yoga, here for the ThinkPad).
               "thinkpad.home-manager.users.dhilipsiva.repo.lucy.enable" =

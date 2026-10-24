@@ -6,7 +6,7 @@ unencrypted ext4 root, 1 GiB EFI partition and systemd-boot with Lanzaboote
 signing; there is no partitioning or reinstall configuration.
 
 `hosts/desktop/` holds hardware, filesystems, NVIDIA, display scale, performance,
-power and Windows-access settings. `modules/nixos/` is the shared system
+power, Windows-access and Roblox (Sober) settings. `modules/nixos/` is the shared system
 configuration and `home/dhilipsiva/` the shared Home Manager profile. The flake
 exposes `nixosConfigurations.desktop` and `nixosConfigurations.thinkpad`
 (`hosts/thinkpad/`). Desktop operations are in [DEPLOYMENT.md](DEPLOYMENT.md),
@@ -69,9 +69,13 @@ screen use a 32-pixel Terminus font.
   `/var/tmp` retention, bounded journals. CPU side-channel mitigations stay on.
 - **Local AI:** socket-activated Ollama with CUDA that unloads models after each
   request (`modules/nixos/ollama.nix`, host backend in `performance.nix`).
+- **Roblox:** Flatpak with the user-scoped Sober from Flathub and a
+  **Roblox (Sober)** launcher entry (`hosts/desktop/applications.nix`); staging
+  requires Sober and the Flatpak NVIDIA runtime matching the candidate driver.
 - **ThinkPad differences:** the laptop keeps its LUKS root with the scripted
   initrd, systemd-boot without Secure Boot, suspend on lid close, Intel/NVIDIA
-  PRIME offload, Flatpak for Sober (Roblox) and native OBS (`hosts/thinkpad/`).
+  PRIME offload, Sober (Roblox) as on the desktop and native OBS
+  (`hosts/thinkpad/`).
 - **Yoga differences:** the Yoga Slim 7 keeps its owner-installed unencrypted
   ext4 root (the installer's swap partition stays unused via `systemd.swap=0`)
   and unsigned systemd-boot with Secure Boot off, suspends on lid close, runs

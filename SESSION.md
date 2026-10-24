@@ -150,3 +150,24 @@ All three toplevels change (desktop `gl58wbar…`, ThinkPad `w0v5rzlk…`, Yoga
 `todo/unblock-sites`. The running desktop (`alzdxla8…`) still carries the
 blocklist until the branch is merged into `master`, published through
 `scripts/nixosctl publish`, staged and booted; nothing was switched or rebooted.
+
+## Roblox on the desktop (2026-10-24)
+
+The owner asked for Roblox on the desktop without a reboot. The new
+`hosts/desktop/applications.nix` (imported after `secure-boot.nix`) enables
+Flatpak and adds the **Roblox (Sober)** launcher entry the Yoga uses;
+`hosts/desktop/maintenance.nix` lists `org.vinegarhq.Sober` as a required user
+Flatpak, so `nixosctl stage --host desktop` now also requires the Flatpak NVIDIA
+runtime matching the candidate driver, as on the laptops, and `host-policies`
+pins both. Flathub serves `org.vinegarhq.Sober` and
+`org.freedesktop.Platform.GL.nvidia-595-104-02` (the running driver). Branch
+`todo/roblox-desktop` stacks on `todo/unblock-sites`; the desktop toplevel is
+`sy4qbd2p…` (laptops unchanged) and `nix fmt` and `nix flake check` (all checks)
+passed. Sober itself is a user-scope install the owner runs after activation
+(`flatpak remote-add --user flathub …`, `flatpak install --user flathub
+org.vinegarhq.Sober`); nothing was switched or rebooted.
+
+Unrelated to these branches: the 21:02 nightly publisher run failed in
+`update-stable-releases.py --verify` because nixpkgs packages NVIDIA 595.104.02
+while the official stable is 595.112.07. It passes once packaging catches up;
+the Sober NVIDIA runtime must then match 595.112.07 before staging.
