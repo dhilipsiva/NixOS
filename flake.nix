@@ -357,6 +357,18 @@
               --context ${toString lucy.model.context} --expect-host-pin
             touch "$out"
           '';
+        # The ThinkPad takes the Yoga's pin on an 8 GiB CUDA GPU; same fixture check.
+        lucy-thinkpad-model =
+          let
+            lucy = self.nixosConfigurations.thinkpad.config.home-manager.users.dhilipsiva.repo.lucy.package;
+          in
+          pkgs.runCommand "lucy-thinkpad-model-check" { nativeBuildInputs = [ pkgs.python3 ]; } ''
+            python3 ${./tests/lucy-package.py} --binary ${lucy}/bin/lucy \
+              --model ${lib.escapeShellArg lucy.model.name} \
+              --digest ${lib.escapeShellArg lucy.model.digest} \
+              --context ${toString lucy.model.context} --expect-host-pin
+            touch "$out"
+          '';
         yoga-policies = import ./tests/yoga-policies.nix { inherit pkgs lib yoga; };
         npu-runtime = import ./tests/npu-runtime.nix { inherit pkgs yoga; };
         ollama-on-demand = import ./tests/ollama-on-demand.nix { inherit pkgs; };
@@ -391,9 +403,18 @@
               "desktop.config.boot.lanzaboote.enable" = desktop.config.boot.lanzaboote.enable;
               "desktop.config.home-manager.users.dhilipsiva.repo.lucy.enable" =
                 desktop.config.home-manager.users.dhilipsiva.repo.lucy.enable;
-              "!thinkpad.home-manager.users.dhilipsiva.repo.lucy.enable" =
-                !thinkpad.home-manager.users.dhilipsiva.repo.lucy.enable;
-              # Only the desktop runs Lucy's own model pin; tests/yoga-policies.nix pins the laptop's.
+              # The desktop runs Lucy's own model pin; both laptops pin the smaller
+              # qwen3.5:9b (tests/yoga-policies.nix for the Yoga, here for the ThinkPad).
+              "thinkpad.home-manager.users.dhilipsiva.repo.lucy.enable" =
+                thinkpad.home-manager.users.dhilipsiva.repo.lucy.enable;
+              "thinkpad.repo.lucy.model.name == \"qwen3.5:9b-q4_K_M\"" =
+                thinkpad.repo.lucy.model.name == "qwen3.5:9b-q4_K_M";
+              "thinkpad.home-manager.users.dhilipsiva.repo.lucy.package.model == thinkpad.repo.lucy.model" =
+                thinkpad.home-manager.users.dhilipsiva.repo.lucy.package.model == thinkpad.repo.lucy.model;
+              "thinkpad.services.ollama.environmentVariables.OLLAMA_NO_CLOUD == \"1\"" =
+                thinkpad.services.ollama.environmentVariables.OLLAMA_NO_CLOUD == "1";
+              "thinkpad.systemd.services.lucy-input.wantedBy == [ ]" =
+                thinkpad.systemd.services.lucy-input.wantedBy == [ ];
               "yoga.config.home-manager.users.dhilipsiva.repo.lucy.enable" =
                 yoga.config.home-manager.users.dhilipsiva.repo.lucy.enable;
               "desktop.config.repo.lucy.model == null" = desktop.config.repo.lucy.model == null;

@@ -1,6 +1,7 @@
 # Aggregator: imports every concern-split system module so a host can include
 # the whole shared system config with one `./modules/nixos` entry. lucy.nix is
-# opt-in: the desktop and the Yoga import it beside their host modules.
+# opt-in: the desktop, the ThinkPad and the Yoga import it beside their host
+# modules.
 { ... }:
 
 {

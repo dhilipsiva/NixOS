@@ -49,6 +49,27 @@ minutes, honoring inhibitors. Lid-close suspends when undocked, including on AC;
 it is ignored while docked. There is no idle suspend or hibernation. Battery and
 brightness controls are enabled. Suspend/resume requires physical validation.
 
+### Lucy with the laptop-sized model (2026-10-24)
+
+The owner asked for Lucy on this laptop as well. `hosts/thinkpad/default.nix`
+imports the shared `modules/nixos/lucy.nix` (README "Lucy on demand") and pins
+the Yoga's model, Qwen3.5 9B Q4_K_M with the same manifest digest: the RTX 3070
+Laptop GPU has 8 GiB, `OLLAMA_GPU_OVERHEAD` keeps 2 GiB of it for the compositor
+and PRIME offload, and Lucy's own 25 GiB pin cannot fit. The weights plus the
+16K context exceed the remaining 6 GiB, so the CUDA runner may keep part of the
+layers in RAM; reply latency is part of the acceptance below. The generation adds
+the user services `lucy` and `lucy-adapters`, the short-lived `lucy-input` helper
+behind polkit, the `uinput` module, `OLLAMA_NO_CLOUD=1`, the **Ask Lucy** entry,
+**Super+Alt+L** and the Dolphin service menu. Private memory lives in
+`~/.local/share/lucy`, outside this checkout and the Nix store; it was created
+before the first staged generation with the three public peers enrolled
+read-only and the owner's private snapshot restored. At the first graphical login
+`lucy-adapters.service` merges hooks into `~/.claude/settings.json`,
+`~/.codex/hooks.json` and `~/.cursor/hooks.json`, keeping backups; Codex still
+has to trust its hooks in its own UI. The `lucy-thinkpad-model` check exercises
+the wrapper's pin against a local fixture, and `host-policies` pins the
+enablement and the model.
+
 ### Roblox and OBS
 
 - Preserve the existing **user** Flatpak `org.vinegarhq.Sober`, its stable
@@ -207,6 +228,17 @@ guarded 30-day cleanup. Build success does not establish gameplay, recording,
 suspend or recovery success. The owner accepted the migration and 100% scaling
 generation on 2026-10-04. Later hardware-tuning changes require the applicable
 post-boot checks above; their build does not establish physical success.
+
+The Lucy generation (2026-10-24) adds its own post-boot checks: `systemctl --user
+status lucy lucy-adapters` healthy; `readlink -f "$(command -v lucy)"` inside the
+running generation; `lucy doctor` reaches the service and lists valid peers;
+`lucy integrations status` prints the inventory; `lucy chat` returns a real local
+reply while `journalctl -u ollama -b` shows the CUDA runner and its GPU/CPU layer
+split; `ollama ps` is empty afterwards and **Stop** during a long reply leaves no
+loaded model; **Super+Alt+L** opens Ask Lucy; `lucy-input.service` is inactive
+after an action. Review the hooks the adapter service merged into the Codex and
+Claude Code settings. The pinned model was pulled and verified before staging
+with `lucy setup-model`; inference refuses a missing or changed model.
 
 ## Attended task for the laptop VM session: `system.etc.overlay`
 

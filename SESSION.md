@@ -101,3 +101,22 @@ evaluate to the same store paths as before the change (`fn01gcrh…`,
 check .` (including the new `lucy-yoga-model` check) and `scripts/nixosctl check
 --stable` passed. Staging (`scripts/nixosctl stage --host yoga`), the reboot,
 `lucy setup-model` and the YOGA.md acceptance remain the owner's steps.
+
+## ThinkPad state (2026-10-24)
+
+Generation 297 is running (`8b9a9sb7…`, staged by the subscriber nightly on
+2026-10-23 from `961c343`; the Lucy packaging commits of 2026-10-24 did not change
+the ThinkPad). The owner then asked for Lucy on the ThinkPad as well.
+`hosts/thinkpad/default.nix` now imports `modules/nixos/lucy.nix` with the Yoga's
+pin (qwen3.5:9b-q4_K_M, digest `56671c2a…`): the RTX 3070 Laptop GPU has 8 GiB
+with 2 GiB reserved as overhead, so the weights and the 16K context may keep part
+of the layers in RAM. `host-policies` asserts the enablement and the pin, and the
+new `lucy-thinkpad-model` check exercises the wrapper. Verified on the ThinkPad:
+`nix fmt`, `nix flake check .` and `scripts/nixosctl check --stable` passed; the
+desktop and Yoga toplevels evaluate to the same store paths as before
+(`alzdxla8…`, `cssqjh2m…`) and the ThinkPad's to `gpwrb34a…`. The private store
+at `~/.local/share/lucy` was created before staging, with the three public peers
+enrolled read-only, the owner's `lucy-private` snapshot restored (1073 records)
+and this checkout's `lucy/` registered. Publication through `scripts/nixosctl
+publish`, the 21:30 subscriber staging, the reboot and the THINKPAD.md acceptance
+follow; nothing was switched or rebooted.

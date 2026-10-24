@@ -10,7 +10,7 @@ physical acceptance.
 ## Lucy desktop integration rollout
 
 The Lucy integration runs on the desktop with Lucy's model pin and on the Yoga
-with a smaller pinned model (YOGA.md). Publish the verified Lucy source revision,
+and the ThinkPad with a smaller pinned model (YOGA.md, THINKPAD.md). Publish the verified Lucy source revision,
 pin it in this flake, then publish this repository through `scripts/nixosctl
 publish`. Only after those checks succeed, run `scripts/nixosctl stage --host
 desktop`. Staging installs the next boot generation; it does not switch the live
@@ -74,7 +74,7 @@ Rust, without a `python3 -m lucy_desktop` child. An adapter failure mentioning a
 missing `~/.nix-profile/bin/lucy` indicates a remaining local override; app
 enrollment conflicts are a separate failure and retain their existing files.
 
-`lucy setup-model` explicitly downloads the pinned Qwen3.6 model and checks the
+`lucy setup-model` explicitly downloads the host's pinned model and checks the
 manifest digest. Verify an actual local reply with `lucy chat`, use `ollama ps`
 and `nvidia-smi` to check fit and unloading, and test Stop during a long reply.
 Missing models, digest mismatches and GPU contention must produce visible local
