@@ -1,0 +1,20 @@
+{
+  "hashes": {
+    "operations.nibli": "6dad3acb419d68947cfb9353886f41ce66905e8961adcf167ec93c09990a46f4",
+    "snapshot.nibli": "26403d12bcdd7b7fe5edc6baff7b9d6130ea65c83936f682ae0a95df6b204010"
+  },
+  "identity": "nixos",
+  "keys": {
+    "9fdbbd26c247390168967134d401f1a1c685a39b262aeeee5f2f6c0a16fa2099": "QKhsIyW90nKUa+Ti/ie4xbcJNb2YRZOPSvgZsT8TH+w="
+  },
+  "paths": {
+    "operations": "operations.nibli",
+    "snapshot": "snapshot.nibli"
+  },
+  "public": true,
+  "ref": "lucy-memory",
+  "repository": "dhilipsiva/NixOS",
+  "schema": "lucy-operations-v1",
+  "scope": "nixos-public",
+  "version": 1
+}
