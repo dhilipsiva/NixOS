@@ -10,8 +10,8 @@
   # Vulkan host does not also carry the CUDA distribution.
   ollama,
   # Nibli pins the Ollama model for the desktop GPU. A host with less memory
-  # passes { name, digest, context } to pin a smaller tag at build time; null
-  # leaves Nibli's source untouched.
+  # passes { name, digest, context } through the Rust runtime's environment;
+  # null keeps Nibli's compiled defaults.
   model ? null,
 }:
 let
@@ -24,6 +24,9 @@ let
     version = "0.2.0-desktop";
     src = nibli;
     cargoLock.lockFile = "${nibli}/Cargo.lock";
+    nativeBuildInputs = [ pkgs.pkg-config ];
+    buildInputs = [ pkgs.gtk4 ];
+    buildFeatures = [ "desktop-ui" ];
     cargoBuildFlags = [
       "-p"
       "lucy-cli"
@@ -33,37 +36,18 @@ let
       "lucy-cli"
     ];
   };
-  python = pkgs.python3.withPackages (p: [
-    p.pygobject3
-    p.pycairo
-  ]);
-  gtkTypelibs = lib.makeSearchPath "lib/girepository-1.0" [
-    pkgs.gtk4
-    pkgs.pango.out
-    pkgs.gdk-pixbuf
-    pkgs.graphene
-    pkgs.gobject-introspection
-    pkgs.glib.out
-    pkgs.harfbuzz
+  desktopSource = "${nibli}/lucy-cli/desktop";
+  modelWrapperArgs = lib.optionals (model != null) [
+    "--set"
+    "LUCY_CHAT_MODEL"
+    model.name
+    "--set"
+    "LUCY_CHAT_DIGEST"
+    model.digest
+    "--set"
+    "LUCY_CHAT_CONTEXT"
+    (toString model.context)
   ];
-  # Only the three pinned constants change; every other line of the runtime is
-  # Nibli's. The greps fail the build if that file's layout moves.
-  desktopSource =
-    if model == null then
-      "${nibli}/lucy-cli/desktop"
-    else
-      pkgs.runCommand "lucy-desktop-${lib.replaceStrings [ ":" ] [ "-" ] model.name}" { } ''
-        cp -r ${nibli}/lucy-cli/desktop $out
-        chmod -R u+w $out
-        sed -i \
-          -e "s|^MODEL = .*|MODEL = '${model.name}'|" \
-          -e "s|^DIGEST = .*|DIGEST = '${model.digest}'|" \
-          -e "s|^CONTEXT = .*|CONTEXT = ${toString model.context}|" \
-          $out/lucy_desktop/model.py
-        grep -Fxq "MODEL = '${model.name}'" $out/lucy_desktop/model.py
-        grep -Fxq "DIGEST = '${model.digest}'" $out/lucy_desktop/model.py
-        grep -Fxq "CONTEXT = ${toString model.context}" $out/lucy_desktop/model.py
-      '';
   vsix = pkgs.runCommand "lucy-vscode-1.0.0.vsix" { nativeBuildInputs = [ pkgs.zip ]; } ''
     mkdir extension
     cp ${nibli}/lucy-cli/desktop/adapters/vscode/* extension/
@@ -94,28 +78,38 @@ let
     pkgs.gtk3
     pkgs.polkit
     ollama
-    python
     pkgs.vscode
   ];
-  runtime = pkgs.writeShellScript "lucy-desktop" ''
-    export PYTHONPATH=${desktopSource}
-    export GI_TYPELIB_PATH=${gtkTypelibs}
-    export PATH=${lib.makeBinPath runtimePaths}:$PATH
-    exec ${python}/bin/python3 -m lucy_desktop "$@"
-  '';
 in
-pkgs.symlinkJoin {
+pkgs.stdenvNoCC.mkDerivation {
   name = "lucy-desktop";
-  paths = [ cli ];
-  nativeBuildInputs = [ pkgs.makeWrapper ];
-  postBuild = ''
+  dontUnpack = true;
+  dontBuild = true;
+  nativeBuildInputs = [
+    pkgs.makeWrapper
+    pkgs.wrapGAppsHook4
+  ];
+  buildInputs = [ pkgs.gtk4 ];
+  # One wrapper supplies both GTK resources and Lucy's packaged dependencies.
+  dontWrapGApps = true;
+  installPhase = ''
+    runHook preInstall
+    mkdir -p "$out/bin" "$out/share/lucy"
+    ln -s ${cli}/bin/lucy "$out/bin/lucy"
     cat > "$out/bin/lucy-native-host" <<EOF
     #!${pkgs.runtimeShell}
     exec "$out/bin/lucy" native-host
     EOF
     chmod +x "$out/bin/lucy-native-host"
+    ln -s ${desktopSource}/adapters/browser "$out/share/lucy/browser-extension"
+    ln -s ${vsix} "$out/share/lucy/lucy.vsix"
+    ln -s ${inventory} "$out/share/lucy/integrations.json"
+    runHook postInstall
+  '';
+  postFixup = ''
     wrapProgram "$out/bin/lucy" \
-      --set LUCY_DESKTOP_EXECUTABLE ${runtime} \
+      "''${gappsWrapperArgs[@]}" \
+      ${lib.escapeShellArgs modelWrapperArgs} \
       --set LUCY_EXECUTABLE "$out/bin/lucy" \
       --set LUCY_NATIVE_HOST "$out/bin/lucy-native-host" \
       --set LUCY_VSIX ${vsix} \
@@ -124,6 +118,7 @@ pkgs.symlinkJoin {
       --set LUCY_INPUT_HELPER ${inputHelper} \
       --set LUCY_DMI_HELPER ${dmiHelper} \
       --set YDOTOOL_SOCKET /run/lucy-input/socket \
+      --prefix PATH : ${lib.makeBinPath runtimePaths} \
       --prefix PATH : "$out/bin" \
       --set LUCY_COMMAND_PATH ${
         lib.makeBinPath [
@@ -135,18 +130,11 @@ pkgs.symlinkJoin {
           pkgs.nix
         ]
       }
-    mkdir -p "$out/share/lucy"
-    ln -s ${desktopSource}/adapters/browser "$out/share/lucy/browser-extension"
-    ln -s ${vsix} "$out/share/lucy/lucy.vsix"
-    ln -s ${inventory} "$out/share/lucy/integrations.json"
   '';
   passthru = {
     inherit
       cli
-      runtime
       vsix
-      python
-      gtkTypelibs
       desktopSource
       model
       ;

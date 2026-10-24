@@ -81,17 +81,17 @@
     "nibli": {
       "flake": false,
       "locked": {
-        "lastModified": 1792353351,
-        "narHash": "sha256-zXQqXK2KvSb0A7Qe54eZhqIcnOSKM6GK7P6aayQ2iyM=",
+        "lastModified": 1792825480,
+        "narHash": "sha256-Xyi+11Oa0hcuGLbSUR0eMDHHMAeRARdmSzMBQKwdkm8=",
         "owner": "dhilipsiva",
         "repo": "nibli",
-        "rev": "0f3a3179c44d449ec0020415e98ec534d9cfd0d1",
+        "rev": "168f32b3a127adf7ea7497e1b9879d327fd80a85",
         "type": "github"
       },
       "original": {
         "owner": "dhilipsiva",
         "repo": "nibli",
-        "rev": "0f3a3179c44d449ec0020415e98ec534d9cfd0d1",
+        "rev": "168f32b3a127adf7ea7497e1b9879d327fd80a85",
         "type": "github"
       }
     },

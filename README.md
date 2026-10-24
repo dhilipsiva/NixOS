@@ -213,8 +213,9 @@ Lucy action. Ordinary prompts, quoted text and subject mentions such as
 `Lucy, sleep`, closing it, signing out or restarting the service ends it.
 **Stop** cancels the current task and pending approvals.
 
-The reusable implementation is a revision-pinned Nibli input, not a second
-identity copied into this repository. The user service stores complete invoked
+The reusable implementation is a revision-pinned Nibli input. The package builds
+the Rust service, CLI and GTK4 window with Nibli's `desktop-ui` feature, including
+their runtime libraries and GTK resources. The user service stores complete invoked
 messages privately under `~/.local/share/lucy` and uses a rebuildable text index
 for bounded recall. Private conversation data never belongs in this checkout or
 the Nix store. Existing public peer commands remain explicit. Invoked cloud apps
@@ -225,13 +226,23 @@ Local chat uses a pinned Ollama model with its manifest digest and 16K context.
 The desktop keeps Nibli's pin, Qwen3.6 35B-A3B Q4_K_M, which peaks near 25 GiB
 on the RTX 5090. The Yoga's integrated Arc 140V shares a 23 GiB Vulkan heap with
 32 GiB of RAM, so `hosts/yoga/default.nix` pins Qwen3.5 9B Q4_K_M (about 6 GiB,
-the same qwen3.5 tool-call format) through `repo.lucy.model`; only that constant
-changes in the packaged Nibli runtime (`pkgs/lucy.nix`), and the `lucy-yoga-model`
-check imports it. `lucy setup-model` explicitly downloads and verifies the host's
+the same qwen3.5 tool-call format) through `repo.lucy.model`. The package wrapper
+sets the Rust runtime's `LUCY_CHAT_MODEL`, `LUCY_CHAT_DIGEST` and
+`LUCY_CHAT_CONTEXT` for this host. The `lucy-yoga-model` check exercises those
+settings against an isolated HTTP fixture, including refusal of a mismatched
+manifest. `lucy setup-model` explicitly downloads and verifies the host's
 model. Inference does not download missing weights or fall back to a cloud model.
 Ollama on both hosts has cloud features disabled, one model/request at a time and
 unloading after requests; the desktop keeps 2 GiB of GPU headroom. Build success
 does not establish physical GPU fit.
+
+The native executor records predictions and outcomes in the shared private store;
+`lucy self-model status` and `lucy self-model audit` inspect that history and its
+evidence checks. The package checks execute a native file read, audit the recorded
+outcome and verify persistence across a service restart. External agents use
+explicit reported observations; they do not inherit the native executor's loop.
+Updating this feature requires advancing the Nibli source pin and rebuilding the
+package. Pulling a sibling checkout does not change the installed service.
 
 At the first graphical login after staging, `lucy-adapters.service` enrolls
 adapters with additive settings merges and backups. Conflicting existing files

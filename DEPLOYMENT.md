@@ -24,6 +24,56 @@ conflicts. Review Codex's hooks in Codex, grant VS Code's selected-model access,
 load the Chrome extension, and complete Firefox signing/trust as appropriate.
 These application steps are not established by a Nix build or the login VM.
 
+### Updating the Rust runtime and self-model
+
+Advance the explicit Nibli revision in `flake.nix` and refresh its lock with
+`nix flake update nibli`. The package builds Rust with `desktop-ui` and GTK4;
+the desktop checks exercise the packaged service, self-model, GTK window and
+host-specific model settings. Before publishing and staging, verify the candidate
+executable itself:
+
+```bash
+nix build .#lucy
+./result/bin/lucy self-model status
+./result/bin/lucy self-model audit
+```
+
+An `unknown command self-model` response means the candidate is still an older
+runtime. Refreshing the lock alone cannot advance a revision fixed in `flake.nix`.
+After the required checks pass, commit the changes and publish the clean `master`
+checkout through `scripts/nixosctl publish`, then stage through
+`scripts/nixosctl stage --host desktop`.
+
+Before the manual reboot, check for local overrides of **both** user services:
+
+```bash
+systemctl --user cat lucy.service lucy-adapters.service
+nix profile list
+```
+
+An old `rust.conf` in either `~/.config/systemd/user/lucy.service.d/` or
+`~/.config/systemd/user/lucy-adapters.service.d/` can override the packaged
+`ExecStart` with `~/.nix-profile/bin/lucy`. If present and selecting that old
+executable, rename that file to `rust.conf.disabled` in the same directory,
+preserving any existing backup. Leave unrelated overrides alone. Remove the
+personal `lucy-rust-local` package with `nix profile remove lucy-rust-local` if
+it is still listed. This keeps private memory in `~/.local/share/lucy` intact.
+Run `systemctl --user daemon-reload` after disabling an override.
+
+After rebooting into the staged generation, verify both services and the CLI:
+
+```bash
+systemctl --user status lucy lucy-adapters
+readlink -f "$(command -v lucy)"
+lucy self-model status
+lucy self-model audit
+```
+
+Both service commands must select the NixOS package. The service now runs in
+Rust, without a `python3 -m lucy_desktop` child. An adapter failure mentioning a
+missing `~/.nix-profile/bin/lucy` indicates a remaining local override; app
+enrollment conflicts are a separate failure and retain their existing files.
+
 `lucy setup-model` explicitly downloads the pinned Qwen3.6 model and checks the
 manifest digest. Verify an actual local reply with `lucy chat`, use `ollama ps`
 and `nvidia-smi` to check fit and unloading, and test Stop during a long reply.

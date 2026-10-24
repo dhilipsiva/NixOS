@@ -4,7 +4,7 @@
   inputs = {
     # Reusable Lucy code belongs to Nibli; never copy private runtime data here.
     nibli = {
-      url = "github:dhilipsiva/nibli/0f3a3179c44d449ec0020415e98ec534d9cfd0d1";
+      url = "github:dhilipsiva/nibli/168f32b3a127adf7ea7497e1b9879d327fd80a85";
       flake = false;
     };
     # Keep NixOS and Home Manager on the newest released stable series together.
@@ -318,18 +318,16 @@
           pkgs.runCommand "lucy-gtk-check"
             {
               nativeBuildInputs = [
+                pkgs.bash
                 pkgs.xvfb-run
+                pkgs.xdotool
                 pkgs.dbus
               ];
-              GI_TYPELIB_PATH = lucy.gtkTypelibs;
-              PYTHONPATH = "${inputs.nibli}/lucy-cli/desktop";
             }
             ''
               export HOME="$TMPDIR/home"
               mkdir -p "$HOME"
-              export XDG_RUNTIME_DIR="$TMPDIR/runtime"
-              mkdir -m700 "$XDG_RUNTIME_DIR"
-              GDK_BACKEND=x11 dbus-run-session --config-file=${pkgs.dbus}/share/dbus-1/session.conf -- xvfb-run ${lucy.python}/bin/python3 ${./tests/lucy-gtk.py}
+              bash ${inputs.nibli}/lucy-cli/desktop/test-window.sh ${lucy}/bin/lucy
               touch "$out"
             '';
         lucy-desktop =
@@ -338,29 +336,25 @@
               nativeBuildInputs = [
                 pkgs.python3
                 pkgs.nodejs
-                pkgs.ruff
               ];
             }
             ''
-              export PYTHONPATH=${inputs.nibli}/lucy-cli/desktop
-              python3 -m unittest discover -s ${inputs.nibli}/lucy-cli/desktop/tests -v
-              ruff check ${inputs.nibli}/lucy-cli/desktop
+              python3 ${./tests/lucy-package.py} --binary ${self.packages.${system}.lucy}/bin/lucy
               node --check ${inputs.nibli}/lucy-cli/desktop/adapters/vscode/extension.js
               node --check ${inputs.nibli}/lucy-cli/desktop/adapters/browser/popup.js
               touch "$out"
             '';
-        # The laptop's packaged runtime must import with the host's pinned model.
+        # Exercise the laptop wrapper's model, digest and context against a local
+        # HTTP fixture in the build sandbox, including rejection of a bad digest.
         lucy-yoga-model =
           let
             lucy = yoga.config.home-manager.users.dhilipsiva.repo.lucy.package;
           in
-          pkgs.runCommand "lucy-yoga-model-check" { PYTHONPATH = lucy.desktopSource; } ''
-            ${lucy.python}/bin/python3 -c '
-            from lucy_desktop import model
-            assert model.MODEL == "${lucy.model.name}", model.MODEL
-            assert model.DIGEST == "${lucy.model.digest}", model.DIGEST
-            assert model.CONTEXT == ${toString lucy.model.context}, model.CONTEXT
-            '
+          pkgs.runCommand "lucy-yoga-model-check" { nativeBuildInputs = [ pkgs.python3 ]; } ''
+            python3 ${./tests/lucy-package.py} --binary ${lucy}/bin/lucy \
+              --model ${lib.escapeShellArg lucy.model.name} \
+              --digest ${lib.escapeShellArg lucy.model.digest} \
+              --context ${toString lucy.model.context} --expect-host-pin
             touch "$out"
           '';
         yoga-policies = import ./tests/yoga-policies.nix { inherit pkgs lib yoga; };
