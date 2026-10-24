@@ -228,9 +228,10 @@ on the RTX 5090. The Yoga's integrated Arc 140V shares a 23 GiB Vulkan heap with
 32 GiB of RAM, so `hosts/yoga/default.nix` pins Qwen3.5 9B Q4_K_M (about 6 GiB,
 the same qwen3.5 tool-call format) through `repo.lucy.model`. The ThinkPad's RTX
 3070 Laptop GPU has 8 GiB with 2 GiB reserved as overhead, so
-`hosts/thinkpad/default.nix` takes the same pin and digest; the weights and the
-16K context exceed the remaining 6 GiB, so its CUDA runner may keep part of the
-layers in RAM. The package wrapper sets the Rust runtime's `LUCY_CHAT_MODEL`,
+`hosts/thinkpad/default.nix` takes the same pin and digest; measured on
+2026-10-24, the whole model loads into VRAM at 16K context (6.8 GiB peak, 36
+tokens/s after a 35 s cold load) and unloads after each reply. The package
+wrapper sets the Rust runtime's `LUCY_CHAT_MODEL`,
 `LUCY_CHAT_DIGEST` and `LUCY_CHAT_CONTEXT` for each host. The `lucy-yoga-model`
 and `lucy-thinkpad-model` checks exercise those settings against an isolated HTTP
 fixture, including refusal of a mismatched manifest. `lucy setup-model`

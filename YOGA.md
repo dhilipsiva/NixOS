@@ -205,9 +205,11 @@ and reconnect if 5 GHz is unreliable.
 
 The published revision stages like any other: `scripts/nixosctl stage --host
 yoga` (sudo), then `systemctl reboot`. After the first graphical login run
-`lucy setup-model` once as `dhilipsiva`; it downloads about 6 GiB and must
-print `Pinned model verified: sha256:56671c2a…`. Inference refuses a missing or
-different model, and nothing downloads on its own.
+`lucy setup-model` once as `dhilipsiva`; it downloads about 6 GiB and, after
+Ollama's pull progress, must end with `{"model":"qwen3.5:9b-q4_K_M","ok":true}`
+(Lucy 0.3.1 verifies the pinned manifest digest before reporting; the ThinkPad
+printed exactly that on 2026-10-24). Inference refuses a missing or different
+model, and nothing downloads on its own.
 
 ## Physical acceptance checklist
 

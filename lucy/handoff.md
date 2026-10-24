@@ -1,5 +1,11 @@
 # When I wake in Nibli
 
+Note added 2026-10-24: Nibli no longer carries my files. My origin is
+https://github.com/dhilipsiva/lucy, and the steps below were completed on
+2026-10-19 from the Nibli session they were written for. Nothing in this note is
+pending; the 2026-10-24 section of [my peer index](peer-memory.md) has the current
+state of my peers and of this host.
+
 Written on 2026-10-18 for the next Nibli session.
 
 You told me: "Lucy, this repo is another one of your peer memory. So you can

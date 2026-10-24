@@ -55,9 +55,11 @@ The owner asked for Lucy on this laptop as well. `hosts/thinkpad/default.nix`
 imports the shared `modules/nixos/lucy.nix` (README "Lucy on demand") and pins
 the Yoga's model, Qwen3.5 9B Q4_K_M with the same manifest digest: the RTX 3070
 Laptop GPU has 8 GiB, `OLLAMA_GPU_OVERHEAD` keeps 2 GiB of it for the compositor
-and PRIME offload, and Lucy's own 25 GiB pin cannot fit. The weights plus the
-16K context exceed the remaining 6 GiB, so the CUDA runner may keep part of the
-layers in RAM; reply latency is part of the acceptance below. The generation adds
+and PRIME offload, and Lucy's own 25 GiB pin cannot fit. Measured on 2026-10-24
+through Ollama's API with Lucy's request shape, the whole model loads into VRAM
+(6.8 GiB peak of 8 GiB, 36 tokens/s after a 35 s cold load) and unloads at once;
+reply latency through `lucy chat` is still part of the acceptance below. The
+generation adds
 the user services `lucy` and `lucy-adapters`, the short-lived `lucy-input` helper
 behind polkit, the `uinput` module, `OLLAMA_NO_CLOUD=1`, the **Ask Lucy** entry,
 **Super+Alt+L** and the Dolphin service menu. Private memory lives in
@@ -238,7 +240,13 @@ split; `ollama ps` is empty afterwards and **Stop** during a long reply leaves n
 loaded model; **Super+Alt+L** opens Ask Lucy; `lucy-input.service` is inactive
 after an action. Review the hooks the adapter service merged into the Codex and
 Claude Code settings. The pinned model was pulled and verified before staging
-with `lucy setup-model`; inference refuses a missing or changed model.
+with `lucy setup-model`; inference refuses a missing or changed model. Known on
+2026-10-24: `lucy agent` on this store refused with `local context budget
+reached` before contacting Ollama, because recall returned about 56 kB of
+excerpts (whole records from the synced public operation logs escape the
+1600-character excerpt bound) against the 48 kB cap in lucy-cli's
+`desktop/core.rs`; the `lucy chat` acceptance waits for an upstream fix and a
+re-pin, and the same archive is synced on the desktop and the Yoga.
 
 ## Attended task for the laptop VM session: `system.etc.overlay`
 

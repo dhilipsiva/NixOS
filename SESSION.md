@@ -120,3 +120,20 @@ enrolled read-only, the owner's `lucy-private` snapshot restored (1073 records)
 and this checkout's `lucy/` registered. Publication through `scripts/nixosctl
 publish`, the 21:30 subscriber staging, the reboot and the THINKPAD.md acceptance
 follow; nothing was switched or rebooted.
+
+Later on 2026-10-24: the memory reconciliation commit makes `lucy/` agree with
+Lucy origin `879b06c` (constitution comment, twelve direct facts, peer index,
+handoff note; `lucy check` compiles 231 statements with standing). Because every
+host's Lucy identity embeds `lucy/memory.nibli`, all three toplevels change
+(desktop `0fnnnr3n…`, Yoga `rvri8qxg…`, ThinkPad `0bm8sk75…`); `nix flake check
+.` reran all 36 checks and `scripts/nixosctl check --stable` passed. On the
+ThinkPad `lucy setup-model` pulled and verified `qwen3.5:9b-q4_K_M` (6.1 GiB,
+digest `56671c2a…`), and one request through Ollama's API with Lucy's request
+shape loaded the whole model into VRAM (6.8 GiB peak of 8 GiB, 36 tokens/s after
+a 35 s cold load) and unloaded it at once. Lucy's own chat path did not run:
+`lucy agent` refused with `local context budget reached` because recall over the
+synced public operation logs returned about 56 kB of excerpts against the 48 kB
+cap in lucy-cli `desktop/core.rs`; that needs an upstream fix and a re-pin, and
+the desktop and Yoga sync the same archive. The owner's upload actor regenerates
+the `nixos-public` branch with `lucy sync` after publication. Publication through
+`scripts/nixosctl publish`, the 21:30 subscriber staging and the reboot follow.
