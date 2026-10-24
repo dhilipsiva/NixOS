@@ -137,3 +137,16 @@ cap in lucy-cli `desktop/core.rs`; that needs an upstream fix and a re-pin, and
 the desktop and Yoga sync the same archive. The owner's upload actor regenerates
 the `nixos-public` branch with `lucy sync` after publication. Publication through
 `scripts/nixosctl publish`, the 21:30 subscriber staging and the reboot follow.
+
+## Focus Mode removed (2026-10-24)
+
+The owner asked to unblock all websites. `modules/nixos/networking.nix` no
+longer sets `networking.hosts`: the Focus-Mode list that resolved YouTube,
+Facebook, LinkedIn, Instagram and Reddit domains to loopback on every host is
+gone, so each generated `/etc/hosts` holds only localhost and the machine name.
+All three toplevels change (desktop `gl58wbar…`, ThinkPad `w0v5rzlk…`, Yoga
+`k48ivfs1…`); `nix fmt` (no changes), `nix flake check` (all checks, including
+`desktop-login`) and the three builds passed on the desktop from branch
+`todo/unblock-sites`. The running desktop (`alzdxla8…`) still carries the
+blocklist until the branch is merged into `master`, published through
+`scripts/nixosctl publish`, staged and booted; nothing was switched or rebooted.
