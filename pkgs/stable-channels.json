@@ -3,6 +3,10 @@
     "source": "https://api.github.com/repos/alacritty/alacritty/releases/latest",
     "version": "0.17.0"
   },
+  "antigravity-cli": {
+    "source": "https://antigravity-cli-auto-updater-974169037036.us-central1.run.app/manifests/linux_amd64.json",
+    "version": "1.4.7"
+  },
   "atuin": {
     "source": "https://api.github.com/repos/atuinsh/atuin/releases/latest",
     "version": "18.24.1"
@@ -106,6 +110,10 @@
   "uwsm": {
     "source": "https://api.github.com/repos/Vladimir-csp/uwsm/tags?per_page=100",
     "version": "0.27.1"
+  },
+  "zcode-cli": {
+    "source": "https://zcode.z.ai/en/docs/install",
+    "version": "3.16.3"
   },
   "zed-editor": {
     "source": "https://api.github.com/repos/zed-industries/zed/releases/latest",

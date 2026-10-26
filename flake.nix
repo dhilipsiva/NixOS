@@ -79,6 +79,8 @@
       # stable channel in pkgs/stable-channels.json. The kernel and NVIDIA driver
       # are host configuration and are appended where they are compared.
       stableApps = [
+        "antigravity-cli"
+        "zcode-cli"
         "codex"
         "claude-code"
         "zed-editor"
@@ -128,6 +130,8 @@
         in
         {
           nixpkgs-apps = apps;
+          antigravity-cli = apps.callPackage ./pkgs/antigravity-cli.nix { };
+          zcode-cli = apps.callPackage ./pkgs/zcode-cli.nix { };
           inherit (apps)
             codex
             zed-editor
@@ -230,6 +234,8 @@
       homeModules.default = import ./home/dhilipsiva;
 
       packages.${system} = {
+        antigravity-cli = desktop.pkgs.antigravity-cli;
+        zcode-cli = desktop.pkgs.zcode-cli;
         lucy = desktop.config.home-manager.users.dhilipsiva.repo.lucy.package;
         nixosctl = pkgs.callPackage ./pkgs/nixosctl.nix { };
         npu-smoke = yoga.pkgs.npu-smoke;

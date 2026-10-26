@@ -1,6 +1,7 @@
 """Guard the metadata decisions that feed unattended boot-generation updates."""
 
 import importlib.util
+import copy
 import sys
 import unittest
 
@@ -10,6 +11,49 @@ spec.loader.exec_module(updater)
 
 
 class StableReleaseTests(unittest.TestCase):
+    def test_zcode_requires_official_matching_stable_download(self):
+        url = updater.ZCODE_RELEASES_URL
+        page = f"""
+        {url}/3.15.1/linux-x64/ZCode-3.15.1-linux-x64.AppImage
+        {url}/3.16.3/linux-x64/ZCode-3.16.3-linux-x64.AppImage
+        {url}/3.17.0-rc1/linux-x64/ZCode-3.17.0-rc1-linux-x64.AppImage
+        """
+        self.assertEqual(updater.zcode_version(page), "3.16.3")
+        for invalid in (page.replace(url, "https://example.invalid"),
+                        f"{url}/3.16.3/linux-x64/ZCode-3.17.0-linux-x64.AppImage"):
+            with self.assertRaises(ValueError):
+                updater.zcode_version(invalid)
+
+    def test_zcode_requires_matching_runtime_and_checksum(self):
+        archive = {"target": "linux-x64", "version": "3.16.3",
+                   "fileName": "zcode-server-linux-x64.tar.gz",
+                   "urls": ["zcode-server-linux-x64.tar.gz"], "sha256": "a" * 64}
+        manifest = {"schemaVersion": 1, "version": "3.16.3", "archives": [archive]}
+        self.assertEqual(updater.zcode_pin(manifest, "3.16.3")["hash"], "sha256:" + "a" * 64)
+        for changes in ({"schemaVersion": 2}, {"version": "3.17.0"},
+                        {"archives": []}, {"archives": [archive, archive]}):
+            with self.assertRaises(ValueError):
+                updater.zcode_pin(dict(manifest, **changes), "3.16.3")
+        for changes in ({"target": "darwin-arm64"}, {"sha256": "bad"},
+                        {"version": "3.17.0"}, {"fileName": "wrong.tar.gz"},
+                        {"urls": ["https://example.invalid/runtime.tar.gz"]}):
+            invalid = copy.deepcopy(manifest)
+            invalid["archives"][0].update(changes)
+            with self.assertRaises(ValueError):
+                updater.zcode_pin(invalid, "3.16.3")
+
+    def test_antigravity_requires_matching_stable_linux_asset_and_checksum(self):
+        manifest = {
+            "version": "1.4.7",
+            "url": "https://storage.googleapis.com/antigravity-public/antigravity-cli/1.4.7-5900205422411776/linux-x64/cli_linux_x64.tar.gz",
+            "sha512": "a" * 128,
+        }
+        self.assertEqual(updater.antigravity_pin(manifest)["hash"], "sha512:" + "a" * 128)
+        for changes in ({"version": "1.4.7-rc1"}, {"version": "1.4.8"},
+                        {"sha512": "bad"}, {"url": manifest["url"].replace("linux-x64", "darwin-arm")}):
+            with self.assertRaises(ValueError):
+                updater.antigravity_pin(dict(manifest, **changes))
+
     def test_compiler_tracks_exact_stable_driver_bundle(self):
         release = {'tag_name': 'v1.38.0', 'draft': False, 'prerelease': False,
                    'assets': [{'name': 'linux-npu-driver-v1.38.0.build-ubuntu2404.tar.gz',

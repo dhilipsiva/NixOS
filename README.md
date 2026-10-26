@@ -186,11 +186,29 @@ Alacritty starts **fish** with the starship prompt, **Atuin** history, **zoxide*
 package that provides it and `, <command>` runs one without installing it. **Zellij** uses upstream keybindings, opens
 fish in new panes and does not auto-start. **Helix** carries its JS/TS/JSON
 language servers. Applications and toolchains (Zed, VS Code, Cursor, Codex,
-Claude Code, Herdr, Python, Node, Rust, uv, Slack, Chrome, Firefox, Dolphin,
+Claude Code, Antigravity CLI, ZCode CLI, Herdr, Python, Node, Rust, uv, Slack, Chrome, Firefox, Dolphin,
 Discord, Lutris/Wine, build tools) live in the user's Home Manager profile
 (`home/dhilipsiva/packages.nix`); the system profile holds shared essentials
 only. The Microsoft Teams launcher opens the official web app in a Chrome
 Wayland app window. Account authentication for every tool remains user-managed.
+
+Run `agy` for Google's [Antigravity CLI](https://antigravity.google/download#antigravity-cli)
+and `zcode` for [Z.ai's terminal agent](https://github.com/zai-org/ZCode).
+Both follow the stable release updater. Antigravity's in-app updater is disabled
+because Nix owns its executable. ZCode is packaged from the official server
+runtime with its terminal interface compiled from the included sources and its
+public provider catalogue copied from the matching desktop release. It uses Nix's
+Node 22; Electron is not installed. The ZCode package version follows the release
+distribution, while `zcode --version` reports the embedded CLI's own version.
+Launch each command to complete its own sign-in/setup; account files remain in
+the user's home directory, outside the Nix store.
+
+To use these commands before the next system activation, install the published
+packages with `nix profile add .#antigravity-cli .#zcode-cli`. After booting the
+generation that includes them, check `/etc/profiles/per-user/dhilipsiva/bin/agy`
+and `/etc/profiles/per-user/dhilipsiva/bin/zcode`, then run
+`nix profile remove antigravity-cli zcode-cli`. This lets Home Manager's future
+stable updates take precedence over the temporary profile copies.
 
 ## On-demand Ollama
 

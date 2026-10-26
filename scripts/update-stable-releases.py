@@ -21,6 +21,10 @@ GITHUB_ASSETS = {
     "uv": ("astral-sh/uv", "uv-x86_64-unknown-linux-musl.tar.gz"),
 }
 CLAUDE_URL = "https://downloads.claude.ai/claude-code-releases"
+ANTIGRAVITY_URL = ("https://antigravity-cli-auto-updater-974169037036.us-central1.run.app"
+                   "/manifests/linux_amd64.json")
+ZCODE_DOWNLOADS_URL = "https://zcode.z.ai/en/docs/install"
+ZCODE_RELEASES_URL = "https://cdn-zcode.z.ai/zcode/electron/releases"
 # The same non-beta production-branch query used by NVIDIA's Unix Drivers page.
 NVIDIA_URL = ("https://gfwsl.geforce.com/services_toolkit/services/com/nvidia/services/AjaxDriverService.php"
               "?func=DriverManualLookup&psid=133&pfid=1075&osID=12&languageCode=1033"
@@ -49,6 +53,45 @@ def release_version(release, prefix="v"):
     version = release["tag_name"].removeprefix(prefix)
     version_tuple(version)
     return version
+
+
+def antigravity_pin(manifest):
+    version = manifest["version"]
+    version_tuple(version)
+    url = manifest["url"]
+    expected = (r"https://storage\.googleapis\.com/antigravity-public/antigravity-cli/"
+                + re.escape(version) + r"-[0-9]+/linux-x64/cli_linux_x64\.tar\.gz")
+    if not re.fullmatch(expected, url):
+        raise ValueError("Antigravity manifest has a mismatched Linux release URL")
+    if not re.fullmatch(r"[0-9a-f]{128}", manifest["sha512"]):
+        raise ValueError("Antigravity manifest is missing its Linux SHA-512")
+    return {"version": version, "url": url, "hash": "sha512:" + manifest["sha512"]}
+
+
+def zcode_version(page):
+    versions = re.findall(re.escape(ZCODE_RELEASES_URL)
+                          + r"/([0-9.]+)/linux-x64/ZCode-\1-linux-x64\.AppImage", page)
+    if not versions:
+        raise ValueError("ZCode download page has no stable Linux release")
+    return max(versions, key=version_tuple)
+
+
+def zcode_pin(manifest, version):
+    version_tuple(version)
+    if manifest["schemaVersion"] != 1 or manifest["version"] != version:
+        raise ValueError("ZCode runtime manifest does not match the stable release")
+    archives = [a for a in manifest["archives"] if a["target"] == "linux-x64"]
+    if len(archives) != 1:
+        raise ValueError("ZCode runtime manifest needs exactly one Linux x64 archive")
+    archive = archives[0]
+    filename = "zcode-server-linux-x64.tar.gz"
+    url = f"{ZCODE_RELEASES_URL}/{version}/{filename}"
+    if (archive["version"] != version or archive["fileName"] != filename
+            or not any(u in (filename, url) for u in archive["urls"])):
+        raise ValueError("ZCode runtime manifest has a mismatched Linux archive")
+    if not re.fullmatch(r"[0-9a-f]{64}", archive["sha256"]):
+        raise ValueError("ZCode runtime manifest is missing its Linux SHA-256")
+    return {"version": version, "url": url, "hash": "sha256:" + archive["sha256"]}
 
 
 def compare_channels(actual, channels):
@@ -180,6 +223,28 @@ def update(repo, check_only=False):
     old_pins = json.loads(pins_path.read_text())
     pins = dict(old_pins)
     channels = {}
+    pins["antigravity-cli"] = antigravity_pin(json.loads(fetch(ANTIGRAVITY_URL)))
+    if "antigravity-cli" in old_pins:
+        no_downgrade("antigravity-cli", old_pins["antigravity-cli"]["version"],
+                     pins["antigravity-cli"]["version"])
+    channels["antigravity-cli"] = {"version": pins["antigravity-cli"]["version"],
+                                  "source": ANTIGRAVITY_URL}
+    zcode = zcode_version(fetch(ZCODE_DOWNLOADS_URL).decode())
+    manifest_url = f"{ZCODE_RELEASES_URL}/{zcode}/source-server-release.json"
+    pins["zcode-cli"] = zcode_pin(json.loads(fetch(manifest_url)), zcode)
+    if "zcode-cli" in old_pins:
+        no_downgrade("zcode-cli", old_pins["zcode-cli"]["version"], zcode)
+    resources_url = f"{ZCODE_RELEASES_URL}/{zcode}/linux-x64/ZCode-{zcode}-linux-x64.AppImage"
+    previous_zcode = old_pins.get("zcode-cli", {})
+    if previous_zcode.get("resourcesUrl") == resources_url and previous_zcode.get("resourcesHash"):
+        resources_hash = previous_zcode["resourcesHash"]
+    else:
+        # The runtime omits its public provider catalogue; take it from the
+        # matching official desktop release, hashing only when the URL changes.
+        digest = base64.b64encode(hashlib.sha256(fetch(resources_url)).digest()).decode()
+        resources_hash = "sha256-" + digest
+    pins["zcode-cli"].update(resourcesUrl=resources_url, resourcesHash=resources_hash)
+    channels["zcode-cli"] = {"version": zcode, "source": ZCODE_DOWNLOADS_URL}
     kernel_url = "https://www.kernel.org/releases.json"
     kernel = max((r for r in json.loads(fetch(kernel_url))["releases"] if r["moniker"] == "stable"),
                  key=lambda r: version_tuple(r["version"]))

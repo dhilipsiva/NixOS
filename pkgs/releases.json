@@ -36,5 +36,17 @@
     "version": "2026.4.1",
     "url": "https://files.pythonhosted.org/packages/7f/8b/d2fb2611cd8160cb4c0e5401b9d87312961d77891eade431381e396a8d83/openvino-2026.4.1-22982-cp313-cp313-manylinux_2_28_x86_64.whl",
     "hash": "sha256:a9b637846c579d7b81b17b6585e0c7b1947574e8d13cf83d7307ce50cd2c352e"
+  },
+  "antigravity-cli": {
+    "version": "1.4.7",
+    "url": "https://storage.googleapis.com/antigravity-public/antigravity-cli/1.4.7-5900205422411776/linux-x64/cli_linux_x64.tar.gz",
+    "hash": "sha512:beda760587589f5827b0b516c3ec2c5bd5cd2e91eb0e2533807ba1e990a27dcd63aef0191e0b76fb60feab0d16eaa8210fb79842c34dd4809e257e1712edd152"
+  },
+  "zcode-cli": {
+    "version": "3.16.3",
+    "url": "https://cdn-zcode.z.ai/zcode/electron/releases/3.16.3/zcode-server-linux-x64.tar.gz",
+    "hash": "sha256:5062d871bd2ad2ddd1b44d6463bd9159af5b493be93845ffc7163dd5b5d45375",
+    "resourcesUrl": "https://cdn-zcode.z.ai/zcode/electron/releases/3.16.3/linux-x64/ZCode-3.16.3-linux-x64.AppImage",
+    "resourcesHash": "sha256-SdAHZHuDHuUiDuNNCX4Dj7iaLfLGhrl6o7awLn0KC6I="
   }
 }

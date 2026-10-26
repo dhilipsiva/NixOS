@@ -19,6 +19,8 @@
     seahorse
 
     # Editors and AI tooling
+    antigravity-cli
+    zcode-cli
     zed-editor
     vscode
     code-cursor
