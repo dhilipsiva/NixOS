@@ -167,7 +167,12 @@ in
     enable = true;
     settings = {
       default-timeout = 5000;
-      font = "Fira Code 11";
+      font = "Fira Code 12";
+      # Bottom-left, stacked above the bottom waybar; a little larger than
+      # mako's 300x100 default (logical pixels, scaled like the bar).
+      anchor = "bottom-left";
+      width = 400;
+      height = 150;
     };
   };
 
