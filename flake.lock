@@ -81,17 +81,17 @@
     "lucy": {
       "flake": false,
       "locked": {
-        "lastModified": 1792838669,
-        "narHash": "sha256-pMtsG0DwvWfwW7khAOoW7+ft1grQZajaHqQLTRA4AH4=",
+        "lastModified": 1793254137,
+        "narHash": "sha256-b142JLkWJzqlCZpJWFdvWi7fvSYIpWwj0XjKGHLe8bE=",
         "owner": "dhilipsiva",
         "repo": "lucy",
-        "rev": "879b06cddd82ddd98a8bc5d049ce1ea12ae85a51",
+        "rev": "2d6c9bd70f4dd5c867c7a4c9c2ea5fa27589e19a",
         "type": "github"
       },
       "original": {
         "owner": "dhilipsiva",
         "repo": "lucy",
-        "rev": "879b06cddd82ddd98a8bc5d049ce1ea12ae85a51",
+        "rev": "2d6c9bd70f4dd5c867c7a4c9c2ea5fa27589e19a",
         "type": "github"
       }
     },

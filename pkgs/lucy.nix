@@ -25,7 +25,7 @@ let
     src = lucy;
     cargoLock = {
       lockFile = "${lucy}/Cargo.lock";
-      outputHashes."nibli-engine-0.2.0" = "sha256-q9rG8QUlYPEcqu3oRqpIiAlJVyW+5x6eWqBCSNRIHjI=";
+      outputHashes."nibli-engine-0.2.0" = "sha256-NRlhLyP1nISGbEvrBeOJtM3Umol8nb68yN0FSbnDku8=";
     };
     nativeBuildInputs = [ pkgs.pkg-config ];
     buildInputs = [ pkgs.gtk4 ];
