@@ -31,6 +31,8 @@
       g = "git";
       e = "hx";
       q = "exit";
+      # Claude Code with the separate NuFlights account and settings.
+      claude-nuflights = "CLAUDE_CONFIG_DIR=~/.claude-nuflights command claude";
     };
   };
 
