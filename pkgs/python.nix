@@ -11,10 +11,17 @@ let
   # Select the matching interpreter recipe when a new stable minor is released.
   interpreter = pkgs.${"python${major}${minor}"};
 in
-interpreter.override {
+(interpreter.override {
   sourceVersion = {
     inherit major minor patch;
     suffix = "";
   };
   inherit (release) hash;
-}
+}).overrideAttrs
+  (old: {
+    # 3.15.2 moved the Unix MIME paths under a platform guard. Keep that upstream
+    # fix and Nixpkgs' MIME database substitution with an updated patch context.
+    patches = map (
+      patch: if builtins.baseNameOf patch == "mimetypes.patch" then ./python-mimetypes.patch else patch
+    ) old.patches;
+  })

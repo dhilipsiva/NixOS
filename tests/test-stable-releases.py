@@ -4,6 +4,7 @@ import importlib.util
 import copy
 import sys
 import unittest
+from unittest.mock import patch
 
 spec = importlib.util.spec_from_file_location("updater", sys.argv.pop(1))
 updater = importlib.util.module_from_spec(spec)
@@ -11,6 +12,42 @@ spec.loader.exec_module(updater)
 
 
 class StableReleaseTests(unittest.TestCase):
+    def test_rate_limited_github_metadata_uses_existing_gh_authentication(self):
+        url = 'https://api.github.com/repos/example/project/releases/latest'
+        for code in (403, 429):
+            error = updater.urllib.error.HTTPError(url, code, 'rate limited', {}, None)
+            result = updater.subprocess.CompletedProcess(['gh'], 0, stdout=b'{"tag_name":"v1.0.0"}')
+            with self.subTest(code=code), \
+                    patch.object(updater.urllib.request, 'urlopen', side_effect=error), \
+                    patch.object(updater.shutil, 'which', return_value='/bin/gh'), \
+                    patch.object(updater.subprocess, 'run', return_value=result) as run:
+                self.assertEqual(updater.fetch(url), result.stdout)
+                run.assert_called_once_with(['gh', 'api', '--hostname', 'github.com', url],
+                                            capture_output=True, timeout=60)
+
+    def test_github_authentication_is_not_used_for_other_hosts_or_errors(self):
+        for url, code in [('https://example.invalid/releases', 403),
+                          ('https://api.github.com.example.invalid/releases', 403),
+                          ('https://api.github.com/repos/example/project', 404)]:
+            error = updater.urllib.error.HTTPError(url, code, 'unavailable', {}, None)
+            with self.subTest(url=url, code=code), \
+                    patch.object(updater.urllib.request, 'urlopen', side_effect=error), \
+                    patch.object(updater.subprocess, 'run') as run:
+                with self.assertRaises(ValueError):
+                    updater.fetch(url)
+                run.assert_not_called()
+
+    def test_failed_authenticated_fetch_does_not_expose_diagnostics(self):
+        url = 'https://api.github.com/repos/example/project/releases/latest'
+        error = updater.urllib.error.HTTPError(url, 403, 'rate limited', {}, None)
+        result = updater.subprocess.CompletedProcess(['gh'], 1, stdout=b'', stderr=b'private diagnostic')
+        with patch.object(updater.urllib.request, 'urlopen', side_effect=error), \
+                patch.object(updater.shutil, 'which', return_value='/bin/gh'), \
+                patch.object(updater.subprocess, 'run', return_value=result):
+            with self.assertRaisesRegex(ValueError, '^Authenticated GitHub metadata unavailable:') as raised:
+                updater.fetch(url)
+            self.assertNotIn('private diagnostic', str(raised.exception))
+
     def test_zcode_requires_official_matching_stable_download(self):
         url = updater.ZCODE_RELEASES_URL
         page = f"""

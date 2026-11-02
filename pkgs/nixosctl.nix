@@ -2,6 +2,7 @@
   writeShellApplication,
   python3,
   git,
+  gh,
   nix,
   openssh,
   util-linux,
@@ -25,6 +26,7 @@ writeShellApplication {
   runtimeInputs = [
     python3
     git
+    gh
     nix
     openssh
     util-linux

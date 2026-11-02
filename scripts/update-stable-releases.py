@@ -8,6 +8,7 @@ import gzip
 import json
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import tomllib
 import urllib.request
@@ -19,6 +20,7 @@ GITHUB_ASSETS = {
     "herdr": ("herdrdev/herdr", "herdr-linux-x86_64"),
     "ollama": ("ollama/ollama", "ollama-linux-amd64.tar.zst"),
     "uv": ("astral-sh/uv", "uv-x86_64-unknown-linux-musl.tar.gz"),
+    "obs-studio": ("obsproject/obs-studio", "OBS-Studio-{version}-Sources.tar.gz"),
 }
 CLAUDE_URL = "https://downloads.claude.ai/claude-code-releases"
 ANTIGRAVITY_URL = ("https://antigravity-cli-auto-updater-974169037036.us-central1.run.app"
@@ -32,7 +34,6 @@ NVIDIA_URL = ("https://gfwsl.geforce.com/services_toolkit/services/com/nvidia/se
 GITHUB_CHANNELS = {
     "intel-npu-driver": ("intel/linux-npu-driver", "v"),
     "openvino-npu": ("openvinotoolkit/openvino", ""),
-    "obs-studio": ("obsproject/obs-studio", ""),
     "codex": ("openai/codex", "rust-v"),
     "zed-editor": ("zed-industries/zed", "v"),
     "helix": ("helix-editor/helix", "v"),
@@ -127,6 +128,18 @@ def fetch(url):
     try:
         with urllib.request.urlopen(request, timeout=60) as response:
             return response.read()
+    except urllib.error.HTTPError as exc:
+        # Public metadata can exhaust GitHub's shared anonymous quota. Let gh
+        # use the checkout owner's existing authentication, without exposing a
+        # token in command arguments, logs, or the Nix source tree.
+        if (url.startswith('https://api.github.com/') and exc.code in (403, 429)
+                and shutil.which('gh')):
+            result = subprocess.run(['gh', 'api', '--hostname', 'github.com', url],
+                                    capture_output=True, timeout=60)
+            if result.returncode == 0:
+                return result.stdout
+            raise ValueError(f'Authenticated GitHub metadata unavailable: {url}') from exc
+        raise ValueError(f'Stable metadata unavailable: {url}: {exc.reason}') from exc
     except urllib.error.URLError as exc:
         raise ValueError(f"Stable metadata unavailable: {url}: {exc.reason}") from exc
 
@@ -258,6 +271,7 @@ def update(repo, check_only=False):
     channels["nvidia"] = {"version": production_driver(json.loads(fetch(NVIDIA_URL))), "source": NVIDIA_URL}
     for name, (project, asset) in GITHUB_ASSETS.items():
         release = json.loads(fetch(f"https://api.github.com/repos/{project}/releases/latest"))
+        asset = asset.format(version=release_version(release))
         pins[name] = github_pin(release, asset)
         if name in old_pins:
             no_downgrade(name, old_pins[name]["version"], pins[name]["version"])
@@ -266,6 +280,13 @@ def update(repo, check_only=False):
     for name, (project, prefix) in GITHUB_CHANNELS.items():
         url = f"https://api.github.com/repos/{project}/releases/latest"
         channels[name] = {"version": release_version(json.loads(fetch(url)), prefix), "source": url}
+    hyprlock_version = channels['hyprlock']['version']
+    if old_pins.get('hyprlock', {}).get('version') != hyprlock_version:
+        # Hyprlock has no source release asset with a published digest. Pin the
+        # exact stable tag archive, retaining its digest on subsequent refreshes.
+        archive = fetch(f'https://github.com/hyprwm/hyprlock/archive/refs/tags/v{hyprlock_version}.tar.gz')
+        digest = base64.b64encode(hashlib.sha256(archive).digest()).decode()
+        pins['hyprlock'] = {'version': hyprlock_version, 'hash': 'sha256-' + digest}
     pins['intel-npu-compiler'] = npu_compiler_pin(json.loads(fetch(channels['intel-npu-driver']['source'])))
     if pins['intel-npu-compiler']['version'] != channels['intel-npu-driver']['version']:
         raise ValueError('NPU release changed during metadata refresh; retry')

@@ -14,6 +14,14 @@ in
   };
   config = lib.mkIf cfg.enable {
     home.packages = [ cfg.package ];
+    # The old manually installed desktop file shadows the managed entry below.
+    # Retain only that known override outside the XDG application search path.
+    home.activation.retireLegacyLucyLauncher = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      run ${pkgs.python3}/bin/python3 ${../../scripts/retire-legacy-lucy-launcher.py} \
+        --home-dir ${lib.escapeShellArg config.home.homeDirectory} \
+        --data-dir ${lib.escapeShellArg config.xdg.dataHome} \
+        --state-dir ${lib.escapeShellArg config.xdg.stateHome}
+    '';
     systemd.user.services.lucy-adapters = {
       Unit = {
         Description = "Enroll Lucy adapters while preserving existing app settings";

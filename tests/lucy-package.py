@@ -6,6 +6,7 @@ All configuration, memory, workspaces and service sockets are disposable.
 """
 
 import argparse
+import hashlib
 import json
 import os
 import socket
@@ -38,10 +39,28 @@ class Ollama(BaseHTTPRequestHandler):
         assert self.path == '/api/chat', self.path
         request = json.loads(self.rfile.read(int(self.headers['Content-Length'])))
         self.server.requests.append(request)
-        if len(self.server.requests) == 1:
+        step = len(self.server.requests)
+        if step == 1:
+            message = {'role': 'assistant', 'content': '', 'tool_calls': [{
+                'id': 'begin-fixture', 'type': 'function',
+                'function': {'name': 'task_begin', 'arguments': {
+                    'title': 'Read the packaged executor fixture',
+                    'family': 'package-verification', 'method': 'read',
+                    'criteria': [{'id': 'fixture', 'description': 'The fixture has its expected contents',
+                                  'check': {'kind': 'file_sha256', 'path': 'note.txt',
+                                            'sha256': self.server.fixture_sha256}}],
+                }},
+            }]}
+        elif step == 2:
             message = {'role': 'assistant', 'content': '', 'tool_calls': [{
                 'id': 'read-fixture', 'type': 'function',
                 'function': {'name': 'read', 'arguments': {'path': 'note.txt'}},
+            }]}
+        elif step in (3, 4):
+            name = 'task_check' if step == 3 else 'task_finish'
+            message = {'role': 'assistant', 'content': '', 'tool_calls': [{
+                'id': name, 'type': 'function',
+                'function': {'name': name, 'arguments': {'criterion': 'fixture'} if step == 3 else {}},
             }]}
         else:
             message = {'role': 'assistant', 'content': 'Package fixture read.'}
@@ -129,6 +148,7 @@ def main():
             model.model = args.model
             model.digest = 'mismatched-manifest'
             model.requests = []
+            model.fixture_sha256 = hashlib.sha256(marker.encode()).hexdigest()
             worker = threading.Thread(target=model.serve_forever, daemon=True)
             worker.start()
             try:
@@ -145,6 +165,7 @@ def main():
                     empty = audit()
                     assert empty['integrity'] == 'checked', empty
                     assert empty['predictions'] == empty['observations'] == 0, empty
+                    assert empty['grouped']['predictions'] == empty['grouped']['observations'] == 0, empty
 
                     request = {**opened, 'op': 'chat', 'workspace': str(workspace),
                                'text': 'Read note.txt', 'event': 'wrong-digest'}
@@ -155,18 +176,27 @@ def main():
                     model.digest = 'sha256:' + args.digest
                     response = rpc(path, {**request, 'event': 'read-fixture'})
                     assert response.get('text') == 'Package fixture read.', response
-                    assert len(model.requests) == 2, model.requests
+                    assert len(model.requests) == 5, model.requests
                     for chat in model.requests:
                         assert chat['model'] == args.model, chat
                         assert chat['options']['num_ctx'] == args.context, chat
                         assert chat['keep_alive'] == 0, chat
-                    evidence = model.requests[-1]['messages'][-1]
+                    evidence = model.requests[2]['messages'][-1]
                     assert evidence['role'] == 'tool' and marker in evidence['content'], evidence
+                    for chat in model.requests[1:]:
+                        result = json.loads(chat['messages'][-1]['content'])
+                        assert 'error' not in result, result
                     checked = audit()
                     assert checked['integrity'] == 'checked', checked
-                    assert checked['predictions'] == checked['observations'] == 1, checked
+                    # Current native execution writes version-2 grouped forecasts;
+                    # legacy version-1 counters remain empty for a fresh profile.
+                    assert checked['predictions'] == checked['observations'] == 0, checked
                     assert checked['pending'] == 0, checked
-                    assert checked['scopes'][0]['scope']['measurement'] == 'runtime', checked
+                    grouped = checked['grouped']
+                    assert grouped['integrity'] == 'checked', grouped
+                    assert grouped['predictions'] == grouped['observations'] == 1, grouped
+                    assert grouped['pending'] == 0, grouped
+                    assert grouped['scopes'][0]['group']['measurement'] == 'runtime', grouped
 
                 with service(args.binary, env, workspace, root / 'restart.log') as path:
                     assert not rpc(path, {'op': 'status'})['active']

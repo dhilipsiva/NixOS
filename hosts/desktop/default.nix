@@ -11,6 +11,7 @@
     ./hardware-configuration.nix
     ./graphics.nix
     ./performance.nix
+    ./applications.nix
     ../../modules/nixos/lucy.nix
     ./power.nix
     ./windows.nix

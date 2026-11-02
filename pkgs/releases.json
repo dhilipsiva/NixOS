@@ -1,31 +1,31 @@
 {
   "atuin": {
-    "version": "18.24.1",
-    "hash": "sha256:fe03f652d6545a9d8795b3c2abb84bcddfe831e4b7effb0c2d191a0d70e498a0"
+    "version": "18.24.4",
+    "hash": "sha256:788cff5b3903ca7f1f5bdff3e4b4975c38b3c20385176a49b01ad1bea5b37636"
   },
   "herdr": {
     "version": "0.9.5",
     "hash": "sha256:14d9e8bc8b4a9e0118d77c32266f76d461f09b40342eb23752960bd89f59929d"
   },
   "ollama": {
-    "version": "0.40.6",
-    "hash": "sha256:c164ab8b1b28e2a247c29719b8e404c423c5b83ae64c3ab4e59d50c7ff7fc5e0"
+    "version": "0.40.13",
+    "hash": "sha256:c9490e0f520be21271d969e6703f012268b1d39f8b70dd58854e5bfef7a75bb6"
   },
   "python": {
-    "version": "3.15.0",
-    "hash": "sha256-ukvtG6NGuRaJC3bZ4yBFFCCqafZAiZfTPGZILurj1XU="
+    "version": "3.15.2",
+    "hash": "sha256-i1U20oAULs9s3+FdEqIbocZeMAu/eyio0M24SVdXl94="
   },
   "slack": {
-    "version": "4.52.178",
-    "hash": "sha256-HxEO/ut9gukn+iCc12cnjyek3cf+1KYMI/vEqzdOHTo="
+    "version": "4.53.276",
+    "hash": "sha256-iXTGqbP/1O8JztRAOsqkRNdD0ROhhVBNWh3EBb5G50Y="
   },
   "uv": {
-    "version": "0.13.1",
-    "hash": "sha256:6c86040a8f045ab9adc9e3ec4cdafa03fd00e9a988ed2bf28971c7fc2d0debd0"
+    "version": "0.13.6",
+    "hash": "sha256:5d61f26b6c7213779eda90edc6971ea6b0b796bfb8d49a574c8ad69b59838548"
   },
   "linux": {
-    "version": "7.2.11",
-    "hash": "sha256:fd0fc479f983a8c05313f13e9c36330fe6651cf725396748c40d5cd93fa1e6a4"
+    "version": "7.3.1",
+    "hash": "sha256:fa595aad93734f829c963c2a90ef7c3673224fd7fdae7b49406e397cde2de231"
   },
   "intel-npu-compiler": {
     "version": "1.38.0",
@@ -38,9 +38,9 @@
     "hash": "sha256:a9b637846c579d7b81b17b6585e0c7b1947574e8d13cf83d7307ce50cd2c352e"
   },
   "antigravity-cli": {
-    "version": "1.4.7",
-    "url": "https://storage.googleapis.com/antigravity-public/antigravity-cli/1.4.7-5900205422411776/linux-x64/cli_linux_x64.tar.gz",
-    "hash": "sha512:beda760587589f5827b0b516c3ec2c5bd5cd2e91eb0e2533807ba1e990a27dcd63aef0191e0b76fb60feab0d16eaa8210fb79842c34dd4809e257e1712edd152"
+    "version": "1.4.12",
+    "url": "https://storage.googleapis.com/antigravity-public/antigravity-cli/1.4.12-4768735748292608/linux-x64/cli_linux_x64.tar.gz",
+    "hash": "sha512:ea01c73b772187bca928852cf96235f0d846d6da5ebdac188b9ae719597465737f325540d483ee5f3f62d151029001713344972a187ddfb98cc7b97f7204b7f4"
   },
   "zcode-cli": {
     "version": "3.16.3",
@@ -48,5 +48,13 @@
     "hash": "sha256:5062d871bd2ad2ddd1b44d6463bd9159af5b493be93845ffc7163dd5b5d45375",
     "resourcesUrl": "https://cdn-zcode.z.ai/zcode/electron/releases/3.16.3/linux-x64/ZCode-3.16.3-linux-x64.AppImage",
     "resourcesHash": "sha256-SdAHZHuDHuUiDuNNCX4Dj7iaLfLGhrl6o7awLn0KC6I="
+  },
+  "obs-studio": {
+    "version": "33.0.1",
+    "hash": "sha256:c8d3a8f69a0f17970ac0a8f2a2462f1bc4dacd324f6da0c4b408d442d4798913"
+  },
+  "hyprlock": {
+    "version": "0.9.7",
+    "hash": "sha256-ARRXkFcP+r0x6bUoxRe9zK52825y1zPwDCaW2cO/LIg="
   }
 }

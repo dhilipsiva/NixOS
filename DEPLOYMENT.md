@@ -60,6 +60,21 @@ personal `lucy-rust-local` package with `nix profile remove lucy-rust-local` if
 it is still listed. This keeps private memory in `~/.local/share/lucy` intact.
 Run `systemctl --user daemon-reload` after disabling an override.
 
+A legacy `~/.local/share/applications/lucy.desktop` can also hide the managed
+**Ask Lucy** launcher and select that missing personal-profile executable. Home
+Manager now retires only the known legacy entry, preserving it under
+`~/.local/state/lucy/launcher-backups/` with a unique directory. Custom entries
+and symlinks are left alone. To apply this launcher repair before reboot, run:
+
+```bash
+python3 scripts/retire-legacy-lucy-launcher.py \
+  --home-dir "$HOME" \
+  --data-dir "${XDG_DATA_HOME:-$HOME/.local/share}" \
+  --state-dir "${XDG_STATE_HOME:-$HOME/.local/state}"
+```
+
+The managed entry then takes precedence without changing the running system.
+
 After rebooting into the staged generation, verify both services and the CLI:
 
 ```bash
@@ -122,6 +137,24 @@ The permanent fix follows normal publication and staging; the temporary
 override disappears on reboot. App trust and physical input acceptance remain
 pending.
 
+
+## Roblox on the desktop
+
+The desktop enables Flatpak and GameMode. **Roblox (Sober)** uses the stable user
+Flatpak, Wayland and application-specific NVIDIA selection. The initial writable
+Sober settings select Vulkan, high-DPI scaling and the desktop-quality renderer;
+later changes in Sober's Settings are preserved. Both Roblox URL schemes use the
+managed launcher. OBS stays enabled only on the ThinkPad and Yoga.
+
+Install/update the user application with `flatpak install --user flathub
+org.vinegarhq.Sober` and `flatpak update --user`. Staging checks that Sober and
+the Flatpak NVIDIA extension matching the candidate driver are installed. Keep
+the previous driver extension available for recovery. After reboot, open Sober,
+complete its automatic Roblox setup, and verify the RTX 5090 renderer in a real
+game; an installed runtime alone does not establish game performance.
+
+The settings follow [Sober's configuration reference](https://vinegarhq.org/Sober/Configuration/index.html)
+and [NVIDIA's GPU selection documentation](https://download.nvidia.com/XFree86/Linux-x86_64/595.104.02/README/primerenderoffload.html).
 
 ## 1. DisplayPort display policy and recovery history
 

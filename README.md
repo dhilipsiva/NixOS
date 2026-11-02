@@ -69,6 +69,10 @@ screen use a 32-pixel Terminus font.
   `/var/tmp` retention, bounded journals. CPU side-channel mitigations stay on.
 - **Local AI:** socket-activated Ollama with CUDA that unloads models after each
   request (`modules/nixos/ollama.nix`, host backend in `performance.nix`).
+- **Desktop gaming:** stable Sober (Roblox) through the user Flatpak, with a
+  managed launcher, NVIDIA/Vulkan selection, GameMode and writable initial
+  quality settings (`hosts/desktop/applications.nix`). OBS is enabled only on
+  the ThinkPad and Yoga.
 - **ThinkPad differences:** the laptop keeps its LUKS root with the scripted
   initrd, systemd-boot without Secure Boot, suspend on lid close, Intel/NVIDIA
   PRIME offload, Flatpak for Sober (Roblox) and native OBS (`hosts/thinkpad/`).
@@ -103,10 +107,6 @@ not imply every bundled dependency is the newest upstream release.
 The versions in this lock are what `nix eval --json .#lib.stableVersions` prints: the nightly
 moves them, so no table here can stay true. The `stable-releases` check refuses any that is a
 prerelease or differs from its recorded stable channel.
-| Python | 3.14.8 as the separate `python-latest` package |
-| Linux kernel | 7.2.9 |
-| NVIDIA production driver | 595.104.02 |
-| Nix | 2.35.2 (`nixVersions.latest`) |
 
 All machines use the same Git checkout path,
 `/home/dhilipsiva/projects/dhilipsiva/NixOS`, tracking `origin/master`, owned by
@@ -138,7 +138,7 @@ Windows files and personal documents are never cleanup targets
 
 ## Wayland desktop
 
-[Hyprland](https://github.com/hyprwm/Hyprland/releases/tag/v0.56.2) runs under
+[Hyprland](https://github.com/hyprwm/Hyprland) runs under
 UWSM, started from the text greeter **greetd + tuigreet**. Home Manager generates
 its native Lua configuration (`home/dhilipsiva/wayland.nix`). Waybar, Mako,
 Hyprlock, Hypridle (lock and screens off after five minutes, no suspend on the

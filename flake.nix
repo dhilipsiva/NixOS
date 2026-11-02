@@ -4,7 +4,7 @@
   inputs = {
     # Reusable Lucy code belongs to the independent Lucy origin; never copy private runtime data here.
     lucy = {
-      url = "github:dhilipsiva/lucy/2d6c9bd70f4dd5c867c7a4c9c2ea5fa27589e19a";
+      url = "github:dhilipsiva/lucy/6751c975e0bead2730afb866d8d24ab2455e41ae";
       flake = false;
     };
     # Keep NixOS and Home Manager on the newest released stable series together.
@@ -143,16 +143,26 @@
             zoxide
             ripgrep
             google-chrome
-            obs-studio
             hyprland
             hypridle
-            hyprlock
             uwsm
             xdg-desktop-portal-hyprland
             ;
           atuin = newer apps.atuin releases.atuin.version (apps.callPackage ./pkgs/atuin.nix { });
           uv = newer apps.uv releases.uv.version (apps.callPackage ./pkgs/uv.nix { });
           herdr = newer apps.herdr releases.herdr.version (apps.callPackage ./pkgs/herdr.nix { });
+          hyprlock = newer apps.hyprlock releases.hyprlock.version (
+            apps.hyprlock.overrideAttrs {
+              inherit (releases.hyprlock) version;
+              src = apps.fetchurl {
+                url = "https://github.com/hyprwm/hyprlock/archive/refs/tags/v${releases.hyprlock.version}.tar.gz";
+                inherit (releases.hyprlock) hash;
+              };
+            }
+          );
+          obs-studio = newer apps.obs-studio releases.obs-studio.version (
+            import ./pkgs/obs-studio.nix { pkgs = apps; }
+          );
           # Separate development interpreter: leave NixOS's Python
           # dependencies on the tested release package set.
           python-latest = newer apps.python3 releases.python.version (
@@ -508,6 +518,12 @@
                   monitor: monitor.output == "DP-1" && monitor.scale == 1.5
                 ) desktop.config.home-manager.users.dhilipsiva.wayland.windowManager.hyprland.settings.monitor;
               "thinkpad.services.flatpak.enable" = thinkpad.services.flatpak.enable;
+              "desktop.services.flatpak.enable" = desktop.config.services.flatpak.enable;
+              "desktop.programs.gamemode.enable" = desktop.config.programs.gamemode.enable;
+              "desktop requires Sober before staging" =
+                self.lib.hosts.desktop.flatpakApps == [ "org.vinegarhq.Sober" ];
+              "OBS is disabled on desktop" = !desktop.config.programs.obs-studio.enable;
+              "OBS is enabled on Yoga" = yoga.config.programs.obs-studio.enable;
               "thinkpad.programs.obs-studio.enable" = thinkpad.programs.obs-studio.enable;
               "thinkpad.programs.obs-studio.package.version == channels.obs-studio.version" =
                 thinkpad.programs.obs-studio.package.version == channels.obs-studio.version;
@@ -553,6 +569,7 @@
               python3 ${./tests/test-deployment.py} ${./scripts}
               python3 ${./tests/test-secret-encryption.py} ${./scripts}
               python3 ${./tests/test-reboot-to-windows.py} ${./scripts/reboot-to-windows.sh}
+              python3 ${./tests/test-lucy-launcher.py} ${./scripts/retire-legacy-lucy-launcher.py}
               python3 ${./scripts/check-secrets.py} ${./.}
               touch "$out"
             '';

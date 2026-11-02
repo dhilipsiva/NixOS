@@ -5,19 +5,19 @@
   },
   "antigravity-cli": {
     "source": "https://antigravity-cli-auto-updater-974169037036.us-central1.run.app/manifests/linux_amd64.json",
-    "version": "1.4.7"
+    "version": "1.4.12"
   },
   "atuin": {
     "source": "https://api.github.com/repos/atuinsh/atuin/releases/latest",
-    "version": "18.24.1"
+    "version": "18.24.4"
   },
   "claude-code": {
     "source": "https://downloads.claude.ai/claude-code-releases/stable",
-    "version": "2.1.292"
+    "version": "2.1.309"
   },
   "codex": {
     "source": "https://api.github.com/repos/openai/codex/releases/latest",
-    "version": "0.163.0"
+    "version": "0.166.0"
   },
   "fish": {
     "source": "https://api.github.com/repos/fish-shell/fish-shell/releases/latest",
@@ -29,7 +29,7 @@
   },
   "google-chrome": {
     "source": "https://dl.google.com/linux/chrome/deb/dists/stable/main/binary-amd64/Packages.gz",
-    "version": "155.0.8059.84"
+    "version": "156.0.8078.79"
   },
   "helix": {
     "source": "https://api.github.com/repos/helix-editor/helix/releases/latest",
@@ -45,11 +45,11 @@
   },
   "hyprland": {
     "source": "https://api.github.com/repos/hyprwm/Hyprland/releases/latest",
-    "version": "0.56.2"
+    "version": "0.57.0"
   },
   "hyprlock": {
     "source": "https://api.github.com/repos/hyprwm/hyprlock/releases/latest",
-    "version": "0.9.6"
+    "version": "0.9.7"
   },
   "intel-npu-compiler": {
     "source": "https://api.github.com/repos/intel/linux-npu-driver/releases/latest",
@@ -61,23 +61,23 @@
   },
   "linux": {
     "source": "https://www.kernel.org/releases.json",
-    "version": "7.2.11"
+    "version": "7.3.1"
   },
   "nvidia": {
     "source": "https://gfwsl.geforce.com/services_toolkit/services/com/nvidia/services/AjaxDriverService.php?func=DriverManualLookup&psid=133&pfid=1075&osID=12&languageCode=1033&beta=0&isWHQL=0&dltype=-1&dch=0&upCRD=null&qnf=0&ctk=null&sort1=&numberOfResults=1",
-    "version": "595.104.02"
+    "version": "595.112.07"
   },
   "obs-studio": {
     "source": "https://api.github.com/repos/obsproject/obs-studio/releases/latest",
-    "version": "32.2.2"
+    "version": "33.0.1"
   },
   "ollama": {
     "source": "https://api.github.com/repos/ollama/ollama/releases/latest",
-    "version": "0.40.6"
+    "version": "0.40.13"
   },
   "ollama-vulkan": {
     "source": "https://api.github.com/repos/ollama/ollama/releases/latest",
-    "version": "0.40.6"
+    "version": "0.40.13"
   },
   "openvino-npu": {
     "source": "https://api.github.com/repos/openvinotoolkit/openvino/releases/latest",
@@ -85,7 +85,7 @@
   },
   "python-latest": {
     "source": "https://www.python.org/api/v2/downloads/release/?is_published=true",
-    "version": "3.15.0"
+    "version": "3.15.2"
   },
   "ripgrep": {
     "source": "https://api.github.com/repos/BurntSushi/ripgrep/releases/latest",
@@ -97,7 +97,7 @@
   },
   "slack": {
     "source": "https://slack.com/downloads/instructions/linux",
-    "version": "4.52.178"
+    "version": "4.53.276"
   },
   "tuigreet": {
     "source": "https://api.github.com/repos/apognu/tuigreet/releases/latest",
@@ -105,7 +105,7 @@
   },
   "uv": {
     "source": "https://api.github.com/repos/astral-sh/uv/releases/latest",
-    "version": "0.13.1"
+    "version": "0.13.6"
   },
   "uwsm": {
     "source": "https://api.github.com/repos/Vladimir-csp/uwsm/tags?per_page=100",
@@ -117,7 +117,7 @@
   },
   "zed-editor": {
     "source": "https://api.github.com/repos/zed-industries/zed/releases/latest",
-    "version": "1.24.2"
+    "version": "1.26.2"
   },
   "zoxide": {
     "source": "https://api.github.com/repos/ajeetdsouza/zoxide/releases/latest",
