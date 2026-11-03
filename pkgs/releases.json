@@ -8,8 +8,8 @@
     "hash": "sha256:14d9e8bc8b4a9e0118d77c32266f76d461f09b40342eb23752960bd89f59929d"
   },
   "ollama": {
-    "version": "0.40.13",
-    "hash": "sha256:c9490e0f520be21271d969e6703f012268b1d39f8b70dd58854e5bfef7a75bb6"
+    "version": "0.40.14",
+    "hash": "sha256:993e83d08c3d13d17c55009a3e2664c8a25445e644aec3a68bef5abb6abce67d"
   },
   "python": {
     "version": "3.15.2",
@@ -20,8 +20,8 @@
     "hash": "sha256-iXTGqbP/1O8JztRAOsqkRNdD0ROhhVBNWh3EBb5G50Y="
   },
   "uv": {
-    "version": "0.13.6",
-    "hash": "sha256:5d61f26b6c7213779eda90edc6971ea6b0b796bfb8d49a574c8ad69b59838548"
+    "version": "0.13.7",
+    "hash": "sha256:287491da03f2a785c70fa75b13e1f849918c2f2b5415fe84876b8214eeb792f9"
   },
   "linux": {
     "version": "7.3.1",
@@ -43,11 +43,11 @@
     "hash": "sha512:ea01c73b772187bca928852cf96235f0d846d6da5ebdac188b9ae719597465737f325540d483ee5f3f62d151029001713344972a187ddfb98cc7b97f7204b7f4"
   },
   "zcode-cli": {
-    "version": "3.16.3",
-    "url": "https://cdn-zcode.z.ai/zcode/electron/releases/3.16.3/zcode-server-linux-x64.tar.gz",
-    "hash": "sha256:5062d871bd2ad2ddd1b44d6463bd9159af5b493be93845ffc7163dd5b5d45375",
-    "resourcesUrl": "https://cdn-zcode.z.ai/zcode/electron/releases/3.16.3/linux-x64/ZCode-3.16.3-linux-x64.AppImage",
-    "resourcesHash": "sha256-SdAHZHuDHuUiDuNNCX4Dj7iaLfLGhrl6o7awLn0KC6I="
+    "version": "3.17.2",
+    "url": "https://cdn-zcode.z.ai/zcode/electron/releases/3.17.2/zcode-server-linux-x64.tar.gz",
+    "hash": "sha256:88a41b337faa3f578a1fd68c1f28025fa0385a391eacfbac34b819653b8938e3",
+    "resourcesUrl": "https://cdn-zcode.z.ai/zcode/electron/releases/3.17.2/linux-x64/ZCode-3.17.2-linux-x64.AppImage",
+    "resourcesHash": "sha256-SlItRXJ0VBiMVoMyda5bTViKw7K4fu3uX32Y+FU6EuE="
   },
   "obs-studio": {
     "version": "33.0.1",

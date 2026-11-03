@@ -13,7 +13,7 @@
   },
   "claude-code": {
     "source": "https://downloads.claude.ai/claude-code-releases/stable",
-    "version": "2.1.309"
+    "version": "2.1.311"
   },
   "codex": {
     "source": "https://api.github.com/repos/openai/codex/releases/latest",
@@ -45,7 +45,7 @@
   },
   "hyprland": {
     "source": "https://api.github.com/repos/hyprwm/Hyprland/releases/latest",
-    "version": "0.57.0"
+    "version": "0.57.1"
   },
   "hyprlock": {
     "source": "https://api.github.com/repos/hyprwm/hyprlock/releases/latest",
@@ -73,11 +73,11 @@
   },
   "ollama": {
     "source": "https://api.github.com/repos/ollama/ollama/releases/latest",
-    "version": "0.40.13"
+    "version": "0.40.14"
   },
   "ollama-vulkan": {
     "source": "https://api.github.com/repos/ollama/ollama/releases/latest",
-    "version": "0.40.13"
+    "version": "0.40.14"
   },
   "openvino-npu": {
     "source": "https://api.github.com/repos/openvinotoolkit/openvino/releases/latest",
@@ -105,7 +105,7 @@
   },
   "uv": {
     "source": "https://api.github.com/repos/astral-sh/uv/releases/latest",
-    "version": "0.13.6"
+    "version": "0.13.7"
   },
   "uwsm": {
     "source": "https://api.github.com/repos/Vladimir-csp/uwsm/tags?per_page=100",
@@ -113,7 +113,7 @@
   },
   "zcode-cli": {
     "source": "https://zcode.z.ai/en/docs/install",
-    "version": "3.16.3"
+    "version": "3.17.2"
   },
   "zed-editor": {
     "source": "https://api.github.com/repos/zed-industries/zed/releases/latest",
