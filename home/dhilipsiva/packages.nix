@@ -26,6 +26,8 @@
     code-cursor
     codex
     claude-code
+    chatgpt
+    claude-desktop
     herdr
 
     # Toolchains and build tools

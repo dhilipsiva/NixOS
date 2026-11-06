@@ -11,9 +11,17 @@
     "source": "https://api.github.com/repos/atuinsh/atuin/releases/latest",
     "version": "18.24.4"
   },
+  "chatgpt": {
+    "source": "https://persistent.oaistatic.com/codex-app-prod/linux/deb/dists/stable/main/binary-amd64/Packages.gz",
+    "version": "26.1103.31037"
+  },
   "claude-code": {
     "source": "https://downloads.claude.ai/claude-code-releases/stable",
     "version": "2.1.311"
+  },
+  "claude-desktop": {
+    "source": "https://downloads.claude.ai/claude-desktop/apt/stable/dists/stable/main/binary-amd64/Packages",
+    "version": "4.23118.0"
   },
   "codex": {
     "source": "https://api.github.com/repos/openai/codex/releases/latest",

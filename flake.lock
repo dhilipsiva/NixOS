@@ -1,5 +1,21 @@
 {
   "nodes": {
+    "claude-desktop-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1793927295,
+        "narHash": "sha256-kzJB3vCcrVMZYDCiYVsF+8GbPHoq9uHCXPDla5kNBGM=",
+        "owner": "aaddrick",
+        "repo": "claude-desktop-debian",
+        "rev": "54ef5d2d75f9ab03e0c42da3e8ad58fe37381c1b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "aaddrick",
+        "repo": "claude-desktop-debian",
+        "type": "github"
+      }
+    },
     "crane": {
       "locked": {
         "lastModified": 1789760033,
@@ -192,6 +208,7 @@
     },
     "root": {
       "inputs": {
+        "claude-desktop-src": "claude-desktop-src",
         "home-manager": "home-manager",
         "lanzaboote": "lanzaboote",
         "lucy": "lucy",

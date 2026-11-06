@@ -23,7 +23,10 @@ without an attended, documented migration. No fixture is a deployable host.
 - Latest released stable NixOS and matching Home Manager, with stable application
   channels recorded in `pkgs/stable-channels.json`. Applications from nixpkgs-apps
   are packages only (exposed as `pkgs.nixpkgs-apps`); never import its NixOS
-  modules. No beta/RC/nightly versions.
+  modules. No beta/RC/nightly versions. Explicit owner-requested exception:
+  ChatGPT and Claude Desktop's Linux platform remains preview/beta; use only
+  their official stable APT feeds and numeric release versions. This does not
+  relax the policy for other applications or the operating system.
 - `stateVersion` records installation compatibility, not the software release.
   Keep each host's anchors unless a documented data migration requires a change.
 - Official proprietary firmware/userspace are acceptable. RTX 5090 uses NVIDIA's

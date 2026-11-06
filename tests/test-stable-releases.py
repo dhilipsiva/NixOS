@@ -12,6 +12,61 @@ spec.loader.exec_module(updater)
 
 
 class StableReleaseTests(unittest.TestCase):
+    @staticmethod
+    def desktop_record(name="claude-desktop", version="4.23118.0", **changes):
+        fields = {"Package": name, "Version": version, "Architecture": "amd64",
+                  "Filename": f"pool/main/{name[0]}/{name}/{name}_{version}_amd64.deb",
+                  "SHA256": "a" * 64}
+        fields.update(changes)
+        return "\n".join(f"{key}: {value}" for key, value in fields.items())
+
+    def test_desktop_index_selects_latest_numeric_version_independent_of_order(self):
+        for name in updater.DESKTOP_APT_REPOSITORIES:
+            entries = [self.desktop_record(name, version) for version in ("4.9.0", "4.23118.0", "4.100.0")]
+            for records in (entries, list(reversed(entries))):
+                pin = updater.desktop_app_pin(name, "\n\n".join(records))
+                self.assertEqual(pin, {
+                    "version": "4.23118.0",
+                    "url": f"{updater.DESKTOP_APT_REPOSITORIES[name]}/pool/main/{name[0]}/{name}/{name}_4.23118.0_amd64.deb",
+                    "hash": "sha256:" + "a" * 64,
+                })
+
+    def test_desktop_index_rejects_invalid_release_paths_and_digests(self):
+        for change in ({"Version": "4.23118.0-beta"}, {"Version": "4.23119.0"},
+                       {"Filename": "https://example.invalid/app.deb"},
+                       {"Filename": "../app.deb"}, {"SHA256": "bad"}, {"SHA256": ""}):
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                updater.desktop_app_pin("claude-desktop", self.desktop_record(**change))
+
+    def test_desktop_index_requires_requested_package_and_architecture(self):
+        for change in ({"Package": "claude-code"}, {"Architecture": "arm64"}):
+            with self.assertRaises(ValueError):
+                updater.desktop_app_pin("claude-desktop", self.desktop_record(**change))
+        index = self.desktop_record(Architecture="arm64") + "\n\n" + self.desktop_record()
+        self.assertEqual(updater.desktop_app_pin("claude-desktop", index)["version"], "4.23118.0")
+        with self.assertRaises(ValueError):
+            updater.desktop_app_pin("claude-desktop", "")
+
+    def test_desktop_index_rejects_ambiguous_records_and_downgrades(self):
+        first = self.desktop_record()
+        with self.assertRaises(ValueError):
+            updater.desktop_app_pin("claude-desktop", first + "\n\n" + self.desktop_record(SHA256="b" * 64))
+        with self.assertRaises(ValueError):
+            updater.desktop_app_pin("claude-desktop", first + "\nSHA256: " + "b" * 64)
+        with self.assertRaisesRegex(ValueError, "downgrade"):
+            updater.desktop_app_pin("claude-desktop", first, previous_version="4.23119.0")
+
+    def test_desktop_indexes_decode_gzip_and_debian_continuations(self):
+        for name in updater.DESKTOP_APT_REPOSITORIES:
+            record = self.desktop_record(name) + "\nDescription: Desktop\n Package: misleading continuation\n"
+            data = record.replace("\n", "\r\n").encode()
+            if name == "chatgpt":
+                data = updater.gzip.compress(data)
+            with patch.object(updater, "fetch", return_value=data) as fetch:
+                pin = updater.fetch_desktop_app_pin(name)
+                self.assertEqual(pin["version"], "4.23118.0")
+                fetch.assert_called_once_with(updater.desktop_app_index(name))
+
     def test_rate_limited_github_metadata_uses_existing_gh_authentication(self):
         url = 'https://api.github.com/repos/example/project/releases/latest'
         for code in (403, 429):

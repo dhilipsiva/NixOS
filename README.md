@@ -192,6 +192,31 @@ Discord, Lutris/Wine, build tools) live in the user's Home Manager profile
 only. The Microsoft Teams launcher opens the official web app in a Chrome
 Wayland app window. Account authentication for every tool remains user-managed.
 
+ChatGPT and Claude Desktop are installed on all three hosts alongside the separate
+`codex` and `claude` CLIs. Launch `chatgpt` or `claude-desktop` from a terminal or
+the application menu. Both package the vendors' official Linux binaries; Claude's
+native Nix packaging comes from the locked `claude-desktop-src` input, instantiated
+against the existing application package set. The Linux preview/beta status of
+these two requested apps is an explicit exception to the stable-only policy.
+Their versions, URLs and SHA-256 pins still follow only the vendors' stable APT
+feeds through the nightly updater; other prerelease restrictions remain intact.
+
+These apps default to XWayland under Hyprland. Pass `--ozone-platform=wayland`
+to opt into native Wayland. The shared desktop setting remains unchanged.
+GNOME Keyring and the existing portals supply login persistence and file access.
+Cowork's QEMU, virtiofsd and guest firmware are provided declaratively, with
+`vhost_vsock` loaded at boot and the existing `kvm` group granting device access.
+Guest firmware compatibility links under `/usr/share/OVMF` and
+`/usr/libexec/virtiofsd` point into the store. They do not change the host bootloader.
+The native Claude package preserves the normal host environment for Code sessions;
+Chromium sandboxing remains enabled. Sign in separately to each app after activation.
+
+`nix build .#chatgpt .#claude-desktop` builds the individual packages, while
+`nix build .#checks.x86_64-linux.ai-desktop-apps` verifies the shared host prerequisites,
+launchers and Cowork runtime files. A build does not verify account access, GPU
+behavior on each laptop, or a successful Cowork task; use DEPLOYMENT.md for those
+post-boot checks.
+
 Run `agy` for Google's [Antigravity CLI](https://antigravity.google/download#antigravity-cli)
 and `zcode` for [Z.ai's terminal agent](https://github.com/zai-org/ZCode).
 Both follow the stable release updater. Antigravity's in-app updater is disabled

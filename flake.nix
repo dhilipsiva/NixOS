@@ -16,6 +16,13 @@
     # Check their versions against upstream releases when refreshing the lock.
     nixpkgs-apps.url = "github:nixos/nixpkgs/master";
 
+    # Reuse the native packaging of Anthropic's official Linux .deb. Instantiate
+    # it against our application package set, without another nixpkgs/module set.
+    claude-desktop-src = {
+      url = "github:aaddrick/claude-desktop-debian";
+      flake = false;
+    };
+
     rust-overlay = {
       url = "github:oxalica/rust-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -83,6 +90,8 @@
         "zcode-cli"
         "codex"
         "claude-code"
+        "chatgpt"
+        "claude-desktop"
         "zed-editor"
         "helix"
         "alacritty"
@@ -132,6 +141,10 @@
           nixpkgs-apps = apps;
           antigravity-cli = apps.callPackage ./pkgs/antigravity-cli.nix { };
           zcode-cli = apps.callPackage ./pkgs/zcode-cli.nix { };
+          chatgpt = apps.callPackage ./pkgs/chatgpt.nix { };
+          claude-desktop = apps.callPackage ./pkgs/claude-desktop.nix {
+            source = inputs.claude-desktop-src;
+          };
           inherit (apps)
             codex
             zed-editor
@@ -246,6 +259,8 @@
       packages.${system} = {
         antigravity-cli = desktop.pkgs.antigravity-cli;
         zcode-cli = desktop.pkgs.zcode-cli;
+        chatgpt = desktop.pkgs.chatgpt;
+        claude-desktop = desktop.pkgs.claude-desktop;
         lucy = desktop.config.home-manager.users.dhilipsiva.repo.lucy.package;
         nixosctl = pkgs.callPackage ./pkgs/nixosctl.nix { };
         npu-smoke = yoga.pkgs.npu-smoke;
@@ -312,6 +327,11 @@
         };
 
       checks.${system} = {
+        ai-desktop-apps = import ./tests/ai-desktop-apps.nix {
+          inherit lib;
+          pkgs = desktop.pkgs;
+          hosts = self.nixosConfigurations;
+        };
         lucy-vscode =
           let
             lucy = self.packages.${system}.lucy;

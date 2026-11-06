@@ -56,5 +56,15 @@
   "hyprlock": {
     "version": "0.9.7",
     "hash": "sha256-ARRXkFcP+r0x6bUoxRe9zK52825y1zPwDCaW2cO/LIg="
+  },
+  "chatgpt": {
+    "version": "26.1103.31037",
+    "url": "https://persistent.oaistatic.com/codex-app-prod/linux/deb/pool/main/c/chatgpt/chatgpt_26.1103.31037_amd64.deb",
+    "hash": "sha256:32fed80ad3f8caf666e5860022361e9709d64aa318cfb19f548e8b458d4f6793"
+  },
+  "claude-desktop": {
+    "version": "4.23118.0",
+    "url": "https://downloads.claude.ai/claude-desktop/apt/stable/pool/main/c/claude-desktop/claude-desktop_4.23118.0_amd64.deb",
+    "hash": "sha256:1ad996e8caab05c9b374646051c40cb6bb9d84f371756f15b8d3728897515a97"
   }
 }

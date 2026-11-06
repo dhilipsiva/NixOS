@@ -23,6 +23,12 @@ GITHUB_ASSETS = {
     "obs-studio": ("obsproject/obs-studio", "OBS-Studio-{version}-Sources.tar.gz"),
 }
 CLAUDE_URL = "https://downloads.claude.ai/claude-code-releases"
+# Linux platform maturity is an explicit exception for these requested desktop
+# apps. Their binaries still follow only the vendors' stable APT repositories.
+DESKTOP_APT_REPOSITORIES = {
+    "chatgpt": "https://persistent.oaistatic.com/codex-app-prod/linux/deb",
+    "claude-desktop": "https://downloads.claude.ai/claude-desktop/apt/stable",
+}
 ANTIGRAVITY_URL = ("https://antigravity-cli-auto-updater-974169037036.us-central1.run.app"
                    "/manifests/linux_amd64.json")
 ZCODE_DOWNLOADS_URL = "https://zcode.z.ai/en/docs/install"
@@ -54,6 +60,56 @@ def release_version(release, prefix="v"):
     version = release["tag_name"].removeprefix(prefix)
     version_tuple(version)
     return version
+
+
+def desktop_app_index(name):
+    suffix = ".gz" if name == "chatgpt" else ""
+    return f"{DESKTOP_APT_REPOSITORIES[name]}/dists/stable/main/binary-amd64/Packages{suffix}"
+
+
+def desktop_app_pin(name, index, previous_version=None):
+    """Select a checksum-pinned amd64 app from its official stable APT index."""
+    repository = DESKTOP_APT_REPOSITORIES[name]
+    candidates = {}
+    for stanza in re.split(r"\n\s*\n", index.replace("\r\n", "\n").strip()):
+        fields = {}
+        for line in stanza.splitlines():
+            # Debian description/dependency continuations cannot introduce fields.
+            if not line or line[0].isspace():
+                continue
+            key, separator, value = line.partition(": ")
+            if separator:
+                if key in fields:
+                    raise ValueError(f"Duplicate APT field: {key}")
+                fields[key] = value
+        if fields.get("Package") != name or fields.get("Architecture") != "amd64":
+            continue
+        version = fields.get("Version", "")
+        order = version_tuple(version)
+        filename = f"pool/main/{name[0]}/{name}/{name}_{version}_amd64.deb"
+        if fields.get("Filename") != filename:
+            raise ValueError(f"{name}: unexpected APT package path")
+        digest = fields.get("SHA256", "")
+        if not re.fullmatch(r"[0-9a-f]{64}", digest):
+            raise ValueError(f"{name}: missing or invalid upstream SHA-256")
+        pin = {"version": version, "url": f"{repository}/{filename}", "hash": "sha256:" + digest}
+        if order in candidates and candidates[order] != pin:
+            raise ValueError(f"{name}: conflicting APT records for {version}")
+        candidates[order] = pin
+    if not candidates:
+        raise ValueError(f"{name}: no amd64 package in the official APT index")
+    selected = candidates[max(candidates)]
+    if previous_version is not None:
+        no_downgrade(name, previous_version, selected["version"])
+    return selected
+
+
+def fetch_desktop_app_pin(name, previous_version=None):
+    url = desktop_app_index(name)
+    index = fetch(url)
+    if url.endswith(".gz"):
+        index = gzip.decompress(index)
+    return desktop_app_pin(name, index.decode(), previous_version)
 
 
 def antigravity_pin(manifest):
@@ -236,6 +292,9 @@ def update(repo, check_only=False):
     old_pins = json.loads(pins_path.read_text())
     pins = dict(old_pins)
     channels = {}
+    for name in DESKTOP_APT_REPOSITORIES:
+        pins[name] = fetch_desktop_app_pin(name, old_pins.get(name, {}).get("version"))
+        channels[name] = {"version": pins[name]["version"], "source": desktop_app_index(name)}
     pins["antigravity-cli"] = antigravity_pin(json.loads(fetch(ANTIGRAVITY_URL)))
     if "antigravity-cli" in old_pins:
         no_downgrade("antigravity-cli", old_pins["antigravity-cli"]["version"],

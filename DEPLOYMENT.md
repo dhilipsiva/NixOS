@@ -7,6 +7,33 @@ and rebooted. `/run/current-system` and the system profile both resolved to
 The post-boot checks below still distinguish observed behavior from pending
 physical acceptance.
 
+## ChatGPT and Claude Desktop
+
+Both apps belong to the shared Home Manager profile for desktop, ThinkPad and
+Yoga. Publish the checked revision, then stage the appropriate host through
+`scripts/nixosctl stage --host desktop` (or the laptop's own host name, on that
+laptop). Reboot manually; do not use a live switch for this rollout.
+
+On 2026-11-06, ChatGPT 26.1103.31037 and Claude Desktop 4.23118.0 both opened
+windows on a virtual X display using disposable home directories with Chromium
+sandboxing enabled. Explicit Wayland overrides were also confirmed to select
+Wayland. This checks startup and launcher behavior; it does not establish native
+Wayland rendering, account sign-in or Cowork guest operation.
+
+After boot, launch `chatgpt` and `claude-desktop` from the application menu.
+Complete each account's sign-in, quit and reopen the app, and confirm the keyring
+retains the login. Check that browser authentication returns to the appropriate
+app and that a disposable project folder can be selected and read. The existing
+`codex` and `claude` CLI commands retain their separate authentication/configuration.
+
+For Claude Cowork, verify read/write access to `/dev/kvm` and `/dev/vhost-vsock`,
+check `lsmod` for `vhost_vsock`, and confirm `/usr/share/OVMF/OVMF_CODE_4M.fd`,
+`/usr/share/OVMF/OVMF_VARS_4M.fd` and `/usr/libexec/virtiofsd` resolve into the
+Nix store. Start a Cowork task against a disposable directory and confirm the
+guest boots and completes a file operation. Check graphics and file dialogs on
+each physical host. Record failures separately from build results; firmware
+virtualization settings and account entitlement cannot be established by a build.
+
 ## Lucy desktop integration rollout
 
 The Lucy integration runs on the desktop with Lucy's model pin and on the Yoga
