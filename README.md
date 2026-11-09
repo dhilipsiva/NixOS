@@ -38,7 +38,8 @@ and library loading.
 The kernel is the latest kernel.org stable release (with a pinned patch-release
 source bridge when Nixpkgs lags) and the GPU runs NVIDIA's current production
 driver, built against that exact kernel. The panel is connected over DisplayPort
-(DP-1) since 2026-10-04 and runs 3840×2160 at 240 Hz with 10-bit colour and
+since 2026-10-04 (the driver names the port DP-1 or DP-4 from boot to boot, so
+its Hyprland rule matches the panel's description) and runs 3840×2160 at 240 Hz with 10-bit colour and
 adaptive sync in fullscreen; the earlier HDMI FRL workaround (4K60, 8-bit) went
 away with the cable, and HDR remains a future test. The compositor addresses only
 the NVIDIA card by PCI path. The 700 mm wide panel uses compositor scale 1.5 (2560×1440 logical

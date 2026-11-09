@@ -533,9 +533,9 @@
                     scale = 1;
                   }
                 ];
-              "builtins.any ( monitor: monitor.output == \"DP-1\" && monitor.scale == 1.5 ) desktop.config.home-manager.users.dhilipsiva.wayland.windowManager.hyprland.settings.monitor" =
+              "builtins.any ( monitor: monitor.output == \"desc:Samsung Electric Company Odyssey G81SF\" && monitor.scale == 1.5 ) desktop.config.home-manager.users.dhilipsiva.wayland.windowManager.hyprland.settings.monitor" =
                 builtins.any (
-                  monitor: monitor.output == "DP-1" && monitor.scale == 1.5
+                  monitor: monitor.output == "desc:Samsung Electric Company Odyssey G81SF" && monitor.scale == 1.5
                 ) desktop.config.home-manager.users.dhilipsiva.wayland.windowManager.hyprland.settings.monitor;
               "thinkpad.services.flatpak.enable" = thinkpad.services.flatpak.enable;
               "desktop.services.flatpak.enable" = desktop.config.services.flatpak.enable;

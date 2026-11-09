@@ -5,7 +5,7 @@
 {
   boot.kernelPackages = pkgs.linuxPackagesFor (import ../../pkgs/kernel.nix { inherit pkgs; });
 
-  # The panel moved from HDMI to DisplayPort (DP-1) on 2026-10-04. Over HDMI the
+  # The panel moved from HDMI to DisplayPort on 2026-10-04. Over HDMI the
   # NVIDIA driver failed FRL link training in generation 10 and the display was
   # pinned to 4K60 8-bit by kernel parameters; DisplayPort 1.4 with DSC reaches
   # the panel's full 3840x2160 at 240 Hz with 10-bit colour, so that workaround
@@ -15,10 +15,15 @@
   # logical pixels. Wayland clients scale themselves; Xwayland clients render at
   # native pixels (sharp but smaller) because of xwayland.force_zero_scaling.
   # VRR 2 = adaptive sync only while a fullscreen window is shown.
+  #
+  # The rule matches the panel's EDID description, not its connector: the NVIDIA
+  # driver names the same port DP-1 on some boots and DP-4 on others, and a
+  # missed DP-1 rule fell back to the shared "auto" rule (scale 1 at about
+  # 138 PPI, 60 Hz, 8-bit), which made the UI look randomly shrunken.
   home-manager.users.dhilipsiva.wayland.windowManager.hyprland.settings = {
     monitor = [
       {
-        output = "DP-1";
+        output = "desc:Samsung Electric Company Odyssey G81SF";
         mode = "3840x2160@240";
         position = "auto";
         scale = 1.5;
