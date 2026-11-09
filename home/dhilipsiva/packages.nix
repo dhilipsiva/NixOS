@@ -70,6 +70,7 @@
     kdePackages.dolphin
     slack
     discord
+    vlc
 
     # Wine / gaming
     lutris
