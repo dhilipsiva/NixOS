@@ -113,12 +113,29 @@ in
         or changed model; lucy setup-model downloads the configured tag.
       '';
     };
+    backup = {
+      enable = lib.mkEnableOption "the hourly backup of Lucy's private memory from this host";
+      peers = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [ ];
+        description = ''
+          The peers this host's backup may carry besides Lucy's own
+          conversations. A peer that is not listed stays out, so a host that
+          also holds someone else's private peer never copies it.
+        '';
+      };
+    };
   };
 
   config = lib.mkIf cfg.enable {
     home-manager.users.dhilipsiva.repo.lucy = {
       enable = true;
       inherit package;
+      backup = {
+        inherit (cfg.backup) enable peers;
+        host = config.networking.hostName;
+        package = pkgs.callPackage ../../pkgs/lucy-backup.nix { };
+      };
     };
     services.ollama.environmentVariables.OLLAMA_NO_CLOUD = "1";
     boot.kernelModules = [ "uinput" ];

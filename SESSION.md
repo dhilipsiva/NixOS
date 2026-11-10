@@ -137,3 +137,45 @@ cap in lucy-cli `desktop/core.rs`; that needs an upstream fix and a re-pin, and
 the desktop and Yoga sync the same archive. The owner's upload actor regenerates
 the `nixos-public` branch with `lucy sync` after publication. Publication through
 `scripts/nixosctl publish`, the 21:30 subscriber staging and the reboot follow.
+
+## Desktop state (2026-11-10)
+
+Generation 35 was running when this session began (booted 09:50, equal to
+`6636da4`). Three changes were made on the desktop and are published together.
+
+`lucy/` agrees with Lucy's origin again. The constitution here ended at
+Article 6 and is now byte for byte the origin's, with eleven articles;
+`lucy/memory.nibli` spells `Bucchi`; `lucy.nibli` is regenerated from both
+(`lucy check`: 24 and 25 statements, standing). Lucy's service uploaded the two
+files to the `nixos-public` memory branch at 13:44 (head `eb9ac4a`, 39
+operations). Every host's Lucy identity embeds `lucy/memory.nibli`, so all
+three toplevels change.
+
+The Lucy pin moved from `6751c97` to `0dac7e5`; `Cargo.lock` is unchanged,
+so `pkgs/lucy.nix` keeps its hash. The prompt hook had been cancelled at its
+ten-second limit, and what it returned was 260 to 540 kB, of which Claude Code
+passes on 2,000 characters. The new revision records a prompt before anything
+can refuse it, builds every context against a budget (9,000 UTF-16 units for a
+hosted app, conversation ID and capture reminder first), answers within 4.5
+seconds whatever memory is doing, verifies each enrolled log once per content
+and ranks what it retrieves. Measured on a copy of the desktop's store, without
+network or an embedding model: a hosted prompt takes 0.56 to 0.66 s where it
+took 2.5 s, a 3,000-word prompt 0.57 s where it took 6.3 s, and a prompt sent
+while the store was locked for 12 s is answered at 4.5 s and saved once the
+lock is released. None of this has been observed on the running system yet.
+
+The desktop backs Lucy's private memory up hourly into the private repository
+`lucy-private` (`repo.lucy.backup`, `scripts/lucy-backup.py`, a user timer that
+first fires ten minutes after login); the laptops do not. A run lists the peers
+it carries, verifies what it wrote, pushes `main` only and never forces. The
+first backup was made through the same script on 2026-11-10 (2,394 records,
+8 MB); a rehearsal on a copy of the store restored such a backup into an empty
+store (2,392 records).
+
+Verified on the desktop: `nix fmt`, `nix flake check .`, the desktop toplevel
+and `scripts/nixosctl check --stable`. Publication through `scripts/nixosctl
+publish` and staging for the desktop's next boot follow; nothing was switched
+or rebooted. After the reboot, the first prompt that addresses Lucy should show
+the hook finishing with its context inline, `systemctl --user list-timers
+lucy-backup.timer` should show the next run, and one manual start of
+`lucy-backup.service` should push.

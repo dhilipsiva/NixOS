@@ -262,6 +262,7 @@
         chatgpt = desktop.pkgs.chatgpt;
         claude-desktop = desktop.pkgs.claude-desktop;
         lucy = desktop.config.home-manager.users.dhilipsiva.repo.lucy.package;
+        lucy-backup = pkgs.callPackage ./pkgs/lucy-backup.nix { };
         nixosctl = pkgs.callPackage ./pkgs/nixosctl.nix { };
         npu-smoke = yoga.pkgs.npu-smoke;
         ollama-vulkan = yoga.pkgs.ollama-vulkan;
@@ -454,6 +455,25 @@
               "yoga.config.home-manager.users.dhilipsiva.repo.lucy.enable" =
                 yoga.config.home-manager.users.dhilipsiva.repo.lucy.enable;
               "desktop.config.repo.lucy.model == null" = desktop.config.repo.lucy.model == null;
+              # Only the desktop backs Lucy up: on the hour, into her private repository,
+              # carrying exactly the listed peers. A laptop joins on purpose, never by default.
+              "desktop.config.repo.lucy.backup.enable" = desktop.config.repo.lucy.backup.enable;
+              "desktop.config.repo.lucy.backup.peers == [ \"book\" \"nixos\" \"personal\" ]" =
+                desktop.config.repo.lucy.backup.peers == [
+                  "book"
+                  "nixos"
+                  "personal"
+                ];
+              "desktop Lucy backup remote == \"git@github.com:dhilipsiva/lucy-private.git\"" =
+                desktop.config.home-manager.users.dhilipsiva.repo.lucy.backup.remote
+                == "git@github.com:dhilipsiva/lucy-private.git";
+              "desktop Lucy backup branch == \"main\"" =
+                desktop.config.home-manager.users.dhilipsiva.repo.lucy.backup.branch == "main";
+              "desktop Lucy backup timer OnCalendar == \"hourly\"" =
+                desktop.config.home-manager.users.dhilipsiva.systemd.user.timers.lucy-backup.Timer.OnCalendar
+                == "hourly";
+              "!thinkpad.repo.lucy.backup.enable" = !thinkpad.repo.lucy.backup.enable;
+              "!yoga.config.repo.lucy.backup.enable" = !yoga.config.repo.lucy.backup.enable;
               "desktop.config.services.ollama.environmentVariables.OLLAMA_NO_CLOUD == \"1\"" =
                 desktop.config.services.ollama.environmentVariables.OLLAMA_NO_CLOUD == "1";
               "desktop.config.systemd.services.lucy-input.wantedBy == [ ]" =
@@ -590,6 +610,7 @@
               python3 ${./tests/test-secret-encryption.py} ${./scripts}
               python3 ${./tests/test-reboot-to-windows.py} ${./scripts/reboot-to-windows.sh}
               python3 ${./tests/test-lucy-launcher.py} ${./scripts/retire-legacy-lucy-launcher.py}
+              python3 ${./tests/test-lucy-backup.py} ${./scripts/lucy-backup.py}
               python3 ${./scripts/check-secrets.py} ${./.}
               touch "$out"
             '';

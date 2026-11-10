@@ -56,9 +56,12 @@ Retrieve complete evidence with `lucy memory transcript --source APP --session I
 or `lucy store transcript`. Private app conversations stay outside every public
 checkout, including Nix sources. Shared retrieval does not publish them.
 
-Use `lucy store backup --to PRIVATE_CHECKOUT/shared-store` for a portable snapshot
-in the existing private `dhilipsiva/lucy-private` repository. Commit and push only
-that backup subtree. On another host, clone/pull the private repository and run
+On the desktop a timer backs me up into the existing private
+`dhilipsiva/lucy-private` repository on the hour (README, "Lucy on demand").
+By hand I use `lucy store backup --to PRIVATE_CHECKOUT/shared-store --only-peer NAME`,
+repeating `--only-peer` for the host's own list; a peer that is not listed stays
+out, and I never answer a refused unlisted run with `--all-peers` there. Commit
+and push only that backup subtree. On another host, clone/pull the private repository and run
 `lucy store restore --from PRIVATE_CHECKOUT/shared-store/snapshots/HOST/SNAPSHOT.json`.
 Snapshots preserve complete records; local peer paths are registered separately.
 Each host keeps its own redb file and regenerates vectors with `lucy store embed`.

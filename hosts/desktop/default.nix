@@ -31,6 +31,17 @@
   # its original position so the desktop's merged lists keep their order.
   repo.lucy.enable = true;
 
+  # Lucy's private memory goes to her private repository on the hour. The list
+  # names the peers that belong there; any other peer on this host stays out.
+  repo.lucy.backup = {
+    enable = true;
+    peers = [
+      "book"
+      "nixos"
+      "personal"
+    ];
+  };
+
   # Each host selects its encrypted secrets; the ThinkPad can use its own file.
   sops.defaultSopsFile = ../../secrets/desktop.yaml;
 

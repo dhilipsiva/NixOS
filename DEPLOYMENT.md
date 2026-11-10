@@ -51,6 +51,13 @@ conflicts. Review Codex's hooks in Codex, grant VS Code's selected-model access,
 load the Chrome extension, and complete Firefox signing/trust as appropriate.
 These application steps are not established by a Nix build or the login VM.
 
+On the desktop, also inspect `systemctl --user list-timers lucy-backup.timer`
+and, after its first run, `lucy-backup status`: it reports `"ok": true` and
+`"pushed": true` once a snapshot has reached `dhilipsiva/lucy-private`. The push
+uses the owner's SSH identity through the keyring agent, so a locked keyring
+leaves the snapshot committed in `~/.local/share/lucy-private-backup` until the
+next run. Neither the build nor the login VM establishes that push.
+
 ### Updating the Rust runtime and self-model
 
 Advance the explicit Lucy revision in `flake.nix` and refresh its lock with

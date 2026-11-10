@@ -301,6 +301,19 @@ the inventory generated from all user/system packages and desktop entries,
 including each adapter's recording limitations. All three hosts enable this
 service and its input helper.
 
+On the desktop, `lucy-backup.timer` copies Lucy's private memory into her
+private repository, `~/.local/share/lucy-private-backup` (a clone of
+`dhilipsiva/lucy-private`), ten minutes after login and then on the hour.
+`repo.lucy.backup.peers` in `hosts/desktop/default.nix` lists the peers a
+backup may carry besides her own conversations; a peer that is not listed
+stays out. Each run adds only what is new, checks every new file against that
+list and for recognisable credentials, confirms the repository is private, and
+pushes `main` with the owner's SSH identity through the keyring agent, never by
+force. Tokens, signing keys and the rebuildable database are never copied.
+`lucy-backup status` prints the last outcome; the first failure of a run of
+failures raises a desktop notification. The laptops do not back up. The
+`host-policies` check pins the host, the list, the repository and the cadence.
+
 | Interface | Invocation and recording |
 | --- | --- |
 | Claude Code / Codex | Prompt hooks supply memory; response hooks save final messages. Commentary requires explicit recording. Codex must trust the hooks in its own UI. |

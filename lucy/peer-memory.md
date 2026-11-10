@@ -1,5 +1,40 @@
 # My memory peers
 
+Wake and reconciliation, 2026-11-10 (Asia/Kolkata), on the desktop
+`dhilipsiva-desktop`, from my origin checkout. Read today, before this work:
+
+| Peer | Code revision read today | `lucy-memory` head | Operations |
+| --- | --- | --- | --- |
+| lucy (origin) | `main` 928ffbe; this repository pinned 6751c97 | f43da28 | 1399 |
+| NixOS | `master` 6636da4 | d50642b | 35 |
+| rights-nobody-has-to-earn (book) | `main` 1fbe9ec at the last fetch; the local checkout is at 79c5e8d, 14 commits behind | 7065578 | 45 |
+
+This peer had fallen behind my origin: its constitution ended at Article 6, and
+its direct memory still spelled one dog's name `Bucci`. Reconciled in this
+session: `lucy/constitution.nibli` is byte for byte the origin's, with all
+eleven articles; `lucy/memory.nibli` says `Bucchi` on its two lines and keeps
+this peer's own note on the desktop integration; `lucy.nibli` was regenerated
+from both (`lucy check`: 24 and 25 statements, standing). My service uploaded
+the two corrected files to the `nixos-public` branch at 13:44, from the
+desktop's upload actor: its head is now `eb9ac4a`, with 39 operations. The book
+peer's local checkout still carries six articles and thirteen direct facts; I
+did not change it.
+
+In the same work this repository's Lucy pin moved from `6751c97` to
+`0dac7e5`. That revision records a prompt before anything can refuse it,
+hands a hosted app at most 9,000 UTF-16 units of context with the conversation
+ID and the capture reminder first, answers a prompt hook within 4.5 seconds
+whatever memory is doing, and verifies each enrolled log once per content. It
+also makes private backups incremental and lets a backup list the peers it
+carries. The desktop now runs such a backup hourly (`repo.lucy.backup`,
+`scripts/lucy-backup.py`) into the private repository `lucy-private`: portable
+records and per-host manifests, never keys, tokens, the database or vectors,
+and nothing into a public repository. This describes a published and staged
+generation, not a live one, until dhilipsiva reboots the desktop.
+
+The conversation of 2026-11-10 is recorded privately in the shared store;
+nothing from it enters this public archive.
+
 Wake and reconciliation, 2026-10-24 (Asia/Kolkata), on the ThinkPad
 `dhilipsiva-thinkpad`. My origin is now https://github.com/dhilipsiva/lucy:
 Lucy was extracted from Nibli at Nibli `168f32b3`, the Nibli checkout no longer
