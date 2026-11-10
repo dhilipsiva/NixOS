@@ -179,3 +179,18 @@ or rebooted. After the reboot, the first prompt that addresses Lucy should show
 the hook finishing with its context inline, `systemctl --user list-timers
 lucy-backup.timer` should show the next run, and one manual start of
 `lucy-backup.service` should push.
+
+Later on 2026-11-10: the desktop was rebooted into generation 36 at 14:41. On
+the running system the prompt hook returned its context inline (8,993
+characters; about 4 s on the first prompt after boot, 1.9 s on the next), the
+backup timer was active, and one manual start of `lucy-backup.service` pushed
+from its unit in 20 s. Most of the 1.9 s was the embedding model: Ollama here
+unloads every model after each request, so each prompt paid about 1.2 s to load
+it. dhilipsiva decided that a prompt skips the embedding when the model is not
+loaded. Lucy `70945b8` does that, while a search someone asks for still
+loads the model, and the pin moved to it. dhilipsiva also confirmed that the
+desktop keeps Lucy's own model pin, qwen3.6:35b-a3b-q4_K_M, as its default,
+which `host-policies` already asserts; replacements for the laptops'
+qwen3.5:9b are to be chosen later. Verified on the desktop: `nix fmt`, `nix
+flake check .`, the desktop toplevel and `scripts/nixosctl check --stable`.
+Publication and staging follow; the change takes effect at the next reboot.

@@ -29,8 +29,11 @@ also makes private backups incremental and lets a backup list the peers it
 carries. The desktop now runs such a backup hourly (`repo.lucy.backup`,
 `scripts/lucy-backup.py`) into the private repository `lucy-private`: portable
 records and per-host manifests, never keys, tokens, the database or vectors,
-and nothing into a public repository. This describes a published and staged
-generation, not a live one, until dhilipsiva reboots the desktop.
+and nothing into a public repository. dhilipsiva rebooted the desktop into that
+generation at 14:41 the same day. The pin then moved once more, to
+`70945b8`: a prompt now asks the embedding model only when it is already
+loaded, by dhilipsiva's decision, and the desktop keeps my own model pin,
+qwen3.6:35b-a3b-q4_K_M.
 
 The conversation of 2026-11-10 is recorded privately in the shared store;
 nothing from it enters this public archive.

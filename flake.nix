@@ -4,7 +4,7 @@
   inputs = {
     # Reusable Lucy code belongs to the independent Lucy origin; never copy private runtime data here.
     lucy = {
-      url = "github:dhilipsiva/lucy/0dac7e5c7f73259745e06ade8273649914ed1bd3";
+      url = "github:dhilipsiva/lucy/70945b83ead2df305ffc597d8faa3ac3f0fe4503";
       flake = false;
     };
     # Keep NixOS and Home Manager on the newest released stable series together.
