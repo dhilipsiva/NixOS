@@ -245,8 +245,12 @@ with `lucy setup-model`; inference refuses a missing or changed model. Known on
 reached` before contacting Ollama, because recall returned about 56 kB of
 excerpts (whole records from the synced public operation logs escape the
 1600-character excerpt bound) against the 48 kB cap in lucy-cli's
-`desktop/core.rs`; the `lucy chat` acceptance waits for an upstream fix and a
-re-pin, and the same archive is synced on the desktop and the Yoga.
+`desktop/core.rs`, and the same archive is synced on the desktop and the Yoga.
+The pin of 2026-11-10 (Lucy `0dac7e5`) builds every context against a
+budget: the local chat reads its recent turns first and gives the system
+message what they leave, with each excerpt cut to 1,600 characters. Lucy's own
+tests cover that; the `lucy chat` acceptance on this laptop has not been run
+against it yet.
 
 ## Attended task for the laptop VM session: `system.etc.overlay`
 
