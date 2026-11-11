@@ -19,6 +19,7 @@
     ./power.nix
     ./applications.nix
     ../../modules/nixos/lucy.nix
+    ../../modules/nixos/gaming.nix
   ];
   networking.hostName = "dhilipsiva-yoga";
   time.timeZone = lib.mkForce "Asia/Kolkata";

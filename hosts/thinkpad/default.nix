@@ -7,6 +7,7 @@
     ./power.nix
     ./applications.nix
     ../../modules/nixos/lucy.nix
+    ../../modules/nixos/gaming.nix
   ];
   networking.hostName = "dhilipsiva-thinkpad";
   time.timeZone = lib.mkForce "Asia/Kolkata";

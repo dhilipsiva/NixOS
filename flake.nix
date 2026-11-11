@@ -565,6 +565,10 @@
               "thinkpad.services.flatpak.enable" = thinkpad.services.flatpak.enable;
               "desktop.services.flatpak.enable" = desktop.config.services.flatpak.enable;
               "desktop.programs.gamemode.enable" = desktop.config.programs.gamemode.enable;
+              "thinkpad.programs.gamemode.enable" = thinkpad.programs.gamemode.enable;
+              "thinkpad.programs.steam.enable" = thinkpad.programs.steam.enable;
+              "thinkpad loads ntsync for Proton" = builtins.elem "ntsync" thinkpad.boot.kernelModules;
+              "Steam is not on the desktop" = !desktop.config.programs.steam.enable;
               "desktop requires Sober before staging" =
                 self.lib.hosts.desktop.flatpakApps == [ "org.vinegarhq.Sober" ];
               "OBS is disabled on desktop" = !desktop.config.programs.obs-studio.enable;

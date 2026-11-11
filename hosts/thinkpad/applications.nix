@@ -6,6 +6,15 @@
     enable = true;
     package = pkgs.obs-studio.override { cudaSupport = true; };
   };
+  # PRIME offload for the Steam client and everything it launches, so Proton
+  # games render on the RTX 3070 rather than the Intel iGPU.
+  programs.steam.package = pkgs.steam.override {
+    extraEnv = {
+      __NV_PRIME_RENDER_OFFLOAD = "1";
+      __VK_LAYER_NV_optimus = "NVIDIA_only";
+      __GLX_VENDOR_LIBRARY_NAME = "nvidia";
+    };
+  };
   environment.systemPackages = with pkgs; [
     prismlauncher
     vinegar

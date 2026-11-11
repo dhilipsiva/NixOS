@@ -112,6 +112,9 @@ let
     "c.nix.settings.cores == 0" = c.nix.settings.cores == 0;
     "c.services.flatpak.enable" = c.services.flatpak.enable;
     "c.programs.obs-studio.enable" = c.programs.obs-studio.enable;
+    "c.programs.steam.enable" = c.programs.steam.enable;
+    "c.programs.gamemode.enable" = c.programs.gamemode.enable;
+    "builtins.elem \"ntsync\" c.boot.kernelModules" = builtins.elem "ntsync" c.boot.kernelModules;
     "c.programs.obs-studio.package.version == channels.obs-studio.version" =
       c.programs.obs-studio.package.version == channels.obs-studio.version;
     "c.repo.maintenance.flatpakApps == [ \"org.vinegarhq.Sober\" ]" =
