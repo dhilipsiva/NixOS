@@ -1,8 +1,10 @@
 # Boot the real desktop configuration in QEMU, decrypt build-time fixture
 # secrets through the same sops-nix/userborn path as the hardware, log in on a
 # text console with the fixture password, and let greetd start the Hyprland
-# session with Waybar and the polkit agent. Nothing from the owner's secrets or
-# host identities is used.
+# session with Waybar and the polkit agent. Screenshots record the QUINE theme on
+# every surface the session draws: desktop and bar, launcher, terminal,
+# notification, lock screen and greeter. Nothing from the owner's secrets or host
+# identities is used.
 {
   pkgs,
   inputs,
@@ -52,6 +54,10 @@ pkgs.testers.runNixOSTest {
       boot.lanzaboote.enable = lib.mkForce false;
       environment.sessionVariables.AQ_DRM_DEVICES = lib.mkForce "/dev/dri/card0";
       power.ups.enable = lib.mkForce false;
+      # Nor the /etc/subuid the hosts kept from their installation: rootless Docker
+      # cannot map its IDs and fails three times, which the failed-units check
+      # caught only once the session's screenshots outlasted its retries.
+      virtualisation.docker.rootless.enable = lib.mkForce false;
       sops.defaultSopsFile = lib.mkForce "${fixture}/secrets.yaml";
       # The fixture is built, so validating it at evaluation time would build it during
       # `nix flake check --no-build` (import from derivation); the VM decrypts it at boot anyway.
@@ -99,11 +105,39 @@ pkgs.testers.runNixOSTest {
         "su dhilipsiva -c 'XDG_RUNTIME_DIR=/run/user/1000 "
         "HYPRLAND_INSTANCE_SIGNATURE=$(ls /run/user/1000/hypr) hyprctl -j monitors' | grep -q '\"name\"'"
     )
+    user_unit_active("swaybg.service")
+    machine.sleep(2)
     machine.screenshot("desktop")
     failed = machine.succeed(
         "su dhilipsiva -c 'XDG_RUNTIME_DIR=/run/user/1000 systemctl --user --failed --no-legend --plain'"
     )
     assert failed.strip() == "", f"failed user units: {failed}"
+
+    # The launcher, a terminal, a notification and the lock screen, each in QUINE.
+    machine.send_key("meta_l-d")
+    machine.wait_until_succeeds("pgrep -u dhilipsiva fuzzel")
+    machine.sleep(1)
+    machine.screenshot("launcher")
+    machine.send_key("esc")
+    machine.wait_until_fails("pgrep -u dhilipsiva fuzzel")
+    machine.send_key("meta_l-ret")
+    machine.wait_until_succeeds("pgrep -u dhilipsiva alacritty")
+    machine.sleep(3)
+    machine.screenshot("terminal")
+    machine.succeed(
+        "su dhilipsiva -c 'XDG_RUNTIME_DIR=/run/user/1000 "
+        "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus "
+        "${pkgs.libnotify}/bin/notify-send QUINE \"A notification in the void.\"'"
+    )
+    machine.sleep(1)
+    machine.screenshot("notification")
+    machine.succeed("loginctl lock-sessions")
+    machine.wait_until_succeeds("pgrep -u dhilipsiva hyprlock")
+    machine.sleep(3)
+    machine.screenshot("lock")
+    # The fixture password unlocks it through PAM, as on hardware.
+    machine.send_chars("test\n")
+    machine.wait_until_fails("pgrep -u dhilipsiva hyprlock", timeout=60)
 
     # Password login on a text console proves the hash is usable for PAM. With a
     # compositor holding the seat, VT switching needs the Ctrl modifier.
@@ -122,6 +156,7 @@ pkgs.testers.runNixOSTest {
     machine.succeed("loginctl terminate-user dhilipsiva")
     machine.send_key("ctrl-alt-f1")
     machine.wait_until_tty_matches("1", "F11.*Reboot to Windows")
+    machine.screenshot("greeter")
     machine.send_key("f11")
     machine.wait_until_tty_matches("1", "Power options")
     machine.screenshot("windows-power-menu")

@@ -194,3 +194,34 @@ which `host-policies` already asserts; replacements for the laptops'
 qwen3.5:9b are to be chosen later. Verified on the desktop: `nix fmt`, `nix
 flake check .`, the desktop toplevel and `scripts/nixosctl check --stable`.
 Publication and staging follow; the change takes effect at the next reboot.
+
+On 2026-11-11: dhilipsiva asked for every UI to follow his site's design system,
+QUINE (dhilipsiva.dev `static/assets/tokens`), as far as possible. `lib/quine.nix`
+holds its tokens once: the void surfaces, warm white text, ember `#F2542D` as
+the single accent, phosphor, quanta and the signal colours, IBM Plex and Space
+Grotesk, the radii and a 16-colour terminal map whose bright red is ember. From
+it: Hyprland (ember focus border, rounding 6), a generated wallpaper
+(`pkgs/quine-wallpaper.nix`: the void, the blueprint grid and the site's mark,
+drawn by swaybg; hyprpaper 0.8 crashed on the check VM's software renderer),
+hyprlock, Waybar, Fuzzel, mako, Alacritty, Zellij, Helix, starship, fish, Atuin,
+btop, GTK 3 and 4 (adw-gtk3-dark, Papirus-Dark in deep orange, QUINE colour
+overrides), Qt and Dolphin (the KDE platform theme, colours written into
+kdeglobals by kwriteconfig6), the console palette and tuigreet. On the console
+red is ember too: it draws backgrounds only from its first eight colours, and the
+greeter's key labels are ember. IBM Plex Mono
+replaced Fira Code everywhere by his choice; Fira stays installed for app
+settings kept outside this repository. Lucy moved to `de48997`, which dresses
+Ask Lucy in QUINE.
+
+The desktop-login check now also photographs the launcher, a terminal, a
+notification, the lock screen and the greeter. Its VM turns rootless Docker
+off: a fresh VM has no `/etc/subuid` (the hosts kept theirs from installation),
+so Docker failed there three times, and the failed-units check had passed only
+by running before the third failure. Nothing in this repository declares the
+owner's subordinate ID range, so a fresh installation may meet the same.
+Home Manager replaces the unmanaged `~/.config/btop/btop.conf`, backing it up.
+
+Verified on the desktop: `nix fmt`, `nix flake check .`, every host through
+`scripts/nixosctl check --stable`, and screenshots of each surface. Publication
+follows; nothing was switched or staged, so the theme arrives with the next
+staged generation and a new login.

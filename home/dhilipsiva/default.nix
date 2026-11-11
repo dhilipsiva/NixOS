@@ -8,6 +8,7 @@
     ./helix.nix
     ./wayland.nix # native Hyprland + notifications/locking/polkit
     ./waybar.nix # shared status bar; optional laptop battery indicator
+    ./theme.nix # QUINE for GTK and Qt apps: colours, icons, fonts
     ./services.nix # user timers (time notification)
     ./packages.nix # applications and developer tools
     ./lucy.nix # enabled per host by modules/nixos/lucy.nix

@@ -1,7 +1,13 @@
 # Shared Hyprland session. Host modules own GPU, display scale and idle/power policy.
+# Colours and type come from QUINE, the site's design system (lib/quine.nix).
 { lib, pkgs, ... }:
 
 let
+  quine = import ../../lib/quine.nix;
+  inherit (quine) palette font hex;
+  rgb = c: "rgb(${c})";
+  rgba = c: "rgba(${c}ff)";
+  wallpaper = "${pkgs.quine-wallpaper}/quine.png";
   lua = lib.generators.mkLuaInline;
   bind = key: action: {
     _args = [
@@ -55,19 +61,24 @@ in
           gaps_in = 4;
           gaps_out = 4;
           border_size = 2;
+          # QUINE: focus is ember; every other edge is a void hairline.
           col = {
             active_border = {
-              colors = [ "rgb(61afef)" ];
+              colors = [ (rgb palette.ember500) ];
               angle = 0;
             };
-            inactive_border = "rgb(3b4048)";
+            inactive_border = rgb palette.void500;
           };
+        };
+        group.col = {
+          border_active = rgb palette.ember500;
+          border_inactive = rgb palette.void500;
         };
         dwindle.preserve_split = true;
         # Immediate window/workspace changes; retain the useful focus border.
         animations.enabled = false;
         decoration = {
-          rounding = 0;
+          rounding = quine.radius.md;
           blur.enabled = false;
           shadow.enabled = false;
           glow.enabled = false;
@@ -95,7 +106,7 @@ in
         misc = {
           disable_hyprland_logo = true;
           disable_splash_rendering = true;
-          background_color = "rgb(1e222a)";
+          background_color = rgb palette.void1000;
           mouse_move_enables_dpms = true;
           key_press_enables_dpms = true;
         };
@@ -159,7 +170,30 @@ in
       terminal = "${pkgs.alacritty}/bin/alacritty -e";
       launch-prefix = "${pkgs.uwsm}/bin/uwsm app --";
       layer = "overlay";
-      font = "Fira Code:size=12";
+      font = "${font.mono}:size=12";
+      prompt = ''"❯ "'';
+      width = 44;
+      lines = 12;
+      horizontal-pad = 20;
+      vertical-pad = 14;
+      inner-pad = 10;
+    };
+    settings.colors = {
+      background = "${palette.void800}ff";
+      text = "${palette.paper200}ff";
+      prompt = "${palette.phosphor500}ff";
+      placeholder = "${palette.faint}ff";
+      input = "${palette.paper100}ff";
+      match = "${palette.ember500}ff";
+      selection = "${palette.void600}ff";
+      selection-text = "${palette.paper100}ff";
+      selection-match = "${palette.ember300}ff";
+      counter = "${palette.faint}ff";
+      border = "${palette.void500}ff";
+    };
+    settings.border = {
+      width = 1;
+      radius = quine.radius.md;
     };
   };
 
@@ -167,13 +201,45 @@ in
     enable = true;
     settings = {
       default-timeout = 5000;
-      font = "Fira Code 12";
+      font = "${font.mono} 11";
+      background-color = hex palette.void700;
+      text-color = hex palette.paper200;
+      border-color = hex palette.void500;
+      progress-color = "over ${hex palette.ember500}";
+      border-size = 1;
+      border-radius = quine.radius.md;
+      padding = "12,14";
       # Bottom-left, stacked above the bottom waybar; a little larger than
       # mako's 300x100 default (logical pixels, scaled like the bar).
       anchor = "bottom-left";
       width = 400;
       height = 150;
+      "urgency=low".text-color = hex palette.muted;
+      "urgency=high".border-color = hex palette.crimson;
     };
+  };
+
+  # The QUINE wallpaper on every output. swaybg draws it from shared memory; hyprpaper 0.8
+  # needs a GPU buffer and crashed on the software renderer of the desktop-login check.
+  systemd.user.services.swaybg = {
+    Unit = {
+      Description = "QUINE wallpaper";
+      After = [ "graphical-session.target" ];
+      PartOf = [ "graphical-session.target" ];
+    };
+    Service = {
+      ExecStart = lib.escapeShellArgs [
+        "${pkgs.swaybg}/bin/swaybg"
+        "--mode"
+        "fill"
+        "--color"
+        (hex palette.void900)
+        "--image"
+        wallpaper
+      ];
+      Restart = "on-failure";
+    };
+    Install.WantedBy = [ "graphical-session.target" ];
   };
 
   programs.hyprlock = {
@@ -187,22 +253,49 @@ in
       background = [
         {
           monitor = "";
-          color = "rgba(1e222aff)";
+          path = wallpaper;
+          color = rgba palette.void900;
           blur_passes = 0;
+        }
+      ];
+      label = [
+        {
+          monitor = "";
+          text = "// locked";
+          font_family = font.mono;
+          font_size = 13;
+          color = rgba palette.faint;
+          position = "0, 260";
+          halign = "center";
+          valign = "center";
+        }
+        {
+          monitor = "";
+          text = "$TIME";
+          font_family = font.display;
+          font_size = 88;
+          color = rgba palette.paper100;
+          position = "0, 180";
+          halign = "center";
+          valign = "center";
         }
       ];
       input-field = [
         {
           monitor = "";
-          size = "300, 50";
-          position = "0, -80";
-          font_family = "Fira Code";
-          rounding = 0;
+          size = "320, 48";
+          position = "0, -150";
+          font_family = font.mono;
+          rounding = quine.radius.md;
+          outline_thickness = 2;
           shadow_passes = 0;
           fade_on_empty = false;
-          inner_color = "rgba(282c34ff)";
-          outer_color = "rgba(61afefff)";
-          font_color = "rgba(abb2bfff)";
+          placeholder_text = "password";
+          inner_color = rgba palette.void600;
+          outer_color = rgba palette.ember500;
+          font_color = rgba palette.paper100;
+          check_color = rgba palette.phosphor500;
+          fail_color = rgba palette.crimson;
         }
       ];
     };
@@ -220,4 +313,10 @@ in
   # Hyprland's own polkit authentication agent, managed by the Home Manager
   # module and bound to the graphical session that UWSM starts.
   services.hyprpolkitagent.enable = true;
+  # Its Qt style (hyprland-qt-support) reads these; colours come from the Qt palette.
+  xdg.configFile."hypr/application-style.conf".text = ''
+    roundness = 1
+    border_width = 1
+    reduce_motion = true
+  '';
 }

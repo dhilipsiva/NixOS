@@ -1,4 +1,5 @@
 # Shared, quiet status bar. Host modules opt into laptop-only indicators.
+# Colours and type come from QUINE, the site's design system (lib/quine.nix).
 {
   config,
   lib,
@@ -7,6 +8,8 @@
 }:
 
 let
+  quine = import ../../lib/quine.nix;
+  inherit (quine) palette font hex;
   launch = command: "${pkgs.uwsm}/bin/uwsm app -- ${command}";
   monitor = launch "${pkgs.alacritty}/bin/alacritty -e ${pkgs.btop}/bin/btop";
   mixer = launch "${pkgs.pavucontrol}/bin/pavucontrol";
@@ -95,7 +98,7 @@ in
         calendar = {
           mode = "month";
           on-scroll = 1;
-          format.today = "<span color='#89b4fa'><b><u>{}</u></b></span>";
+          format.today = "<span color='${hex palette.ember500}'><b><u>{}</u></b></span>";
         };
         actions = {
           on-scroll-up = "shift_up";
@@ -192,9 +195,9 @@ in
         on-click = lock;
       };
     };
-    style = ''
+    style = with palette; ''
       * {
-        font-family: "FiraCode Nerd Font", "Fira Code", sans-serif;
+        font-family: "${font.mono}", "${font.symbols}", monospace;
         font-size: 12px;
         min-height: 0;
         border: none;
@@ -205,15 +208,16 @@ in
         text-shadow: none;
       }
       window#waybar {
-        background: #161b22;
-        color: #d6deeb;
-        border-top: 1px solid #303a49;
+        background: #${void900};
+        color: #${paper200};
+        border-top: 1px solid #${void500};
       }
       tooltip {
-        background: #1e2632;
-        border: 1px solid #45546a;
+        background: #${void700};
+        border: 1px solid #${void500};
+        border-radius: ${toString quine.radius.md}px;
       }
-      tooltip label { padding: 8px; color: #e6edf3; }
+      tooltip label { padding: 8px 10px; color: #${paper100}; }
       .modules-left { margin-left: 6px; }
       .modules-right { margin-right: 6px; }
       #custom-launcher, #custom-lock, #submap, #clock, #cpu, #memory,
@@ -221,35 +225,42 @@ in
         padding: 0 10px;
         margin: 4px 0;
       }
-      #custom-launcher { color: #89b4fa; font-weight: bold; }
+      #custom-launcher { color: #${ember500}; font-weight: 600; }
+      /* The active workspace is QUINE's "marked" card: an ember top rule, not a fill. */
       #workspaces button {
-        padding: 0 7px;
+        padding: 0 8px;
         margin: 4px 1px;
         min-width: 18px;
-        color: #c2ccdb;
-        background: #222c39;
-        border-bottom: 2px solid transparent;
+        color: #${muted};
+        background: #${void800};
+        border-top: 2px solid transparent;
+        border-radius: ${toString quine.radius.sm}px;
       }
-      #workspaces button.empty { background: transparent; color: #8794a8; }
-      #workspaces button.visible { border-bottom-color: #89b4fa; }
-      #workspaces button.active { background: #89b4fa; color: #111821; font-weight: bold; }
-      #workspaces button.urgent, #submap { background: #f9e2af; color: #111821; }
-      #window { margin-left: 12px; color: #a7b4c8; }
+      #workspaces button.empty { background: transparent; color: #${quine.ansi.brightBlack}; }
+      #workspaces button.visible { border-top-color: #${void400}; color: #${paper200}; }
+      #workspaces button.active {
+        background: #${void700};
+        color: #${paper100};
+        border-top-color: #${ember500};
+        font-weight: 600;
+      }
+      #workspaces button.urgent, #submap { background: ${quine.rgba amber "0.14"}; color: #${amber}; }
+      #window { margin-left: 12px; color: #${muted}; }
       window#waybar.empty #window { margin: 0; }
-      #clock { color: #e6edf3; font-weight: bold; }
-      #cpu, #memory, #disk { background: #1e2632; }
-      #network { color: #94e2d5; }
-      #pulseaudio { color: #b4befe; }
-      #pulseaudio.muted { color: #a7b4c8; }
+      #clock { color: #${paper100}; font-weight: 500; }
+      #cpu, #memory, #disk { background: #${void800}; border-radius: ${toString quine.radius.sm}px; }
+      #network { color: #${phosphor500}; }
+      #pulseaudio { color: #${quanta300}; }
+      #pulseaudio.muted { color: #${muted}; }
       #cpu.warning, #memory.warning, #disk.warning, #battery.warning,
-      #custom-services.warning { color: #f9e2af; }
+      #custom-services.warning { color: #${amber}; }
       #cpu.critical, #memory.critical, #disk.critical, #battery.critical,
-      #network.disconnected, #custom-services.critical { color: #f38ba8; }
-      #battery.charging, #battery.plugged { color: #a6e3a1; }
-      #custom-lock { color: #a7b4c8; border-left: 1px solid #303a49; }
+      #network.disconnected, #custom-services.critical { color: #${crimson}; }
+      #battery.charging, #battery.plugged { color: #${phosphor500}; }
+      #custom-lock { color: #${muted}; border-left: 1px solid #${void500}; }
       #workspaces button:hover, #custom-launcher:hover, #custom-lock:hover,
       #cpu:hover, #memory:hover, #disk:hover, #network:hover, #pulseaudio:hover,
-      #custom-services:hover { background: #303a49; color: #ffffff; }
+      #custom-services:hover { background: #${void600}; color: #${paper100}; }
     '';
   };
 }

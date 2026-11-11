@@ -40,6 +40,12 @@
             "--time"
             "--remember"
             "--user-menu"
+            # QUINE over the console palette (modules/nixos/locale.nix): grey frame and
+            # text, ember prompt and action keys; red and lightred are both ember there.
+            "--theme"
+            "border=darkgray;text=gray;time=darkgray;prompt=lightred;action=gray;button=red;container=black;input=white;greet=gray"
+            "--greeting"
+            "// Nothing is owed. Build anyway."
             "--cmd"
             "${pkgs.uwsm}/bin/uwsm start hyprland.desktop"
           ]

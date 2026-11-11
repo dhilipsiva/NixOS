@@ -139,6 +139,9 @@
         in
         {
           nixpkgs-apps = apps;
+          # QUINE, the site's design system, on the desktop (lib/quine.nix holds its tokens).
+          space-grotesk = final.callPackage ./pkgs/space-grotesk.nix { };
+          quine-wallpaper = final.callPackage ./pkgs/quine-wallpaper.nix { };
           antigravity-cli = apps.callPackage ./pkgs/antigravity-cli.nix { };
           zcode-cli = apps.callPackage ./pkgs/zcode-cli.nix { };
           chatgpt = apps.callPackage ./pkgs/chatgpt.nix { };
@@ -265,6 +268,8 @@
         lucy-backup = pkgs.callPackage ./pkgs/lucy-backup.nix { };
         nixosctl = pkgs.callPackage ./pkgs/nixosctl.nix { };
         npu-smoke = yoga.pkgs.npu-smoke;
+        quine-wallpaper = desktop.pkgs.quine-wallpaper;
+        space-grotesk = desktop.pkgs.space-grotesk;
         ollama-vulkan = yoga.pkgs.ollama-vulkan;
       };
 
