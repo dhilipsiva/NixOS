@@ -58,6 +58,8 @@ pkgs.testers.runNixOSTest {
       # cannot map its IDs and fails three times, which the failed-units check
       # caught only once the session's screenshots outlasted its retries.
       virtualisation.docker.rootless.enable = lib.mkForce false;
+      # Nor a Slack workspace or network to sign into; keep its window off the screenshots.
+      home-manager.users.dhilipsiva.systemd.user.services.slack.Install.WantedBy = lib.mkForce [ ];
       sops.defaultSopsFile = lib.mkForce "${fixture}/secrets.yaml";
       # The fixture is built, so validating it at evaluation time would build it during
       # `nix flake check --no-build` (import from derivation); the VM decrypts it at boot anyway.

@@ -55,5 +55,23 @@ in
         run chmod u+w "$settings"
       fi
     '';
+    # Slack starts with the session in Waybar's tray: --startup honours its own
+    # "hide on startup" setting. Quitting from the tray keeps it closed.
+    systemd.user.services.slack = {
+      Unit = {
+        Description = "Slack in the system tray";
+        Requires = [ "tray.target" ];
+        After = [
+          "graphical-session.target"
+          "tray.target"
+        ];
+        PartOf = [ "graphical-session.target" ];
+      };
+      Service = {
+        ExecStart = "${pkgs.slack}/bin/slack --startup";
+        Restart = "on-failure";
+      };
+      Install.WantedBy = [ "graphical-session.target" ];
+    };
   };
 }
