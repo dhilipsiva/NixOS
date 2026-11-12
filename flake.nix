@@ -109,7 +109,7 @@
         "hyprlock"
         "uwsm"
         "zoxide"
-        "ripgrep"
+        "ripgrep-latest"
         "slack"
         "google-chrome"
         "obs-studio"
@@ -157,7 +157,6 @@
             alacritty
             tuigreet
             zoxide
-            ripgrep
             google-chrome
             hyprland
             hypridle
@@ -184,6 +183,9 @@
           python-latest = newer apps.python3 releases.python.version (
             import ./pkgs/python.nix { pkgs = apps; }
           );
+          # Separate as well: release packages (dart, VS Code, Cursor) build with
+          # ripgrep, and shadowing it rebuilt them from source instead of the cache.
+          ripgrep-latest = apps.ripgrep;
           rust-toolchain = final.rust-bin.stable.latest.default.override {
             extensions = [
               "rust-src"
@@ -477,6 +479,10 @@
               "desktop Lucy backup timer OnCalendar == \"hourly\"" =
                 desktop.config.home-manager.users.dhilipsiva.systemd.user.timers.lucy-backup.Timer.OnCalendar
                 == "hourly";
+              # Release packages build with ripgrep (dart for adw-gtk3, VS Code, Cursor); the
+              # user's newer one is ripgrep-latest, so they keep coming from the cache.
+              "desktop.pkgs.ripgrep.drvPath == pkgs.ripgrep.drvPath" =
+                desktop.pkgs.ripgrep.drvPath == pkgs.ripgrep.drvPath;
               "!thinkpad.repo.lucy.backup.enable" = !thinkpad.repo.lucy.backup.enable;
               "!yoga.config.repo.lucy.backup.enable" = !yoga.config.repo.lucy.backup.enable;
               "desktop.config.services.ollama.environmentVariables.OLLAMA_NO_CLOUD == \"1\"" =

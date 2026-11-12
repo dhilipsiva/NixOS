@@ -476,11 +476,19 @@ def verify_flatpak(cfg):
     apps = cfg.get('flatpakApps', [])
     if not apps:
         return
+    def require(ref, missing):
+        try:
+            run(['flatpak', 'info', '--user', '--show-ref', ref], owner=cfg['owner'], capture=True)
+        except Error as exc:
+            raise Error(f'{missing}; install it with `flatpak install --user flathub {ref}` '
+                        'and stage again.') from exc
+
     for app in apps:
-        run(['flatpak', 'info', '--user', '--show-ref', app], owner=cfg['owner'], capture=True)
+        require(app, f'The required user Flatpak {app} is missing')
     if cfg.get('nvidiaVersion'):
         driver = 'org.freedesktop.Platform.GL.nvidia-' + cfg['nvidiaVersion'].replace('.', '-')
-        run(['flatpak', 'info', '--user', '--show-ref', driver], owner=cfg['owner'], capture=True)
+        # Flatpak fetches the extension for the running driver only, never the candidate's.
+        require(driver, f'The Flatpak NVIDIA runtime for the candidate driver {cfg["nvidiaVersion"]} is missing')
     print('Required user Flatpak applications are installed.')
 
 

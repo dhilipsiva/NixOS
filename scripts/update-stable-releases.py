@@ -50,7 +50,7 @@ GITHUB_CHANNELS = {
     "hypridle": ("hyprwm/hypridle", "v"),
     "hyprlock": ("hyprwm/hyprlock", "v"),
     "zoxide": ("ajeetdsouza/zoxide", "v"),
-    "ripgrep": ("BurntSushi/ripgrep", "v"),
+    "ripgrep-latest": ("BurntSushi/ripgrep", "v"),
 }
 
 

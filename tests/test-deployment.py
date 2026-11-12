@@ -2,6 +2,7 @@ import importlib.util
 from contextlib import nullcontext
 import json
 from pathlib import Path
+import re
 import sys
 import tempfile
 from types import SimpleNamespace
@@ -172,12 +173,13 @@ class FlatpakTests(unittest.TestCase):
             self.assertEqual(run.call_count, 2)
             self.assertEqual(run.call_args.args[0][-1], 'org.freedesktop.Platform.GL.nvidia-595-104-02')
         with patch.object(deployment, 'run', side_effect=[None, Error('missing runtime')]):
-            with self.assertRaises(Error):
+            with self.assertRaisesRegex(Error, re.escape(
+                    '`flatpak install --user flathub org.freedesktop.Platform.GL.nvidia-595-104-02`')):
                 deployment.verify_flatpak(cfg)
 
     def test_missing_sober_blocks_intel_host(self):
         with patch.object(deployment, 'run', side_effect=Error('missing app')):
-            with self.assertRaises(Error):
+            with self.assertRaisesRegex(Error, re.escape('`flatpak install --user flathub org.vinegarhq.Sober`')):
                 deployment.verify_flatpak({'owner': 'fixture', 'flatpakApps': ['org.vinegarhq.Sober']})
 
 

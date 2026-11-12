@@ -8,7 +8,7 @@
     # Terminal tools
     bottom
     ncdu
-    ripgrep
+    ripgrep-latest
     lazygit
     difftastic # git diff.external
     wl-clipboard
