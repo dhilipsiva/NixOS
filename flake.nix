@@ -218,7 +218,7 @@
       # bootloader, secrets file, NixOS/Home Manager stateVersion anchors and
       # platform (`nixpkgs.hostPlatform` in its hardware configuration).
       # The module list every host shares. mkHost evaluates it for a real system;
-      # the desktop-login check boots the same list inside the NixOS test driver.
+      # the on-demand desktop-login test boots the same list inside the NixOS test driver.
       hostModules = hostModule: [
         hostModule
         ./modules/nixos
@@ -273,6 +273,16 @@
         quine-wallpaper = desktop.pkgs.quine-wallpaper;
         space-grotesk = desktop.pkgs.space-grotesk;
         ollama-vulkan = yoga.pkgs.ollama-vulkan;
+
+        # On demand only (`nix build --no-link -L .#desktop-login`), never a flake
+        # check: the real desktop configuration boots, decrypts fixture secrets
+        # through sops-nix and userborn, accepts a console login and starts the
+        # Hyprland session. The only hardware-specific overrides are the GPU
+        # device and the UPS.
+        desktop-login = import ./tests/desktop-login.nix {
+          inherit pkgs inputs;
+          hostModules = hostModules ./hosts/desktop;
+        };
       };
 
       # `nix fmt` runs nixfmt over the whole tree through its zero-setup treefmt
@@ -416,15 +426,6 @@
         yoga-policies = import ./tests/yoga-policies.nix { inherit pkgs lib yoga; };
         npu-runtime = import ./tests/npu-runtime.nix { inherit pkgs yoga; };
         ollama-on-demand = import ./tests/ollama-on-demand.nix { inherit pkgs; };
-
-        # The real desktop configuration boots, decrypts fixture secrets through
-        # sops-nix and userborn, accepts a console login and starts the Hyprland
-        # session. The only hardware-specific overrides are the GPU device and
-        # the UPS, so a session-environment mistake is caught before staging.
-        desktop-login = import ./tests/desktop-login.nix {
-          inherit pkgs inputs;
-          hostModules = hostModules ./hosts/desktop;
-        };
 
         # Each host's storage, power, graphics and application-preservation
         # policy, pinned so a shared-module change cannot silently alter them.

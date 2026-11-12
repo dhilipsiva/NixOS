@@ -375,10 +375,12 @@ scripts/nixosctl check --stable
 
 `nix develop` provides the script, secret and lint tooling. The `formatting`
 check rejects unformatted Nix, unused bindings (deadnix) and ruff findings in the
-Python helpers. The `desktop-login` check boots the real desktop configuration in
-QEMU with build-time fixture secrets, logs in on a console through sops-nix and
-userborn, and starts the Hyprland session with Waybar and the polkit agent; only
-the GPU device and the UPS are overridden. Full builds compile the NVIDIA module
+Python helpers. The `desktop-login` test is on demand only (`nix build --no-link
+-L .#desktop-login`; it is not a flake check, so the nightly and staging skip
+it): it boots the real desktop configuration in QEMU with build-time fixture
+secrets, logs in on a console through sops-nix and userborn, and starts the
+Hyprland session with Waybar and the polkit agent; only the GPU device and the
+UPS are overridden. Full builds compile the NVIDIA module
 for the selected kernel. GitHub Actions (`.github/workflows/check.yml`) evaluates
 every output and runs the light checks on each push, so a broken desktop is never
 the only validator; VM tests, the Hyprland parser and `nixosctl check --stable`

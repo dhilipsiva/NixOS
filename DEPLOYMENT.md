@@ -248,9 +248,9 @@ the greeter is skipped and retried the next evening. No further action.
 
 ## 4. Restore the manual VM rehearsal fixture (owner task, optional)
 
-The `desktop-login` flake check boots the desktop configuration with its own
-build-time fixture secrets, so the sops/userborn login path is covered without
-any owner key. The manual `build.vm` rehearsal still uses `secrets/vm-test.yaml`,
+The on-demand `desktop-login` test (`nix build --no-link -L .#desktop-login`)
+boots the desktop configuration with its own build-time fixture secrets, so the
+sops/userborn login path is covered without any owner key. The manual `build.vm` rehearsal still uses `secrets/vm-test.yaml`,
 whose throwaway private key is no longer available, so that VM only exercises the
 break-glass path. To restore it, generate a new throwaway key outside Git and
 re-encrypt the fixture; the agent session cannot write secret material itself:
