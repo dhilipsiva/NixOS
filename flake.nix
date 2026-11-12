@@ -458,6 +458,10 @@
                 thinkpad.home-manager.users.dhilipsiva.repo.lucy.package.model == thinkpad.repo.lucy.model;
               "thinkpad.services.ollama.environmentVariables.OLLAMA_NO_CLOUD == \"1\"" =
                 thinkpad.services.ollama.environmentVariables.OLLAMA_NO_CLOUD == "1";
+              "thinkpad.systemd.sockets.ollama-proxy.listenStreams == [ \"0.0.0.0:11434\" ]" =
+                thinkpad.systemd.sockets.ollama-proxy.listenStreams == [ "0.0.0.0:11434" ];
+              "thinkpad.networking.firewall.allowedTCPPorts == [ 11434 ]" =
+                thinkpad.networking.firewall.allowedTCPPorts == [ 11434 ];
               "thinkpad.systemd.services.lucy-input.wantedBy == [ ]" =
                 thinkpad.systemd.services.lucy-input.wantedBy == [ ];
               "yoga.config.home-manager.users.dhilipsiva.repo.lucy.enable" =
@@ -488,6 +492,15 @@
               "!yoga.config.repo.lucy.backup.enable" = !yoga.config.repo.lucy.backup.enable;
               "desktop.config.services.ollama.environmentVariables.OLLAMA_NO_CLOUD == \"1\"" =
                 desktop.config.services.ollama.environmentVariables.OLLAMA_NO_CLOUD == "1";
+              # Every host serves the Ollama API to its LAN through the socket proxy;
+              # the backend and every other port stay closed.
+              "desktop.config.systemd.sockets.ollama-proxy.listenStreams == [ \"0.0.0.0:11434\" ]" =
+                desktop.config.systemd.sockets.ollama-proxy.listenStreams == [ "0.0.0.0:11434" ];
+              "desktop.config.services.ollama.host == \"127.0.0.1\"" =
+                desktop.config.services.ollama.host == "127.0.0.1";
+              "desktop.config.networking.firewall.enable" = desktop.config.networking.firewall.enable;
+              "desktop.config.networking.firewall.allowedTCPPorts == [ 11434 ]" =
+                desktop.config.networking.firewall.allowedTCPPorts == [ 11434 ];
               "desktop.config.systemd.services.lucy-input.wantedBy == [ ]" =
                 desktop.config.systemd.services.lucy-input.wantedBy == [ ];
               "!desktop.config.systemd.sleep.settings.Sleep.AllowSuspend" =

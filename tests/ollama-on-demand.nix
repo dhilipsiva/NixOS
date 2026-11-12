@@ -1,4 +1,5 @@
-# Exercise the real socket/backend lifecycle without a GPU or downloaded model.
+# Exercise the real socket/backend lifecycle without a GPU or downloaded model,
+# and reach the API from a second machine on the same LAN.
 { pkgs }:
 
 pkgs.testers.runNixOSTest {
@@ -27,8 +28,13 @@ pkgs.testers.runNixOSTest {
     '';
     systemd.services.ollama-proxy.serviceConfig.ExecStart =
       lib.mkForce "${pkgs.systemd}/lib/systemd/systemd-socket-proxyd --exit-idle-time=2s 127.0.0.1:11435";
+    networking.nftables.enable = true;
     environment.systemPackages = [ pkgs.curl ];
     virtualisation.memorySize = 1024;
+    system.stateVersion = "26.05";
+  };
+  nodes.client = { pkgs, ... }: {
+    environment.systemPackages = [ pkgs.curl ];
     system.stateVersion = "26.05";
   };
 
@@ -49,5 +55,11 @@ pkgs.testers.runNixOSTest {
     machine.succeed("curl -fsS http://127.0.0.1:11434/api/version")
     machine.wait_for_unit("ollama.service")
     machine.wait_until_fails("systemctl is-active --quiet ollama.service")
+
+    # A LAN peer reaches the API through the proxy, never the backend port.
+    client.wait_for_unit("multi-user.target")
+    response = json.loads(client.succeed("curl -fsS --max-time 60 http://machine:11434/api/version"))
+    assert response["keep_alive"] == "0", response
+    client.fail("curl -fsS --connect-timeout 3 http://machine:11435/api/version")
   '';
 }

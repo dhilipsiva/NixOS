@@ -107,6 +107,10 @@ let
     "h.repo.lucy.package.model == c.repo.lucy.model" = h.repo.lucy.package.model == c.repo.lucy.model;
     "c.services.ollama.environmentVariables.OLLAMA_NO_CLOUD == \"1\"" =
       c.services.ollama.environmentVariables.OLLAMA_NO_CLOUD == "1";
+    "c.systemd.sockets.ollama-proxy.listenStreams == [ \"0.0.0.0:11434\" ]" =
+      c.systemd.sockets.ollama-proxy.listenStreams == [ "0.0.0.0:11434" ];
+    "c.networking.firewall.allowedTCPPorts == [ 11434 ]" =
+      c.networking.firewall.allowedTCPPorts == [ 11434 ];
     "c.services.hardware.bolt.enable" = c.services.hardware.bolt.enable;
     "c.nix.settings.max-jobs == 1" = c.nix.settings.max-jobs == 1;
     "c.nix.settings.cores == 0" = c.nix.settings.cores == 0;

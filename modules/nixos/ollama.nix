@@ -1,5 +1,8 @@
 # Ollama does not consume systemd's listening socket itself. A socket proxy starts
 # the backend on the first connection and stops it after connections go idle.
+# Owner's request: every host serves the API to its LAN on port 11434. The API
+# has no authentication, so any device there can chat with, pull and delete
+# models. The backend stays on loopback; only the proxy's port is open.
 {
   config,
   lib,
@@ -28,11 +31,13 @@
   };
 
   systemd.sockets.ollama-proxy = {
-    description = "On-demand local Ollama API";
+    description = "On-demand Ollama API";
     wantedBy = [ "sockets.target" ];
-    listenStreams = [ "127.0.0.1:11434" ];
+    listenStreams = [ "0.0.0.0:11434" ];
     socketConfig.NoDelay = true;
   };
+
+  networking.firewall.allowedTCPPorts = [ 11434 ];
 
   systemd.services.ollama-proxy = {
     description = "Socket proxy for on-demand Ollama";

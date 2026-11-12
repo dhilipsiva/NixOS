@@ -238,7 +238,12 @@ stable updates take precedence over the temporary profile copies.
 
 ## On-demand Ollama
 
-Clients use the normal local endpoint `http://127.0.0.1:11434`. A socket listener
+Clients use the normal endpoint `http://127.0.0.1:11434`; every host also serves
+it to its LAN at `0.0.0.0:11434`, with that port open in the firewall. The API
+has no authentication, so any device on the same network can chat with, pull
+and delete models. LAN clients address the host by IP, bare hostname or `.local`
+name; Ollama's own host check answers 403 to other DNS names such as `.lan`. The
+backend listens only on `127.0.0.1:11435`. A socket listener
 starts the backend on the first connection; the backend does not start at boot
 and stops after the proxy has had no connections for five minutes.
 `OLLAMA_KEEP_ALIVE=0` unloads a model after each request, releasing its VRAM

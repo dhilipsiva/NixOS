@@ -9,8 +9,8 @@
   };
   services.resolved.enable = true;
 
-  # nftables backend for the NixOS firewall. Nothing listens on the network by
-  # default; services bind to localhost or open ports explicitly per host.
+  # nftables backend for the NixOS firewall. Services bind to localhost or open
+  # ports explicitly; the only shared opening is Ollama's API (ollama.nix).
   networking.nftables.enable = true;
 
   # Focus Mode: resolve distracting sites to loopback on every machine.
