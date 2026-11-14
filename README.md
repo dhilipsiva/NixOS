@@ -59,8 +59,10 @@ screen use a 32-pixel Terminus font.
   `<nixpkgs>` pinned to the flake input), XDG base directories, kept outputs for
   direnv shells, the nix-community binary cache, daily 30-day garbage collection
   and weekly store optimisation (`modules/nixos/nix.nix`).
-- **Network:** NetworkManager with systemd-resolved and an nftables firewall with
-  no open ports. Wi-Fi credentials stay in NetworkManager's local store.
+- **Network:** NetworkManager with systemd-resolved and an nftables firewall.
+  The only open ports are Ollama's API on every host and key-only SSH on the
+  desktop (`hosts/desktop/default.nix`). Wi-Fi credentials stay in
+  NetworkManager's local store.
 - **Containers:** rootless Docker in the user session with `DOCKER_HOST` set
   automatically; there is no docker group (`modules/nixos/virtualisation.nix`).
 - **Peripherals:** PipeWire audio, Bluetooth with Blueman, OpenTabletDriver and
