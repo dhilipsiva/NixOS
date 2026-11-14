@@ -499,8 +499,12 @@
               "desktop.config.services.ollama.host == \"127.0.0.1\"" =
                 desktop.config.services.ollama.host == "127.0.0.1";
               "desktop.config.networking.firewall.enable" = desktop.config.networking.firewall.enable;
-              "desktop.config.networking.firewall.allowedTCPPorts == [ 11434 ]" =
-                desktop.config.networking.firewall.allowedTCPPorts == [ 11434 ];
+              # Ollama's API, and SSH for the owner's MacBook (keys only).
+              "desktop.config.networking.firewall.allowedTCPPorts == [ 22 11434 ]" =
+                desktop.config.networking.firewall.allowedTCPPorts == [
+                  22
+                  11434
+                ];
               "desktop.config.systemd.services.lucy-input.wantedBy == [ ]" =
                 desktop.config.systemd.services.lucy-input.wantedBy == [ ];
               "!desktop.config.systemd.sleep.settings.Sleep.AllowSuspend" =

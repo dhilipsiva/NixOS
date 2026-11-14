@@ -100,11 +100,11 @@
 
   # --- SSH / SECRETS KEY SOURCE (real hardware) ---
   # sshd exists so the ed25519 host key exists and sops self-decrypts from it
-  # (sops.age.sshKeyPaths). Port 22 is NOT opened to the LAN; if it ever is,
-  # only key authentication is accepted.
+  # (sops.age.sshKeyPaths). Port 22 is open to the LAN so that the owner's
+  # MacBook can log in; only key authentication is accepted.
   services.openssh = {
     enable = true;
-    openFirewall = false;
+    openFirewall = true;
     settings = {
       PasswordAuthentication = false;
       KbdInteractiveAuthentication = false;
@@ -113,6 +113,12 @@
 
   # Owner's public recovery key; the private key stays outside this repository.
   users.users.root.openssh.authorizedKeys.keyFiles = [ ../../secrets/owner.pub ];
+
+  # The owner's MacBook Pro may log in as dhilipsiva.
+  users.users.dhilipsiva.openssh.authorizedKeys.keys = [
+    "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBJJuKA8PimjzLqAEhsDQGiNRg6fdZUPfgdsaRl9Nh3GPRcBJRtRYXktk/8FtObnZKTtf1g6S8Ti63fBNl4cVv0I= c-dhilipc@Dhilips-MacBook-Pro.local"
+    "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDTnXi3Nr/VOWkLRsgbZFO/J9rK/39wpG61VFLdzr1qv08+X6OcKFlwvvRP+hmS8D0VNrqdW8rHOfUzMXrX4kpIyVd2gYDVu0lg+Dq+t871vP/CXFCB2TmP3ke7yACQIRk8hnHEIEtVkiaOQSy/cKbDEYAD8fI1XC1tjWjxGuG1Bnt7mVHlM1F25bDH48GA6/1mCE21fnY1nSvAnxceDnVLuuKHbf4UUIB3LwEDesnpHKoh7tIca8OeOsiFaZLgeoHO8mMbBjYRukYsUleTpPtRr+yW1sLk1Ym1HZf+iqgOvhIiF2edyMxnfcj1iy5tT2ImoVa8kTr/Sq8Yz5XgfVxJ0bEIm55Nrzc1vyweuORH/G76qS2sp/qedWjVcEnbH1XN6FHUQX5CjlfYx4uRVF+r+Aqo03GhOnBOvJ7GL9HYNqHB8mfpG4gipGvILP8FWQ/RheCOvcuP5kslofjOLsod3+QY1yM+Vl1eekUEOzrVELrazODZ9Vh+EP6F142yEZ0= c-dhilipc@Dhilips-MacBook-Pro.local"
+  ];
 
   # --- BOOT ---
   # Preserve the bootloader of the existing installation. Windows keeps its own
