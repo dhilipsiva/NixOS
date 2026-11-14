@@ -493,14 +493,22 @@
               "desktop.config.services.ollama.environmentVariables.OLLAMA_NO_CLOUD == \"1\"" =
                 desktop.config.services.ollama.environmentVariables.OLLAMA_NO_CLOUD == "1";
               # Every host serves the Ollama API to its LAN through the socket proxy;
-              # the backend and every other port stay closed.
+              # the backend stays closed. The desktop also accepts key-only SSH from
+              # the LAN; every other port stays closed on every host.
               "desktop.config.systemd.sockets.ollama-proxy.listenStreams == [ \"0.0.0.0:11434\" ]" =
                 desktop.config.systemd.sockets.ollama-proxy.listenStreams == [ "0.0.0.0:11434" ];
               "desktop.config.services.ollama.host == \"127.0.0.1\"" =
                 desktop.config.services.ollama.host == "127.0.0.1";
               "desktop.config.networking.firewall.enable" = desktop.config.networking.firewall.enable;
-              "desktop.config.networking.firewall.allowedTCPPorts == [ 11434 ]" =
-                desktop.config.networking.firewall.allowedTCPPorts == [ 11434 ];
+              "lib.sort lib.lessThan desktop.config.networking.firewall.allowedTCPPorts == [ 22 11434 ]" =
+                lib.sort lib.lessThan desktop.config.networking.firewall.allowedTCPPorts == [
+                  22
+                  11434
+                ];
+              "!desktop.config.services.openssh.settings.PasswordAuthentication" =
+                !desktop.config.services.openssh.settings.PasswordAuthentication;
+              "!desktop.config.services.openssh.settings.KbdInteractiveAuthentication" =
+                !desktop.config.services.openssh.settings.KbdInteractiveAuthentication;
               "desktop.config.systemd.services.lucy-input.wantedBy == [ ]" =
                 desktop.config.systemd.services.lucy-input.wantedBy == [ ];
               "!desktop.config.systemd.sleep.settings.Sleep.AllowSuspend" =

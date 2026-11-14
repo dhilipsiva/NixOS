@@ -71,9 +71,6 @@
     services.openssh.enable = true;
     services.openssh.settings.PermitRootLogin = "yes";
     services.openssh.settings.PasswordAuthentication = lib.mkForce true;
-    # Base closes the firewall (real HW); the VM needs port 22 reachable through
-    # the QEMU hostfwd, so re-open it here (VM-only).
-    services.openssh.openFirewall = lib.mkForce true;
     users.users.root.password = "test";
 
     # Decrypt the FAKE secrets in the VM (never the owner's real secrets.yaml).
@@ -99,19 +96,22 @@
   };
 
   # --- SSH / SECRETS KEY SOURCE (real hardware) ---
-  # sshd exists so the ed25519 host key exists and sops self-decrypts from it
-  # (sops.age.sshKeyPaths). Port 22 is NOT opened to the LAN; if it ever is,
-  # only key authentication is accepted.
+  # sshd provides the ed25519 host key that sops self-decrypts from
+  # (sops.age.sshKeyPaths) and serves the LAN on port 22 so the owner's laptops
+  # can reach this machine. Only key authentication is accepted; passwords and
+  # keyboard-interactive logins stay off.
   services.openssh = {
     enable = true;
-    openFirewall = false;
+    openFirewall = true;
     settings = {
       PasswordAuthentication = false;
       KbdInteractiveAuthentication = false;
     };
   };
 
-  # Owner's public recovery key; the private key stays outside this repository.
+  # Owner's public key for the daily account and for root recovery; the private
+  # key stays outside this repository.
+  users.users.dhilipsiva.openssh.authorizedKeys.keyFiles = [ ../../secrets/owner.pub ];
   users.users.root.openssh.authorizedKeys.keyFiles = [ ../../secrets/owner.pub ];
 
   # --- BOOT ---
