@@ -139,6 +139,12 @@
   # Wi-Fi. Add a narrowly scoped override only if real hardware proves a gap.
   hardware.enableRedistributableFirmware = true;
 
+  # The Qualcomm WCN7850 (ath12k) loses the access point's beacons while it
+  # saves power, and then sometimes can't associate again until a reboot
+  # (2026-11-11 and 2026-11-14). A desktop gains nothing from Wi-Fi power
+  # saving, so it is off here; the laptops keep NetworkManager's default.
+  networking.networkmanager.wifi.powersave = false;
+
   # --- UPS MONITORING (CyberPower) ---
   # Structured NUT schema: an upsd account under `users.<name>` plus a
   # `upsmon.monitor.<name>` entry. The monitor password comes from sops
